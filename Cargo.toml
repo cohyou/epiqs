@@ -1,0 +1,6 @@
+[package]
+name = "epiqs"
+version = "0.1.0"
+authors = ["OKAZAKI Yasuo <cohyou@ironoir.io>"]
+
+[dependencies]
