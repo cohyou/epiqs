@@ -5,21 +5,38 @@ mod core;
 mod lexer;
 mod parser;
 
-use std::error::Error;
+// use std::io::prelude::*;
+use std::io::BufReader;
 use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
+use std::error::Error;
+// use std::path::Path;
+// use std::io;
+use std::io::Read;
+// use std::cell::RefCell;
+
+use lexer::{Lexer, LexerError};
+use parser::Parser;
+
+fn exec() -> Result<Vec<String>, Box<Error>> {
+    let f = File::open("_.iq")?;
+    let reader = BufReader::new(f);
+    let mut iter = reader.bytes().map(|b| b.unwrap());
+    let mut lexer = Lexer::new(&mut iter);
+    let mut parser = Parser::new(lexer);
+    match parser.parse() {
+        Ok(p) => println!("{:?}", p),
+        Err(e) => println!("{:?}", e),
+    }
+
+    Ok(vec![])
+}
 
 fn main() {
-    let path = Path::new("_.iq");
-    let display = path.display();
+    match exec() {
+        _ => println!("{:?}", "finished"),
+    }
 
-    let mut file = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, Error::description(&why)),
-        Ok(file) => file,
-    };
-
-    // ファイルの中身を文字列に読み込む。`io::Result<useize>`を返す。
+    /*
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Err(why) => panic!("couldn't read {}: {}", display, Error::description(&why)),
@@ -37,6 +54,5 @@ fn main() {
             }
         },
     }
-
-
+    */
 }
