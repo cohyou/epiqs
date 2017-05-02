@@ -1,8 +1,9 @@
+/*
 use std::fmt;
 use std::fmt::Debug;
 
 /// A(ffix)-expression
-// #[derive(Debug)]
+#[derive(Debug)]
 pub struct Aexp {
     mark: Vec<Epiq>, // @ annotation
     envr: Vec<Epiq>, // $ attribute
@@ -53,6 +54,7 @@ impl Debug for Aexp {
 
     }
 }
+*/
 
 /// E(lemantal) piq
 #[derive(Debug)]
@@ -61,5 +63,12 @@ pub enum Epiq {
     Int8(i64),
     Text(String),
 
-    Cpiq{ p: Box<Aexp>, q: Box<Aexp> }, // cons cell piq
+    Lpiq { p: usize, q: usize }, // (linked) list piq
+    // Vpiq { p: usize, q: usize }, // vector piq
+
+    Aexp { a: usize, e: usize }, // A-Expression
+}
+
+pub struct Heliqs {
+    pub vctr: Vec<Epiq>,
 }

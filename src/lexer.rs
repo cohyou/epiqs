@@ -21,7 +21,7 @@ pub enum Tokn {
     Lbkt, // left bracket
     Rbkt, // right bracket
 
-    // Coln, // colon
+    Coln, // colon
     // Bksl, // back slash
 
     /*
@@ -47,7 +47,7 @@ pub enum Tokn {
 pub enum LexerError {
     // Unknown,
     First,
-    InvalidChar(char),
+    // InvalidChar(char),
     InvalidNumber(String),
     EOF,
 }
@@ -112,6 +112,7 @@ impl<'a> Lexer<'a> {
                 match c {
                     '[' => self.delimit(c, Tokn::Lbkt),
                     ']' => self.delimit(c, Tokn::Rbkt),
+                    ':' => self.delimit(c, Tokn::Coln),
                     '"' => {
                         self.delimit(c, Tokn::Dbqt);
                         self.stat = LexerStat::InnerText;
@@ -144,7 +145,7 @@ impl<'a> Lexer<'a> {
                 match c {
                     _ if c.is_digit(10) => self.advance(c, LexerStat::InnerNumber),
 
-                    '[' | ']' => self.finish_number(),
+                    '[' | ']' | ':' => self.finish_number(),
 
                     _ if c.is_whitespace() => self.finish_number(),
 
