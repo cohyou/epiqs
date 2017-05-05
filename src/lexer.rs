@@ -16,29 +16,34 @@ pub enum Tokn {
     Nmbr(String), // Number
     Text(String), // Text
     // Name(String),
+    Usnm(String), // under score and number (e.g. _0 _34)
 
-    Dbqt, // double quartation
-    Lbkt, // left bracket
-    Rbkt, // right bracket
+    Dbqt, // " double quotation
 
-    Coln, // colon
+    Lbkt, // [ left bracket
+    Rbkt, // ] right bracket
+    Lprn, // ( left parentheses
+    Rprn, // ) right parentheses
+
+    Coln, // : colon
+
+    Pipe, // | vertical bar
+    Crrt, // ^ carret
+    Dllr, // $ dollar
+    Smcl, // ; semi colon
+
+
     // Bksl, // back slash
 
     /*
-    Lparen,
-    Rparen,
     Hash,
     BigP,
     BigQ,
-    Carret,
-    Dollar,
-    BackSlash,
     Asterisk,
     Lbrace,
     Rbrace,
     Question,
     Bang,
-    SemiColon,
     Dot,
     */
 }
@@ -71,6 +76,7 @@ pub enum LexerStat {
     InnerNumber,
     InnerText,
     FinishText,
+    AfterUnderscore,
 }
 
 pub struct Lexer<'a> {
@@ -84,7 +90,7 @@ pub struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new<I>(iter: &'a mut I) -> Lexer
-        where I: Iterator<Item=u8> {
+    where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
         Lexer { iter: iter, current_char: c as char, stat: LexerStat::Normal,
             token_string: "".to_string(), token: Err(LexerError::First), eof: false }
@@ -112,7 +118,16 @@ impl<'a> Lexer<'a> {
                 match c {
                     '[' => self.delimit(c, Tokn::Lbkt),
                     ']' => self.delimit(c, Tokn::Rbkt),
+                    '(' => self.delimit(c, Tokn::Lprn),
+                    ')' => self.delimit(c, Tokn::Rprn),
+
                     ':' => self.delimit(c, Tokn::Coln),
+                    '|' => self.delimit(c, Tokn::Pipe),
+                    '^' => self.delimit(c, Tokn::Crrt),
+                    '$' => self.delimit(c, Tokn::Dllr),
+                    ';' => self.delimit(c, Tokn::Smcl),
+                    '_' => self.advance(c, LexerStat::AfterUnderscore),
+
                     '"' => {
                         self.delimit(c, Tokn::Dbqt);
                         self.stat = LexerStat::InnerText;
@@ -142,17 +157,13 @@ impl<'a> Lexer<'a> {
             },
 
             LexerStat::InnerNumber => {
-                match c {
-                    _ if c.is_digit(10) => self.advance(c, LexerStat::InnerNumber),
-
-                    '[' | ']' | ':' => self.finish_number(),
-
-                    _ if c.is_whitespace() => self.finish_number(),
-
-                    _ => {
+                match self.lex_numeric(c) {
+                    Some("next") => self.advance(c, LexerStat::InnerNumber),
+                    Some("finish") => self.finish_number(),
+                    Some(&_) | None => {
                         self.token_string.push(c);
                         self.finish_error();
-                    },
+                    }
                 }
             },
 
@@ -165,7 +176,35 @@ impl<'a> Lexer<'a> {
 
             LexerStat::FinishText => {
                 self.finish(Ok(Tokn::Dbqt), LexerStat::Normal);
-            }
+            },
+
+            LexerStat::AfterUnderscore => {
+                match self.lex_numeric(c) {
+                    Some("next") => self.advance(c, LexerStat::AfterUnderscore),
+                    Some("finish") => self.finish_underscore_number(),
+                    Some(&_) | None => {
+                        self.token_string.push(c);
+                        self.finish_error();
+                    },
+                }
+            },
+        }
+    }
+
+    /// lex token like number
+    /// e.g. 63 845
+    /// not for 07246(=start with 0) 623452w(=end with no digit char)
+    fn lex_numeric(&mut self, c: char) -> Option<&str> {
+        match c {
+            _ if c.is_digit(10) => Some("next"),
+
+            // 区切り文字ならここで数値を終わらせる必要がある
+            // ただし、全ての区切り文字がここで判断されるわけではない
+            '[' | ']' | '(' | ')' | ':' | '|' => Some("finish"),
+
+            _ if c.is_whitespace() => Some("finish"),
+
+            _ => None,
         }
     }
 
@@ -178,6 +217,11 @@ impl<'a> Lexer<'a> {
     fn finish_number(&mut self) {
         let s = self.token_string.clone();
         self.finish(Ok(Tokn::Nmbr(s)), LexerStat::Normal);
+    }
+
+    fn finish_underscore_number(&mut self) {
+        let s = self.token_string.clone();
+        self.finish(Ok(Tokn::Usnm(s)), LexerStat::Normal);
     }
 
     fn finish_error(&mut self) {

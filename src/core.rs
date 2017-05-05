@@ -10,9 +10,9 @@ pub struct Aexp {
     evnt: Vec<Epiq>, // % attribute
     cond: Vec<Epiq>, // ? attribute
     appl: Vec<Epiq>, // ! action
-    ctgr: Vec<Epiq>, // \ annotation
+    ctgr: Vec<Epiq>, // ^ annotation
     epiq: Epiq,
-    slce: Vec<Epiq>, // # action
+    slce: Vec<Epiq>, // / action
 }
 
 impl Aexp {
@@ -65,8 +65,11 @@ pub enum Epiq {
 
     Lpiq { p: usize, q: usize }, // (linked) list piq
     // Vpiq { p: usize, q: usize }, // vector piq
-
+    Fpiq { p: usize, q: usize }, // function piq
     Aexp { a: usize, e: usize }, // A-Expression
+    Prmt(usize), // anonymous parameter
+    Pprn(usize), // priority parentheses
+    Dbri(usize), // de bruijn index
 }
 
 pub struct Heliqs {
