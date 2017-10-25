@@ -66,6 +66,7 @@ pub enum Epiq {
     Lpiq { p: usize, q: usize }, // (linked) list piq
     // Vpiq { p: usize, q: usize }, // vector piq
     Fpiq { p: usize, q: usize }, // function piq
+    Apiq { p: usize, q: usize }, // application piq
     Aexp { a: usize, e: usize }, // A-Expression
     Prmt(usize), // anonymous parameter
     Pprn(usize), // priority parentheses

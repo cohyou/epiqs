@@ -233,8 +233,34 @@ Elixirのようなマクロがあればいいのかなあ。
 
 ```
 |@ .% 0
-   |? |! .beginning_alpha _0
-      .^ .$ _0
+   |? |! beginning_alpha _0
+      .^ .$ 0
 ```
 
 パイプの方が美しい感じはするなあ。。。
+
+
+### 改めてまとめてみる
+- `;` Unit
+- `N` `F` `T` それぞれnil false true
+- `#.` self ref?
+
+- `|` 引数が2つ、というかconsだよという印
+- `.` 引数が1つという印
+
+- `:` 基本のcons、listも作る　中置記法も可能
+
+- `\` functionを作るcons pが引数、qが本体
+- `$` symbolを作るcons pが名前、qが中身
+- `!` applyを作るcons pが関数 qが引数
+- `?` conditionを作るcons pが条件、qが真偽のcons。本質的に三項演算子なので違和感はある
+- `*` tupleを作るcons
+
+```
+|^ a |^ b |^ c .^ d
+a : b : c : d:;
+[a b c d]
+
+|\ |$ 0 ; ;
+.\ _0
+```

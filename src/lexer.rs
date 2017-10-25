@@ -31,7 +31,7 @@ pub enum Tokn {
     Crrt, // ^ carret
     Dllr, // $ dollar
     Smcl, // ; semi colon
-
+    Bang, // ! exclamation
 
     // Bksl, // back slash
 
@@ -43,7 +43,6 @@ pub enum Tokn {
     Lbrace,
     Rbrace,
     Question,
-    Bang,
     Dot,
     */
 }
@@ -126,6 +125,8 @@ impl<'a> Lexer<'a> {
                     '^' => self.delimit(c, Tokn::Crrt),
                     '$' => self.delimit(c, Tokn::Dllr),
                     ';' => self.delimit(c, Tokn::Smcl),
+                    '!' => self.delimit(c, Tokn::Bang),
+                    
                     '_' => self.advance(c, LexerStat::AfterUnderscore),
 
                     '"' => {
