@@ -94,7 +94,6 @@ ElixirのASTは、全てシンボル、メタデータ、引数リストの順�
 (! .# set-macro-charactor '
    |\ .% 2
       |! .# list [quote |! |# read, recursive, throw-on-eof .~ .# _1])
-
 ```
 
 ところで、ここで暗黙的に導入した`#`に関しては、元々slice要員だったものである。
@@ -241,6 +240,8 @@ pythonみたいに書きたいな、ということで。
 まだ整理されていないが、`,`は`:`みたいに結合力が強いやつかな、もちろん`=`もやけど。<br>
 よく考えてみるとtupleを`,`で作れるのは、Pythonやな。Python偉大やな。ちょっと違うけど。
 ここだと、`:`が一番強くて、`,`が次やね。
+`a,b,c`が'|> a {b c}'は多少違和感があるが、まあ、許容範囲かなあ。
+また改めて考えることにしておきましょう。
 
 
 ## 本当のメタデータ
@@ -257,16 +258,74 @@ pythonみたいに書きたいな、ということで。
 
 どーでもいいが`||`にしたら、それを丸ごとコメントにできる。一つなら当然`.|`。<br>
 もしくは`.|`の代わりに`..`。これは完全にお遊びの範疇だが。
-
+Common Lispが`|#`...`#|`を持っているので、変な話でもない。
 
 ## 例外というか、エラー処理というか
 
+ちょっと真面目に考え始めると、やはりエラー処理（というか、例外ですね）に関して考えざるを得ない。<br>
+実際にはRubyだと`begin rescue else ensure end`+`raise retry`、<br>
+Pythonだと`try: except Error as e: else: finally:`+`raise`。<br>
+`retry`がPython標準にはないが、どうやらdecoratorでやるみたい。
+基本的には「被せて使うものだ」というイメージがあるので、
+```
+|& func exception
+|- func exception
+|_ func exception
+```
+とか、余っている記号でやるしかない。個人的には `|_`がいい感じ。下支えしている印象。
+そしてexceptionの中身は、
+```
+{exception:function exception:function function}:finally
+```
+かなあ。tuple内最後のfunctionはPythonの`else`、最後の奴が`ensure``finally`にあたる。<br>
+`raise`も必要だけど、これはどうしよう。`raise`という文字列は出したくないなあ。<br>
+思いつきだが、`!?`は好きだなあ。`?!`よりは`!?`。「びっくりはてな」である。<br>
+一度コードに落としてみますか。
+```
+try:
+  f = open('myfile.txt')
+  s = f.readline()
+  i = int(s.strip())
+except OSError as err:
+  print("OS error: {0}".format(err))
+except ValueError as err:
+  print("Could not convert data to an integer.")
+except:
+  print("Unexpected error:", sys.exc_info()[0])
+  raise
+else:
+  print(arg, 'has', len(f.readlines()), 'lines')
+finally:  
+  f.close()
+```
+
+```
+|!?
+  |% {f: |! open 'myfile.txt'
+      s: |! readline f
+      i: |! int |! strip s}
+  |~
+    |~
+      { OSError   : |\ |! #> |! % ["OS error: {0}" _1]
+        ValueError: |\ |! #> "Could not convert data to an integer."
+        T         : |\ |~ |! #> ["Unexpected error:" |# 0 |! exc_info sys]
+                          .! !?
+      }
+      |! #> [arg 'has' (# |! readlines f) 'lines']
+    |! close f
+```
+結構スッキリしたはず。`|! #>`は`|!>`みたいにしてもいいかもね。
 
 ## 遅延評価
-これはそもそも、評価、というか、正確にはapplyのタイミングを決めるのはこちらなので、特に問題ないように思える。「リストの最初の引数を関数とみなして、実行する」という仕様がなければ特に気にする必要はない。
+これはそもそも、評価、というか、正確にはapplyのタイミングを決めるのはこちらなので、特に問題ないように思える。<br>
+「リストの最初の引数を関数とみなして、実行する」という仕様がなければ特に気にする必要はない。
 
 
 ## 非同期処理 async/await的な
+
+
+## イベントの話もあった
+
 
 
 ## で、マクロをどのように実装するのか
