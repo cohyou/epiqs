@@ -281,7 +281,7 @@ Pythonだと`try: except Error as e: else: finally:`+`raise`。<br>
 `raise`も必要だけど、これはどうしよう。`raise`という文字列は出したくないなあ。<br>
 思いつきだが、`!?`は好きだなあ。`?!`よりは`!?`。「びっくりはてな」である。<br>
 一度コードに落としてみますか。
-```
+```Python
 try:
   f = open('myfile.txt')
   s = f.readline()
