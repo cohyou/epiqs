@@ -306,7 +306,7 @@ finally:
       i: |! int |! strip s}
   |~
     |~
-      { OSError   : |\ |! #> |! % ["OS error: {0}" _1]
+      { OSError   : |\ |! #> |! #>" ["OS error: {0}" _1]
         ValueError: |\ |! #> "Could not convert data to an integer."
         T         : |\ |~ |! #> ["Unexpected error:" |# 0 |! exc_info sys]
                           .! !?
