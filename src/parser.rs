@@ -24,34 +24,43 @@ pub struct Parser<'a> {
     p: usize, // index of current token
     markers: Vec<usize>, // use as stack of returning points when backtracking
     vm: Heliqs,
+    // output: String,
 }
 
 impl<'a> Parser<'a> {
 
     pub fn new(mut l: Lexer<'a>) -> Parser {
-        let ts = vec![l.next_token().unwrap()];
-        Parser { lexer: l, tokens: ts, vm:Heliqs { vctr: vec![] }, p: 0, markers: vec![] }
+        let ts = match l.next_token() {
+            Ok(t) => vec![t],
+            _ => vec![]
+        };
+        Parser { lexer: l, tokens: ts, vm:Heliqs { vctr: vec![] }, p: 0, markers: vec![], /*output: "".to_string(),*/ }
     }
 
     pub fn parse(&mut self) -> Result<(), ParseError> {
         match self.parse_aexp() {
             Ok(i) => {
+                // 評価前
                 // println!("parse self.vm.vctr: {:#?}", self.vm.vctr);
-                self.print_aexp(i);
-                println!("");
+                // self.print_aexp(i);
+                // println!("");
 
                 match self.vm.vctr.get(i) {
                     Some(&Epiq::Aexp{ a, e }) => self.beta_reduct(e),
                     _ => println!("{:?}", "not A-Expression"),
                 }
 
-                self.print_aexp(i);
-                println!("");
+                // 評価後
+                // self.print_aexp(i);
+                // println!("");
 
                 Ok(())
             },
 
-            Err(e) => Err(e),
+            Err(e) => {
+                // println!("");
+                Err(e)
+            },
         }
     }
 
@@ -491,28 +500,38 @@ impl<'a> Parser<'a> {
 
     /* PRINTING */
 
-    fn print_aexp(&self, i: usize) {
+    pub fn print_aexp(&self, i: usize) -> String {
+        let mut result = "".to_string();
+
         if let Some(c) = self.vm.vctr.get(i) {
             match c {
                 &Epiq::Aexp { a, e } => {
-                    self.print_affx(a);
-                    self.print_epiq(e);
+                    result.push_str(&self.print_affx(a));
+                    result.push_str(&self.print_epiq(e));
                 },
                 _ => {},
             }
         }
+        result.push_str("\n");
+        return result;
     }
 
-    fn print_affx(&self, i: usize) {
+    fn print_affx(&self, i: usize) -> String {
+        let mut result = "".to_string();
+
         if let Some(c) = self.vm.vctr.get(i) {
             match c {
                 &Epiq::Unit => {}, // case of 'has no affx'
                 _ => {},
             }
         }
+
+        return result;
     }
 
-    fn print_epiq(&self, i: usize) {
+    fn print_epiq(&self, i: usize) -> String {
+        let mut result = "".to_string();
+
         // check whether 'true list' or not
         let is_true_list = self.check_true_list(i);
 
@@ -520,43 +539,49 @@ impl<'a> Parser<'a> {
             match c {
                 &Epiq::Lpiq { p, q } => {
                     if is_true_list {
-                        print!("{:}", "[");
-                        self.print_list(p, q);
+                        result.push_str("[");
+                        result.push_str(&self.print_list(p, q));
                     } else {
-                        self.print_piq(" : ", p, q);
+                        result.push_str(&self.print_piq(" : ", p, q));
                     }
                 },
-                &Epiq::Fpiq { p, q } => self.print_piq(" |^ ", p, q),
-                &Epiq::Apiq { p, q } => self.print_piq(" |! ", p, q),
+                &Epiq::Fpiq { p, q } => result.push_str(&self.print_piq(" |^ ", p, q)),
+                &Epiq::Apiq { p, q } => result.push_str(&self.print_piq(" |! ", p, q)),
 
                 &Epiq::Prmt(i) => {
-                    print!("{:}", "Prmt(");
-                    self.print_aexp(i);
-                    print!("{:}", ")");
+                    result.push_str("Prmt(");
+                    result.push_str(&self.print_aexp(i));
+                    result.push_str(")");
                 },
                 &Epiq::Aexp { a, e } => {
-                    self.print_affx(a);
-                    self.print_epiq(e);
+                    result.push_str(&self.print_affx(a));
+                    result.push_str(&self.print_epiq(e));
                 },
                 &Epiq::Pprn(i) => {
-                    print!("{:}", "(");
+                    result.push_str("(");
                     // print!("{:?}", self.check_true_list(i));
-                    self.print_aexp(i);
-                    print!("{:}", ")");
+                    result.push_str(&self.print_aexp(i));
+                    result.push_str(")");
                 },
-                _ => print!("{:?}", c),
+                _ => result.push_str(&format!("{:?}", c)),
             }
         }
+
+        return result;
     }
 
-    fn print_piq(&self, op: &str, p: usize, q: usize) {
+    fn print_piq(&self, op: &str, p: usize, q: usize) -> String {
+        let mut result = "".to_string();
+
         if self.vm.vctr.get(p).is_some() {
-            self.print_aexp(p);
+            result.push_str(&self.print_aexp(p));
         }
         print!("{:}",op);
         if self.vm.vctr.get(q).is_some() {
-            self.print_aexp(q);
+            result.push_str(&self.print_aexp(q));
         }
+
+        return result;
     }
 
     /// check whether 'true list' or not
@@ -580,25 +605,29 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn print_list(&self, pi: usize, qi: usize) {
+    fn print_list(&self, pi: usize, qi: usize) -> String {
+        let mut result = "".to_string();
+
         if self.vm.vctr.get(pi).is_some() {
-            self.print_aexp(pi);
+            result.push_str(&self.print_aexp(pi));
         }
 
         match self.vm.vctr.get(qi) {
             Some(&Epiq::Aexp { a, e }) => {
                 match self.vm.vctr.get(e) {
-                    Some(&Epiq::Unit) => print!("{:}", "]"),
+                    Some(&Epiq::Unit) => result.push_str("]"),
                     _ => {},
                 }
             }
             Some(&Epiq::Lpiq { p, q }) => {
-                print!(" ");
-                self.print_list(p, q);
+                result.push_str(" ");
+                result.push_str(&self.print_list(p, q));
             },
-            None => print!("{:}", ")"),
-            _ => print!("error on print vm: {:?}", self.vm.vctr),
+            None => result.push_str(")"),
+            _ => result.push_str(&format!("error on print vm: {:?}", self.vm.vctr)),
         }
+
+        return result;
     }
 
     fn beta_reduct(&mut self, entry: usize) {

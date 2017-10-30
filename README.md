@@ -1,5 +1,37 @@
 # epiqs
 
+## g4 file
+
+grammar epiqs;
+
+efile: form* EOF;
+
+form: not_cons_form | pair | cons;
+
+not_cons_form: literal | elist | vector | etuple;
+
+forms: (form WS+)*;
+
+cons: ('|' annotation WS+ form WS+ form) | ('.' annotation WS+ form);
+
+pair: not_cons_form ':' (not_cons_form | pair);
+
+annotation: '!' | '$' | '?' | '%' | '*' | '\\';
+
+elist: '(' forms ')';
+
+vector: '[' forms ']';
+
+etuple: '{' forms '}';
+
+literal: INT | STRING;
+
+INT: ('0'|[1-9][0-9]*);
+STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
+
+WS : [ \n\r\t] ;
+
+
 ## about
 
 - affixはprefix+suffixのこと

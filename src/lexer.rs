@@ -43,15 +43,15 @@ pub enum Tokn {
     Lbrace,
     Rbrace,
     Question,
-    Dot,
     */
+    Stop, // . full stop (period)
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerError {
     // Unknown,
     First,
-    // InvalidChar(char),
+    InvalidText(String),
     InvalidNumber(String),
     EOF,
 }
@@ -99,9 +99,11 @@ impl<'a> Lexer<'a> {
         self.reset_token();
 
         loop {
+            // println!("self.eof: {:?}", self.eof);
             match self.token {
-                _ if self.eof => return Err(LexerError::EOF),
+                // _ if self.eof => return Err(LexerError::EOF),
                 Err(LexerError::First) => self.scan(),
+                // _ if self.eof => return Err(LexerError::EOF),
                 _ => { break; },
             }
         }
@@ -115,18 +117,21 @@ impl<'a> Lexer<'a> {
         match self.stat {
             LexerStat::Normal => {
                 match c {
+                    _ if self.eof => self.finish_error(LexerError::EOF), // 普通にEOF
+
                     '[' => self.delimit(c, Tokn::Lbkt),
                     ']' => self.delimit(c, Tokn::Rbkt),
                     '(' => self.delimit(c, Tokn::Lprn),
                     ')' => self.delimit(c, Tokn::Rprn),
 
                     ':' => self.delimit(c, Tokn::Coln),
+
                     '|' => self.delimit(c, Tokn::Pipe),
                     '^' => self.delimit(c, Tokn::Crrt),
                     '$' => self.delimit(c, Tokn::Dllr),
                     ';' => self.delimit(c, Tokn::Smcl),
                     '!' => self.delimit(c, Tokn::Bang),
-                    
+
                     '_' => self.advance(c, LexerStat::AfterUnderscore),
 
                     '"' => {
@@ -146,24 +151,29 @@ impl<'a> Lexer<'a> {
 
             LexerStat::ZeroNumber => {
                 match c {
+                    _ if self.eof => self.finish_number(), // 0でファイルが終わってもOK
+
                     '[' | ']' => self.finish_number(),
 
                     _ if c.is_whitespace() => self.finish_number(),
 
                     _ => {
                         self.token_string.push(c);
-                        self.finish_error();
+                        let s = self.token_string.clone();
+                        self.finish_error(LexerError::InvalidNumber(s));
                     },
                 }
             },
 
             LexerStat::InnerNumber => {
+                // println!("LexerStat::InnerNumber");
                 match self.lex_numeric(c) {
                     Some("next") => self.advance(c, LexerStat::InnerNumber),
                     Some("finish") => self.finish_number(),
                     Some(&_) | None => {
                         self.token_string.push(c);
-                        self.finish_error();
+                        let s = self.token_string.clone();
+                        self.finish_error(LexerError::InvalidNumber(s));
                     }
                 }
             },
@@ -171,11 +181,18 @@ impl<'a> Lexer<'a> {
             LexerStat::InnerText => {
                 match c {
                     '"' => self.finish_text(),
+                    _ if self.eof => {
+                        // 文字列の途中でファイルが終わってしまった
+                        self.token_string.push(c);
+                        let s = self.token_string.clone();
+                        self.finish_error(LexerError::InvalidText(s));
+                    }
                     _ => self.advance(c, LexerStat::InnerText),
                 }
             },
 
             LexerStat::FinishText => {
+                // println!("LexerStat::FinishText");
                 self.finish(Ok(Tokn::Dbqt), LexerStat::Normal);
             },
 
@@ -185,7 +202,8 @@ impl<'a> Lexer<'a> {
                     Some("finish") => self.finish_underscore_number(),
                     Some(&_) | None => {
                         self.token_string.push(c);
-                        self.finish_error();
+                        let s = self.token_string.clone();
+                        self.finish_error(LexerError::InvalidNumber(s));
                     },
                 }
             },
@@ -196,7 +214,13 @@ impl<'a> Lexer<'a> {
     /// e.g. 63 845
     /// not for 07246(=start with 0) 623452w(=end with no digit char)
     fn lex_numeric(&mut self, c: char) -> Option<&str> {
+        // println!("lex_numeric");
         match c {
+            _ if self.eof => {
+                // println!("eof finish");
+                Some("finish") // 数字の並びの途中で終わってもそこまでの数値とみなす
+            },
+
             _ if c.is_digit(10) => Some("next"),
 
             // 区切り文字ならここで数値を終わらせる必要がある
@@ -225,9 +249,9 @@ impl<'a> Lexer<'a> {
         self.finish(Ok(Tokn::Usnm(s)), LexerStat::Normal);
     }
 
-    fn finish_error(&mut self) {
+    fn finish_error(&mut self, e: LexerError) {
         let s = self.token_string.clone();
-        self.finish(Err(LexerError::InvalidNumber(s)), LexerStat::Normal);
+        self.finish(Err(e), LexerStat::Normal);
     }
 
     fn advance(&mut self, c: char, next: LexerStat) {
