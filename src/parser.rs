@@ -5,14 +5,14 @@ use super::core::{Epiq, Heliqs};
 
 #[derive(Debug)]
 pub enum ParseError {
-    UnknownError,
+    // UnknownError,
     Int8CastError,
     TextError,
     // NotAexpError,
     NotAffxError,
     NotCpiqError,
     CanNotCloseParenError,
-    NotTrueListError,
+    // NotTrueListError,
     NotDebruijnIndexError,
     Next(String),
 }
@@ -37,6 +37,13 @@ impl<'a> Parser<'a> {
         Parser { lexer: l, tokens: ts, vm:Heliqs { vctr: vec![] }, p: 0, markers: vec![], /*output: "".to_string(),*/ }
     }
 
+    // VM内でのconsの最大値を返す
+    // 実際には「最後に作られたconsの番号」を返す
+    // 将来変わるかもしれないが、今は0から順番にindexをつけているので、最後に作られたconsのindexが一番大きい
+    pub fn max_index(&self) -> usize {
+        self.vm.vctr.len() - 1
+    }
+
     pub fn parse(&mut self) -> Result<(), ParseError> {
         match self.parse_aexp() {
             Ok(i) => {
@@ -46,7 +53,7 @@ impl<'a> Parser<'a> {
                 // println!("");
 
                 match self.vm.vctr.get(i) {
-                    Some(&Epiq::Aexp{ a, e }) => self.beta_reduct(e),
+                    Some(&Epiq::Aexp{ a:_, e }) => self.beta_reduct(e),
                     _ => println!("{:?}", "not A-Expression"),
                 }
 
@@ -221,7 +228,7 @@ impl<'a> Parser<'a> {
     }
 
     fn speculate_cpiq(&mut self) -> bool {
-        let mut res = true;
+        let res;
         self.add_marker();
         // println!("speculate_cpiq1 self.tokens: {:?}", &self.tokens[self.p..]);
         match self.parse_aexp_excluding_cons() {
@@ -374,7 +381,7 @@ impl<'a> Parser<'a> {
                 self.consume_token();
                 self.sync_tokens(2);
                 // println!("parse_text self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
-                let mut res = Ok(0);
+                let mut res;
                 match &self.tokens[self.p..] {
                     &[Tokn::Text(ref s), Tokn::Dbqt, ..] => {
                         if !self.is_speculating() {
@@ -489,9 +496,11 @@ impl<'a> Parser<'a> {
         self.markers.pop();
     }
 
+    /*
     fn seek_marker(&mut self, index: usize) {
         self.p = index;
     }
+    */
 
     fn is_speculating(&self) -> bool {
         !self.markers.is_empty()
@@ -512,12 +521,12 @@ impl<'a> Parser<'a> {
                 _ => {},
             }
         }
-        result.push_str("\n");
+        // result.push_str("\n");
         return result;
     }
 
     fn print_affx(&self, i: usize) -> String {
-        let mut result = "".to_string();
+        let result = "".to_string();
 
         if let Some(c) = self.vm.vctr.get(i) {
             match c {
@@ -589,14 +598,14 @@ impl<'a> Parser<'a> {
         let mut idx = i;
         while let Some(c) = self.vm.vctr.get(idx) {
             match c {
-                &Epiq::Aexp { a, e } => {
+                &Epiq::Aexp { a:_, e } => {
                     match self.vm.vctr.get(e) {
                         Some(&Epiq::Unit) => return true,
                         _ => return false,
                     }
                 },
                 &Epiq::Unit => return true, // もはやここは通らないと思うが、一旦残しておく
-                &Epiq::Lpiq { p, q } => {
+                &Epiq::Lpiq { p:_, q } => {
                     idx = q;
                 },
                 _ => return false,
@@ -613,7 +622,7 @@ impl<'a> Parser<'a> {
         }
 
         match self.vm.vctr.get(qi) {
-            Some(&Epiq::Aexp { a, e }) => {
+            Some(&Epiq::Aexp { a:_, e }) => {
                 match self.vm.vctr.get(e) {
                     Some(&Epiq::Unit) => result.push_str("]"),
                     _ => {},
@@ -694,28 +703,28 @@ impl<'a> Parser<'a> {
 
 fn aexp_e<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
-        Some(&Epiq::Aexp { a, e }) => Some((t.0, e)),
+        Some(&Epiq::Aexp { a:_, e }) => Some((t.0, e)),
         _ => None,
     }
 }
 
 fn apiq_f<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
-        Some(&Epiq::Apiq { p, q }) => Some((t.0, p)),
+        Some(&Epiq::Apiq { p, q:_ }) => Some((t.0, p)),
         _ => None,
     }
 }
 
 fn apiq_q<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
-        Some(&Epiq::Apiq { p, q }) => Some((t.0, q)),
+        Some(&Epiq::Apiq { p:_, q }) => Some((t.0, q)),
         _ => None,
     }
 }
 
 fn fpiq_p<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
-        Some(&Epiq::Fpiq { p, q }) => Some((t.0, p)),
+        Some(&Epiq::Fpiq { p, q:_ }) => Some((t.0, p)),
         Some(a) => {
             println!("not fpiq: {:?}", a);
             None
@@ -723,7 +732,7 @@ fn fpiq_p<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)>
         _ => None,
     }
 }
-
+/*
 fn pprn<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
         Some(&Epiq::Pprn(i)) => Some((t.0, i)),
@@ -734,7 +743,8 @@ fn pprn<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
         _ => None,
     }
 }
-
+*/
+/*
 fn print_one_piq<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
         Some(e) => {
@@ -744,3 +754,4 @@ fn print_one_piq<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, 
         _ => None,
     }
 }
+*/
