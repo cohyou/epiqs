@@ -33,7 +33,7 @@ not_cons_form: literal | elist | vector | etuple;
 
 forms: (form WS+)*;
 
-cons: ('|' annotation WS+ form WS+ form) | ('.' annotation WS+ form);
+cons: ('|' annotation WS+ form WS+ form) | ('\'' annotation WS+ form);
 
 pair: not_cons_form ':' (not_cons_form | pair);
 
@@ -61,8 +61,8 @@ WS : [ \n\r\t] ;
 :-:|-
 数値|([1-9][0-9]*)&#x7C;0かな。
 シンボル|[a-z&#x7C;A-z][a-z&#x7C;A-z&#x7C;0-9]+ですね。
-文字列|`'` ... `'` or `"` ... `"`
-de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
+文字列|`"` ... `"`
+de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみなす
 
 
 #### 確定(1文字目=tag dispatcher or literal)
@@ -71,7 +71,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 :-:|-
 `(` ~ `)`|piq(基本形)
 &#x7C;|piq(p,qを指定)
-`.`|piq(pのみを指定)
+`'`|piq(pのみを指定)
 `;`|Unit
 `N`|nil
 `T`|true
@@ -92,11 +92,12 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `:`|cons|中置記法でcons
 `\`|block|ナシ
 `%`|environment|ナシ
-`!`|apply|ナシ
+`!`|apply|中置記法でapply（ただしpとの間にWSは許されない
 `$`|symbol|ナシ
 `@`|deref|前置記法でderef
 `?`|condition|ナシ(中置記法やってもいいけどややこしい)
-`#`|access|後置記法でaccess
+`.`|access|中置記法でもいける（ただしpやqとの間にWSは許されない
+`#`|bind|ナシ
 `=`|equal|中置記法でもいける
 
 
@@ -114,8 +115,8 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 
 記号|説明
 :-:|-
-`..`|comment(単一行)
-&#x7C;&#x7C;|comment(複数行)
+`//`|comment(単一行)
+'/*' ... '*/'|comment(複数行)
 `.{` ~ `}`|実行部分
 `.[` ~ `]`|quote
 `!?`|exception
@@ -125,10 +126,8 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 
 記号|説明
 :-:|-
-`%+`|define
 `!#`|yield （不要かも
 `!<`|dispatch
-`#.`|self ref?
 
 
 #### マクロかも(複数文字でのidiom)
@@ -136,8 +135,8 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 記号|説明
 :-:|-
 `!&`|parallel
-`#>`|print
-`#>"`|format
+`.>`|print
+`.>s`|format
 
 
 #### その他未決定事項
@@ -161,7 +160,6 @@ Hphn, // - hyphen-minus
 Star, // * asterisk
 Slsh, // / slash
 
-Sgqt, // ' single quotation
 Bkqt, // ` back quote
 Less, // < less than
 Grtr, // > greater than
@@ -182,11 +180,28 @@ Udsc, // _ underscore
 `|!! symbol [args]`というタグがきたら、`|! @symbol [args]`に変更する
 
 ```
-|~ .% [ast]
+|\ '% (ast) [
    |>>>> "実行用マクロを定義する"
-   |? (= |! @ast#^ !!) .. ^ はそのpiqのタグを表す
-      |: .[ |! (@ .{ast#p}) .{ast#q} ]
+   |? (= @ast.^! !!)
+      |: .[ |! (@ .{ ast.p }) .{ ast.q } ]
          ast
+   ]
+```
+
+### コード例
+
+```
+'!?
+  |:
+    |# f @open! "myfile.txt"
+    |# s @readline! f
+    |# i @int! @s.strip!
+  |:
+    |: [ OSError   : (\ '.> '.>s ["OS error: {0}" _1])
+         ValueError: (\ '.> "Could not convert data to an integer.")
+         T         : |\ ['.> ["Unexpected error:" @sys.exc_info!.0] !?!] ]
+       '.> [arg "has" @f.readlines!.size "lines"]
+    @f.close!
 ```
 
 
