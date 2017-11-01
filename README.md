@@ -65,7 +65,7 @@ WS : [ \n\r\t] ;
 de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 
 
-#### 確定(1文字目)
+#### 確定(1文字目=tag dispatcher)
 
 記号|説明
 :-:|-
@@ -77,13 +77,13 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `T`|true
 `F`|false
 
-#### 要仕様検討(1文字目)
+#### 要仕様検討(1文字目=tag dispatcher)
 
 記号|説明
 :-:|-
 `,`|埋め込み
 
-#### 確定(2文字目)
+#### 確定(2文字目=tag)
 
 記号|説明|単独
 :-:|-|-
@@ -96,7 +96,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `?`|condition|ナシ(中置記法やってもいいけどややこしい)
 `#`|access|後置記法でaccess
 
-#### 要仕様検討(2文字目)
+#### 要仕様検討(2文字目=tag)
 
 記号|説明|単独
 :-:|-|-
@@ -135,6 +135,31 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 #### その他未決定事項
 - ASTをたどるQuery(XPathみたいになるよね)
 - モジュールの具体的な仕様
+
+
+#### tagとして使いそうな記号
+
+```
+Crrt, // ^ carret
+Star, // * asterisk
+Amps, // & ampersand
+Comm, // , comma
+Eqls, // = equal sign
+```
+
+
+#### tagとして余っている記号
+
+```
+Slsh, // / slash
+Sgqt, // ' single quotation
+Hphn, // - hyphen-minus
+Less, // < less than
+Grtr, // > greater than
+Udsc, // _ underscore
+Tild, // ~ tilde
+Bkqt, // ` back quote
+```
 
 ### マクロ
 
