@@ -383,7 +383,7 @@ impl<'a> Parser<'a> {
                 // println!("parse_text self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
                 let mut res;
                 match &self.tokens[self.p..] {
-                    &[Tokn::Text(ref s), Tokn::Dbqt, ..] => {
+                    &[Tokn::Chvc(ref s), Tokn::Dbqt, ..] => {
                         if !self.is_speculating() {
                             self.vm.vctr.push(Epiq::Text(s.to_string()));
                         }
