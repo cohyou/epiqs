@@ -77,11 +77,13 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `T`|true
 `F`|false
 
+
 #### 要仕様検討(1文字目=tag dispatcher)
 
 記号|説明
 :-:|-
 `,`|埋め込み
+
 
 #### 確定(2文字目=tag)
 
@@ -97,6 +99,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `#`|access|後置記法でaccess
 `=`|equal|中置記法でもいける
 
+
 #### 要仕様検討(2文字目=tag)
 
 記号|説明|単独
@@ -105,6 +108,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `~`|enum|ナシ
 `^`|metadata|ナシ
 `/`|module?|ナシ
+
 
 #### 確定(2文字でのidiom)
 
@@ -116,6 +120,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `.[` ~ `]`|quote
 `!?`|exception
 
+
 #### 要仕様検討(2文字でのidiom)
 
 記号|説明
@@ -125,6 +130,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `!<`|dispatch
 `#.`|self ref?
 
+
 #### マクロかも(複数文字でのidiom)
 
 記号|説明
@@ -132,6 +138,7 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `!&`|parallel
 `#>`|print
 `#>"`|format
+
 
 #### その他未決定事項
 - ASTをたどるQuery(XPathみたいになるよね)
@@ -160,6 +167,7 @@ Less, // < less than
 Grtr, // > greater than
 Udsc, // _ underscore
 ```
+
 
 ### マクロ
 
