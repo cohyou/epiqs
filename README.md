@@ -65,7 +65,7 @@ WS : [ \n\r\t] ;
 de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 
 
-#### 確定(1文字目=tag dispatcher)
+#### 確定(1文字目=tag dispatcher or literal)
 
 記号|説明
 :-:|-
@@ -95,13 +95,14 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 `@`|deref|前置記法でderef
 `?`|condition|ナシ(中置記法やってもいいけどややこしい)
 `#`|access|後置記法でaccess
+`=`|equal|中置記法でもいける
 
 #### 要仕様検討(2文字目=tag)
 
 記号|説明|単独
 :-:|-|-
-`&`|tuple|まだ微妙に`*`との間で揺れている
-`+`|enum|ナシ
+`&`|tuple|ナシ
+`~`|enum|ナシ
 `^`|metadata|ナシ
 `/`|module?|ナシ
 
@@ -141,47 +142,26 @@ de bruijn index|`_[0-9]*` `_`の後に数値が続くと、とみなす
 
 ```
 Crrt, // ^ carret
-Star, // * asterisk
-Amps, // & ampersand
 Comm, // , comma
-Eqls, // = equal sign
 ```
 
 
 #### tagとして余っている記号
 
 ```
-Slsh, // / slash
-Sgqt, // ' single quotation
+Plus, // + plus
 Hphn, // - hyphen-minus
+Star, // * asterisk
+Slsh, // / slash
+
+Sgqt, // ' single quotation
+Bkqt, // ` back quote
 Less, // < less than
 Grtr, // > greater than
 Udsc, // _ underscore
-Tild, // ~ tilde
-Bkqt, // ` back quote
 ```
 
 ### マクロ
-
-#### Lisp系(タグ)
-
-`|` `.` `(` ... `)`の直後に来るものをXMLになぞらえてタグと呼びます。
-そのタグ名と、対応する構造を返却する。Reactのコンポーネントぽいな。
-でもまだこの言語には、クラスに類するものはない。
-だったら、関数タイプの単純なものだけ、ということで。
-それを、タグ用のテーブルに追加する、わけですね。
-
-
-#### Lisp系(タグ以外)
-
-いわゆる、ふつーの関数的なものの扱いとして、定義できる。
-しかし、これって上のタグ的なものと全く同じになるよね、少なくとも。
-関数扱いすることで何か変わるだろうか？
-例えば、タグは表面的には引数は二つしか取れないので、もっとたくさん取りたいとか。
-うーん、それってなんだか意味がない気がする。
-
-
-#### XSLTぽいやつ
 
 特定のキーワードに反応するのではなく、AST全体を見回して、クエリで書き換える部分を指定する。
 この方が、まあ書き換えフィルタっぽい。両方あってもいい気もするけど。
@@ -200,10 +180,6 @@ Bkqt, // ` back quote
       |: .[ |! (@ .{ast#p}) .{ast#q} ]
          ast
 ```
-
-こんな感じ？でも`#`は常に働く、ということを意識しないと
-さあ、quoteをどうするのか、という話
-やはり、ASTをたどるXPath的なものは欲しい。
 
 
 ### epiq一覧
