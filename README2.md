@@ -156,8 +156,6 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 :-:|-
 `//`|comment(単一行)
 '/*' ... '*/'|comment(複数行)
-`.{` ~ `}`|実行部分
-`.[` ~ `]`|quote
 `!?`|exception
 
 
@@ -165,7 +163,7 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 
 記号|説明
 :-:|-
-`!#`|yield （不要かも
+`!.`|yield （不要かも
 `!<`|dispatch
 
 
@@ -174,8 +172,8 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 記号|説明
 :-:|-
 `!&`|parallel
-`'>`|print
-`'>s`|format
+`.>`|print
+`.>s`|format
 
 
 #### その他未決定事項
@@ -237,7 +235,7 @@ Grtr, // > greater than
     |# s @readline! f
     |# i @int! @s.strip!
   |:
-    |: [ OSError   : (\ '.> '.>s ["OS error: {0}" _1])
+    |: [ OSError   : (\ '.> '.>s ["OS error: {0}" .1])
          ValueError: (\ '.> "Could not convert data to an integer.")
          T         : |\ ['.> ["Unexpected error:" @sys.exc_info!.0] !?!] ]
        '.> [arg "has" @f.readlines!.size "lines"]
