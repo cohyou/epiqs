@@ -287,14 +287,27 @@ Grtr, // > greater than
 
 ### epiq一覧
 
-- `Unit`
-- `Int8(i64)`
-- `Text(String)`
-
-- `Lpiq { p: usize, q: usize }` // (linked) list piq
-- `Vpiq { p: usize, q: usize }`, // vector piq
-- `Fpiq { p: usize, q: usize }` // function piq
-- `Aexp { a: usize, e: usize }` // A-Expression
-- `Prmt(usize)` // anonymous parameter
-- `Pprn(usize)` // priority parentheses
-- `Dbri(usize)` // de bruijn index
+表記|説明
+-|-
+`Unit`|`;` unit
+`None`|`N` nil null
+`Tval`|`T` true
+`Fval`|`F` false
+`Int8(i64)`|8byte integer
+`Text(String)`|string
+`Smbl(String)`|symbol
+`Tpiq{_tag, pval, qval}`|tag assignable cons
+`Lpiq{pval, qval}`|linked-list(normal cons cell)
+`Meta{mtag, trgt}`|metadata
+`Tupl{lpiq, rest}`|tuple
+`Enum{data, _}`|enum
+`Envn{prms, optn}`|environment
+`Bind{smbl, valu}`|bind
+`Rslv{smbl, _}`|resolve symbol
+`Accs{trgt, kynm}`|access
+`Lmbd{envn, body}`|function piq block
+`Appl{func, args}`|apply
+`Eval{qexp, _}`|exec eval
+`Quot{qexp, _}`|quote
+`Same{val1, val2}`|equal
+`Plhd`|placeholder patternで使う
