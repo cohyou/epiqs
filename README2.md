@@ -250,7 +250,7 @@ Grtr, // > greater than
 |# .double-bang
 |\ '% (piq) [
    |>>>> "実行用マクロを定義する"
-   |? (= ^_(!! _)  @piq)
+   |? (= ^_(!! _)  .piq)
       |: ^[ |! (@ ^{ piq.p }) ^{ piq.q } ]
          piq
    ]
