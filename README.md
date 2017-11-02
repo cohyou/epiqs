@@ -181,7 +181,7 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 
 記号|説明|単独
 :-:|-|-
-`=`|equal|色々な比較に使いたい 中置記法も
+`=`|equal|色々な比較に使いたい 中置記法は迷ったがナシ
 `^_(` ~ `)`|pattern|中に`_`がplaceholderで使われるので、<br>それだけでpatternと判別できればこれは不要
 
 
@@ -287,27 +287,27 @@ Grtr, // > greater than
 
 ### epiq一覧
 
-表記|説明
--|-
-`Unit`|`;` unit
-`None`|`N` nil null
-`Tval`|`T` true
-`Fval`|`F` false
-`Int8(i64)`|8byte integer
-`Text(String)`|string
-`Smbl(String)`|symbol
-`Tpiq{_tag, pval, qval}`|tag assignable cons
-`Lpiq{pval, qval}`|linked-list(normal cons cell)
-`Meta{mtag, trgt}`|metadata
-`Tupl{lpiq, rest}`|tuple
-`Enum{data, _}`|enum
-`Envn{prms, optn}`|environment
-`Bind{smbl, valu}`|bind
-`Rslv{smbl, _}`|resolve symbol
-`Accs{trgt, kynm}`|access
-`Lmbd{envn, body}`|function piq block
-`Appl{func, args}`|apply
-`Eval{qexp, _}`|exec eval
-`Quot{qexp, _}`|quote
-`Same{val1, val2}`|equal
-`Plhd`|placeholder patternで使う
+表記|対応する表現|説明
+-|-|-
+`Unit`|`;`|unit
+`None`|`N`|nil null
+`Tval`|`T`|true
+`Fval`|`F`|false
+`Int8(i64)`|`21` `745`|8byte integer
+`Text(String)`|`"wowow"`|string
+`Smbl(String)`|`map` `index`|symbol
+`Tpiq{_tag, pval, qval}`|`(_tag pval qval)`|tag assignable cons
+`Lpiq{pval, qval}`|`(:a b)` '&#x7C;: a b' `': a` `a:b`|linked-list(normal cons cell)
+`Meta{mtag, trgt}`|`^{}` `^[]`|metadata
+`Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
+`Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
+`Envn{prms, optn}`|`(% [i j] ^{})`|environment
+`Bind{smbl, valu}`|`(# one 1)`|bind
+`Rslv{smbl, _}`|`'@ sym` `@func`|resolve symbol
+`Accs{trgt, kynm}`|`(. piq q)` `obj.attr`|access
+`Lmbd{envn, body}`|`'\ .0` `(\ '% [i] @incl!, .i)`|function piq block
+`Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
+`Eval{qexp, _}`|`^{ @go-a-head! }`|exec eval
+`Quot{qexp, _}`|`^[ a b c ]`|quote
+`Same{val1, val2}`|`(= money happiness)`|equal
+`Plhd`|`_`|placeholder patternで使う
