@@ -12,6 +12,8 @@
 - piqで構成された式を、Q式(Q-Expression)と呼ぶ。
 
 ### 図解epiq
+`(tag p q)`が基本の形。
+
 ```
 +-----+-----+-----+
 | tag |  P  |  Q  |
@@ -25,33 +27,76 @@
 ```
 grammar epiqs;
 
-efile: form* EOF;
+efile: epiq* EOF;
 
-form: not_cons_form | pair | cons;
+elist: '[' epiqs ']';
 
-not_cons_form: literal | elist | vector | etuple;
+etuple: '{' epiqs '}';
 
-forms: (form WS+)*;
+epiqs: (epiq WS+)*;
 
-cons: ('|' annotation WS+ form WS+ form) | ('\'' annotation WS+ form);
+epiq : ('|' tag WS+ epiq WS+ epiq)
+     | ('\'' tag WS+ epiq)
+     | ('^' tag? WS+ epiq WS+ epiq)
+     | '^{' epiq '}'
+     | '^[' epiq ']'
 
-pair: not_cons_form ':' (not_cons_form | pair);
+tag : | ':'
+      | '&' | '~'
+      | '%' | '#' | '@' | '.'
+      | '\' | '!' | '$' | '?'
+      | '='
+      | '/'
+      | '+' | '-' | '*' | '/' | '`' | '<' | '>'
 
-annotation: '!' | '$' | '?' | '%' | '*' | '\\';
+literal : INT | STRING | NAME;
 
-elist: '(' forms ')';
-
-vector: '[' forms ']';
-
-etuple: '{' forms '}';
-
-literal: INT | STRING;
-
-INT: ('0'|[1-9][0-9]*);
+INT : ('0'|[1-9][0-9]*);
 STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
+NAME : [a-z|A-z]
+     ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'
+     | '&' | '~'
+     | '%' | '#' | '$' | '='
+     | '+' | '-' | '*' | '/'
+     | '<' | '>'])+
 
 WS : [ \n\r\t] ;
 ```
+
+#### antlr g4 注記
+
+- ひとまず中置記法だけを書いている
+- `{` ~ `}`と`[` ~ `]`関連に関しては、省略形だけを書いている
+- `,`はまだ組み込んでいない
+
+
+#### シンボル内に使える記号
+
+- 1文字リテラルとディスパッチャに含まれる記号は使えない
+- `:`は中置記法があるのでだめ
+- リストリテラルで使う`&` `~`はOK
+- 環境操作タグのうち、`%`と`#`は使える。<br>
+  `@`もいいが前置では使えるので紛らわしいのでやめる<br>
+  `.`は完全に中置記法で使う想定なのでだめ
+- `!`は後置で使うのでだめ、`?`も三項演算子やるかもなので置いておく
+- `$`と`=`はOK
+- 余っている文字のうち、backquote 以外の`+` `-` `*` `/` `<` `>`は許可<br>
+  `<` `>`は少し怖いがやってみる
+- backquoteとbackslashはいけるはずだが怖いのでやめる
+
+
+### 記号まとめ
+
+種類|数|具体例
+-|:-:|-
+literal|1|`;`
+parens|4|`[` `]` `{` `}`
+dispatcher|5|`(` `)` `'` `^` `,`
+tag|13|`:` `&` `~` `%` `#` `@` `.` `\` `!` `$` `?` `=` `/`
+matching|2|`=` `_`
+unused|7|`+` `-` `*` `/` `<` `>` backquote
+合計|32|
+
 
 ### 各種キーワード
 
@@ -60,73 +105,107 @@ WS : [ \n\r\t] ;
 正規表現|説明
 :-:|-
 数値|([1-9][0-9]*)&#x7C;0かな。
-シンボル|[a-z&#x7C;A-z][a-z&#x7C;A-z&#x7C;0-9]+ですね。
-文字列|`"` ... `"`
+シンボル|[a-z&#x7C;A-z][a-z&#x7C;A-z&#x7C;0-9&#x7C;+-*\/]+ですね。
+文字列|`"` ~ `"`
 de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみなす
 
 
-#### 確定(1文字目=tag dispatcher or literal)
+#### リテラル(1文字)
 
 記号|説明
 :-:|-
-`(` ~ `)`|piq(基本形)
-&#x7C;|piq(p,qを指定)
-`'`|piq(pのみを指定)
 `;`|Unit
 `N`|nil
 `T`|true
 `F`|false
 
 
-#### 要仕様検討(1文字目=tag dispatcher)
+#### ディスパッチャ
 
 記号|説明
 :-:|-
-`,`|埋め込み
+`(` ~ `)`|piq(基本形)
+&#x7C;|piq(p,qを指定)
+`'`|piq(pのみを指定)
+`^`|metadata 基本的には必ず2つ引数を取る
+`,`|埋め込み 後に続くlistの[]を省略して書ける
 
 
-#### 確定(2文字目=tag)
+#### タグ(基本)
 
 記号|説明|単独
 :-:|-|-
 `:`|cons|中置記法でcons
-`\`|block|ナシ
-`%`|environment|ナシ
-`!`|apply|中置記法でapply（ただしpとの間にWSは許されない
-`$`|symbol|ナシ
-`@`|deref|前置記法でderef
-`?`|condition|ナシ(中置記法やってもいいけどややこしい)
-`.`|access|中置記法でもいける（ただしpやqとの間にWSは許されない
-`#`|bind|ナシ
-`=`|equal|中置記法でもいける
 
 
-#### 要仕様検討(2文字目=tag)
+#### タグ(リストリテラル)
 
 記号|説明|単独
 :-:|-|-
 `&`|tuple|ナシ
+`{` ~ `}`|省略形 現在は`^&{` ~ `}`と同じ|
+`^&{` ~ `}`|tuple|
+`^~{` ~ `}`|enum|
+`^#{` ~ `}`|hash|
 `~`|enum|ナシ
-`^`|metadata|ナシ
-`/`|module?|ナシ
+`[` ~ `]`|省略形 現在は`^:[` ~ `]`と同じ|
+`^:[` ~ `]`|list|
+`^-[` ~ `]`|vector|
 
 
-#### 確定(2文字でのidiom)
+#### タグ(環境)
+
+記号|説明|単独
+:-:|-|-
+`%`|environment|ナシ
+`#`|bind|ナシ
+`@`|resolve|前置記法でresolve
+`.`|access|中置記法でもいける（間にWSは許されない
+
+
+#### タグ(実行)
+
+記号|説明|単独
+:-:|-|-
+`\`|block|ナシ
+`!`|apply|中置記法でapply<br>（pとの間にWSは許されない
+`$`|symbol|ナシ
+`?`|condition|ナシ(中置記法は微妙)
+`^{` ~ `}`|現在は`^!{` ~ `}`と同じ|ナシ
+`^[` ~ `]`|現在は`^.[` ~ `]`と同じ|ナシ
+`^!{` ~ `}`|中身を深さ優先で再帰的に評価|ナシ
+`^.[` ~ `]`|quasiquote 実行を止める|ナシ
+
+
+#### タグ(マッチング)
+
+記号|説明|単独
+:-:|-|-
+`=`|equal|色々な比較に使いたい 中置記法も
+`^_(` ~ `)`|pattern|中に`_`がplaceholderで使われるので、<br>それだけでpatternと判別できればこれは不要
+
+
+#### タグ(要仕様検討)
+
+記号|説明|単独
+:-:|-|-
+`/`|path?|ファイルパス関連で使いたい
+
+
+#### タグ(複数文字、確定)
 
 記号|説明
 :-:|-
-`//`|comment(単一行)
-'/*' ... '*/'|comment(複数行)
-`.{` ~ `}`|実行部分
-`.[` ~ `]`|quote
+&#x7C;&#x7C; ~ &#x7C;&#x7C;|comment(複数行)
 `!?`|exception
 
 
-#### 要仕様検討(2文字でのidiom)
+#### タグ(複数文字、要仕様検討)
 
 記号|説明
 :-:|-
-`!#`|yield （不要かも
+`''`|comment(単一行)
+`!.`|yield （不要かも
 `!<`|dispatch
 
 
@@ -144,14 +223,6 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 - モジュールの具体的な仕様
 
 
-#### tagとして使いそうな記号
-
-```
-Crrt, // ^ carret
-Comm, // , comma
-```
-
-
 #### tagとして余っている記号
 
 ```
@@ -163,30 +234,39 @@ Slsh, // / slash
 Bkqt, // ` back quote
 Less, // < less than
 Grtr, // > greater than
-Udsc, // _ underscore
 ```
 
 
 ### マクロ
 
-特定のキーワードに反応するのではなく、AST全体を見回して、クエリで書き換える部分を指定する。
-この方が、まあ書き換えフィルタっぽい。両方あってもいい気もするけど。
-それに、書き換えるタイミングとか、重ねがけ、も指定できる。
-その代わり、本気でやるならXPath的なやつも必要になるよね。
+マクロは普通の関数と同様に作成する。
+- 実行には`>>>>`タグか`^{` ~ `}`(これは`^!{` ~ `}`の略記)を使う。
+- quasiquoteには`^[` ~ `]`(これは`^.[` ~ `]`の略記)を使う。
 
-まあ、まずは、各ASTのパース時に毎回走る関数を設定する、ということで。
-それって特殊なイベントハンドラでは？
-
-`|!! symbol [args]`というタグがきたら、`|! @symbol [args]`に変更する
+例として、`|!! symbol [args]`というタグがきたら、<br>
+`|! @symbol [args]`に変更する関数を書いてみる。
 
 ```
-|\ '% (ast) [
+|# .double-bang
+|\ '% (piq) [
    |>>>> "実行用マクロを定義する"
-   |? (= @ast.^! !!)
-      |: .[ |! (@ .{ ast.p }) .{ ast.q } ]
-         ast
+   |? (= ^_(!! _)  .piq)
+      |: ^[ |! (@ ^{ piq.p }) ^{ piq.q } ]
+         piq
    ]
 ```
+
+次に、このマクロを適用したいコードブロックの環境内で、それらを紐付ける。<br>
+あまりお得になっていない気がするが、まあしかたない。
+```
+|\ |% [a b], macro_function:@double-bang
+   [ (!! plus [(!! plus [3 4]) (!! plus [5 6])]) ]
+```
+
+ちなみに、マクロ定義時に、引数で与えられたpiqから、<br>
+.pや.qを使えば、子を辿ることは簡単だが、親や兄弟は辿れない。<br>
+そのための何か文法は欲しい気はするが、親に影響を与えられてもいいんだろうか。
+
 
 ### コード例
 
@@ -197,7 +277,7 @@ Udsc, // _ underscore
     |# s @readline! f
     |# i @int! @s.strip!
   |:
-    |: [ OSError   : (\ '.> '.>s ["OS error: {0}" _1])
+    |: [ OSError   : (\ '.> '.>s ["OS error: {0}" .1])
          ValueError: (\ '.> "Could not convert data to an integer.")
          T         : |\ ['.> ["Unexpected error:" @sys.exc_info!.0] !?!] ]
        '.> [arg "has" @f.readlines!.size "lines"]
@@ -212,7 +292,7 @@ Udsc, // _ underscore
 - `Text(String)`
 
 - `Lpiq { p: usize, q: usize }` // (linked) list piq
-- // Vpiq { p: usize, q: usize }, // vector piq
+- `Vpiq { p: usize, q: usize }`, // vector piq
 - `Fpiq { p: usize, q: usize }` // function piq
 - `Aexp { a: usize, e: usize }` // A-Expression
 - `Prmt(usize)` // anonymous parameter
