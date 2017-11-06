@@ -12,11 +12,11 @@
 - piqで構成された式を、Q式(Q-Expression)と呼ぶ。
 
 ### 図解epiq
-`(tag p q)`が基本の形。
+`(Tag p q)`が基本の形。
 
 ```
 +-----+-----+-----+
-| tag |  P  |  Q  |
+| Tag |  p  |  q  |
 +-----+-----+-----+
 ```
 
@@ -41,20 +41,25 @@ epiq : ('|' tag WS+ epiq WS+ epiq)
      | '^{' epiq '}'
      | '^[' epiq ']'
 
-tag : | ':'
-      | '&' | '~'
-      | '%' | '#' | '@' | '.'
-      | '\' | '!' | '$' | '?'
-      | '='
-      | '/'
-      | '+' | '-' | '*' | '/' | '`' | '<' | '>'
+tag : TAGHEAD ~(WS*)
+
 
 literal : INT | STRING | NAME;
 
+TAGHEAD :
+        | ':'
+        | '&' | '~'
+        | '%' | '#' | '@' | '.'
+        | '\' | '!' | '$' | '?'
+        | '='
+        | '/'
+        | '+' | '-' | '*' | '/' | '`' | '<' | '>'
+        | [A-Z]
+
 INT : ('0'|[1-9][0-9]*);
 STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
-NAME : [a-z|A-z]
-     ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'
+NAME : [a-z]
+     ('a'..'z' | 'A'..'Z' | '0'..'9'
      | '&' | '~'
      | '%' | '#' | '$' | '='
      | '+' | '-' | '*' | '/'
@@ -299,7 +304,6 @@ Grtr, // > greater than
 `Tpiq{_tag, pval, qval}`|`(_tag pval qval)`|tag assignable cons
 `Lpiq{pval, qval}`|`(:a b)` '&#x7C;: a b' `': a` `a:b`|linked-list(normal cons cell)
 `Meta{mtag, trgt}`|`^{}` `^[]`|metadata
-`Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
 `Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
 `Envn{prms, optn}`|`(% [i j] ^{})`|environment
 `Bind{smbl, valu}`|`(# one 1)`|bind
@@ -311,3 +315,10 @@ Grtr, // > greater than
 `Quot{qexp, _}`|`^[ a b c ]`|quote
 `Same{val1, val2}`|`(= money happiness)`|equal
 `Plhd`|`_`|placeholder patternで使う
+
+
+#### 廃止（tupleはmetadataとしてのみ表現）
+
+表記|対応する表現|説明
+-|-|-
+`Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
