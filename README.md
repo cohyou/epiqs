@@ -48,11 +48,11 @@ literal : INT | STRING | NAME;
 
 TAGHEAD :
         | ':'
-        | '&' | '~'
         | '%' | '#' | '@' | '.'
         | '\' | '!' | '$' | '?'
         | '='
         | '/'
+        | '&' | '~'
         | '+' | '-' | '*' | '/' | '`' | '<' | '>'
         | [A-Z]
 
@@ -79,7 +79,6 @@ WS : [ \n\r\t] ;
 
 - 1文字リテラルとディスパッチャに含まれる記号は使えない
 - `:`は中置記法があるのでだめ
-- リストリテラルで使う`&` `~`はOK
 - 環境操作タグのうち、`%`と`#`は使える。<br>
   `@`もいいが前置では使えるので紛らわしいのでやめる<br>
   `.`は完全に中置記法で使う想定なのでだめ
@@ -97,9 +96,9 @@ WS : [ \n\r\t] ;
 literal|1|`;`
 parens|4|`[` `]` `{` `}`
 dispatcher|5|`(` `)` `'` `^` `,`
-tag|13|`:` `&` `~` `%` `#` `@` `.` `\` `!` `$` `?` `=` `/`
+tag|13|`:` `%` `#` `@` `.` `\` `!` `$` `?` `=` `/`
 matching|2|`=` `_`
-unused|7|`+` `-` `*` `/` `<` `>` backquote
+unused|7|`&` `~` `+` `-` `*` `/` `<` `>` backquote
 合計|32|
 
 
@@ -147,12 +146,10 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 
 記号|説明|単独
 :-:|-|-
-`&`|tuple|ナシ
 `{` ~ `}`|省略形 現在は`^&{` ~ `}`と同じ|
-`^&{` ~ `}`|tuple|
-`^~{` ~ `}`|enum|
+`^*{` ~ `}`|tuple|
+`^+{` ~ `}`|enum|
 `^#{` ~ `}`|hash|
-`~`|enum|ナシ
 `[` ~ `]`|省略形 現在は`^:[` ~ `]`と同じ|
 `^:[` ~ `]`|list|
 `^-[` ~ `]`|vector|
@@ -304,7 +301,6 @@ Grtr, // > greater than
 `Tpiq{_tag, pval, qval}`|`(_tag pval qval)`|tag assignable cons
 `Lpiq{pval, qval}`|`(:a b)` '&#x7C;: a b' `': a` `a:b`|linked-list(normal cons cell)
 `Meta{mtag, trgt}`|`^{}` `^[]`|metadata
-`Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
 `Envn{prms, optn}`|`(% [i j] ^{})`|environment
 `Bind{smbl, valu}`|`(# one 1)`|bind
 `Rslv{smbl, _}`|`'@ sym` `@func`|resolve symbol
@@ -317,8 +313,9 @@ Grtr, // > greater than
 `Plhd`|`_`|placeholder patternで使う
 
 
-#### 廃止（tupleはmetadataとしてのみ表現）
+#### 廃止（tupleとenumはmetadataとしてのみ表現）
 
 表記|対応する表現|説明
 -|-|-
 `Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
+`Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
