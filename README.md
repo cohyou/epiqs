@@ -41,20 +41,25 @@ epiq : ('|' tag WS+ epiq WS+ epiq)
      | '^{' epiq '}'
      | '^[' epiq ']'
 
-tag : | ':'
-      | '&' | '~'
-      | '%' | '#' | '@' | '.'
-      | '\' | '!' | '$' | '?'
-      | '='
-      | '/'
-      | '+' | '-' | '*' | '/' | '`' | '<' | '>'
+tag : TAGHEAD ~(WS*)
+
 
 literal : INT | STRING | NAME;
 
+TAGHEAD :
+        | ':'
+        | '%' | '#' | '@' | '.'
+        | '\' | '!' | '$' | '?'
+        | '='
+        | '/'
+        | '&' | '~'
+        | '+' | '-' | '*' | '/' | '`' | '<' | '>'
+        | [A-Z]
+
 INT : ('0'|[1-9][0-9]*);
 STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
-NAME : [a-z|A-z]
-     ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'
+NAME : [a-z]
+     ('a'..'z' | 'A'..'Z' | '0'..'9'
      | '&' | '~'
      | '%' | '#' | '$' | '='
      | '+' | '-' | '*' | '/'
@@ -74,13 +79,12 @@ WS : [ \n\r\t] ;
 
 - 1文字リテラルとディスパッチャに含まれる記号は使えない
 - `:`は中置記法があるのでだめ
-- リストリテラルで使う`&` `~`はOK
 - 環境操作タグのうち、`%`と`#`は使える。<br>
   `@`もいいが前置では使えるので紛らわしいのでやめる<br>
   `.`は完全に中置記法で使う想定なのでだめ
 - `!`は後置で使うのでだめ、`?`も三項演算子やるかもなので置いておく
 - `$`と`=`はOK
-- 余っている文字のうち、backquote 以外の`+` `-` `*` `/` `<` `>`は許可<br>
+- 余っている文字のうち、backquote 以外の`&` `~` `+` `-` `*` `/` `<` `>`は許可<br>
   `<` `>`は少し怖いがやってみる
 - backquoteとbackslashはいけるはずだが怖いのでやめる
 
@@ -92,9 +96,9 @@ WS : [ \n\r\t] ;
 literal|1|`;`
 parens|4|`[` `]` `{` `}`
 dispatcher|5|`(` `)` `'` `^` `,`
-tag|13|`:` `&` `~` `%` `#` `@` `.` `\` `!` `$` `?` `=` `/`
+tag|13|`:` `%` `#` `@` `.` `\` `!` `$` `?` `=` `/`
 matching|2|`=` `_`
-unused|7|`+` `-` `*` `/` `<` `>` backquote
+unused|7|`&` `~` `+` `-` `*` `/` `<` `>` backquote
 合計|32|
 
 
@@ -142,12 +146,10 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 
 記号|説明|単独
 :-:|-|-
-`&`|tuple|ナシ
-`{` ~ `}`|省略形 現在は`^&{` ~ `}`と同じ|
-`^&{` ~ `}`|tuple|
-`^~{` ~ `}`|enum|
+`{` ~ `}`|省略形 現在は`^*{` ~ `}`と同じ|
+`^*{` ~ `}`|tuple|
+`^+{` ~ `}`|enum|
 `^#{` ~ `}`|hash|
-`~`|enum|ナシ
 `[` ~ `]`|省略形 現在は`^:[` ~ `]`と同じ|
 `^:[` ~ `]`|list|
 `^-[` ~ `]`|vector|
@@ -354,8 +356,6 @@ Grtr, // > greater than
 `Tpiq{_tag, pval, qval}`|`(_tag pval qval)`|tag assignable cons
 `Lpiq{pval, qval}`|`(:a b)` '&#x7C;: a b' `': a` `a:b`|linked-list(normal cons cell)
 `Meta{mtag, trgt}`|`^{}` `^[]`|metadata
-`Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
-`Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
 `Envn{prms, optn}`|`(% [i j] ^{})`|environment
 `Bind{smbl, valu}`|`(# one 1)`|bind
 `Rslv{smbl, _}`|`'@ sym` `@func`|resolve symbol
@@ -366,3 +366,11 @@ Grtr, // > greater than
 `Quot{qexp, _}`|`^[ a b c ]`|quote
 `Same{val1, val2}`|`(= money happiness)`|equal
 `Plhd`|`_`|placeholder patternで使う
+
+
+#### 廃止（tupleとenumはmetadataとしてのみ表現）
+
+表記|対応する表現|説明
+-|-|-
+`Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
+`Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
