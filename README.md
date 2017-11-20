@@ -12,11 +12,11 @@
 - piqで構成された式を、Q式(Q-Expression)と呼ぶ。
 
 ### 図解epiq
-`(tag p q)`が基本の形。
-
+`(Tag p q)`が基本の形。
+タグは大文字または記号から始め、シンボルは小文字から始める。
 ```
 +-----+-----+-----+
-| tag |  P  |  Q  |
+| Tag |  P  |  Q  |
 +-----+-----+-----+
 ```
 
@@ -254,6 +254,13 @@ Grtr, // > greater than
       |: ^[ |! (@ ^{ piq.p }) ^{ piq.q } ]
          piq
    ]
+
+|Defn |Accs Unit double-bang
+|Lmbd 'Envn 'Cons piq 'Cons
+      |>>>> "実行用マクロを定義する"
+      |Ifvl (Eql_ (!! _) |Accs Unit piq)
+                  |Cons 'Quot |Appl (Rslv |Eval |Accs p piq) (Eval |Accs q piq)
+            piq
 ```
 
 次に、このマクロを適用したいコードブロックの環境内で、それらを紐付ける。<br>
@@ -284,7 +291,55 @@ Grtr, // > greater than
     @f.close!
 ```
 
+```
+'Html
+  'Head
+    'Title "onclick test"
+    'Meta, http-equiv:"Content-Type", content:"text/html", charset:"utf-8"
+    'Meta, name:"viewport", content:{width:divice-width initial-scale:1.0 minimum-scale:1.0 maximum-scale:1.0 user-scalable:no}
+    ^!~ {
+      (# leftpx 0)
+      |# touch |\ '% ; [
+        |# leftpx (+ .leftpx 10)
+        (# (Selector#migi).style.left "{.leftpx}px")
+      ]
+      |# reset |\  '% ; [
+        (# leftpx 0)
+        (# (Selector#migi).style.left "{.leftpx}px")
+      ]
+    }
+    'Style [
+      ".yaji":{font-size:"20px"}
+      ".btn":{font-size:"20px" width:"200px" height:"50px" text-align:"center" margin-top:"20px"}
+    ]
+  )
+  |Body, bgcolor:"#FFFFFF", text:"#000000" [
+    |Div#migi.yaji, style:{position:absolute left:'0px'} "■"
+    'Div, style:{clear:both}
+    |Div, style:{position:absolute top:'50px'} [
+      |Button.btn, onclick:(! @touch) "onclick"
+      |Button.btn, ontouchstart:(! @touch) "ontouchstart"
+      |Button.btn, ontouchstart:(! @reset) "reset"
+    ]
+```
 
+```
+(FoldTagR +, 0, [1 2 3 4 5 6])
+(FoldTagR :, ;, [1 2 3 4 5 6])
+
+|# touch
+   |\ '% ;
+   [  |# leftpx (+ .leftpx 10)
+      (# (Selector#migi).style.left "{.leftpx}px")]
+
+|Defn touch:[],
+  |# leftpx (+ .leftpx 10),
+  (# (Selector#migi).style.left "{.leftpx}px")
+
+
+|Defn sum:[a b], (+ .a .b)
+|-> (+ .0 .1)
+```
 ### epiq一覧
 
 表記|対応する表現|説明
