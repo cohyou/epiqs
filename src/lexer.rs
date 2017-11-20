@@ -1,145 +1,15 @@
-use std::fmt;
-use std::error::Error;
-/*
-use std::iter::Peekable;
-use std::io::Bytes;
-use std::io::BufReader;
-use std::fs::File;
-use std::iter::Map;
-use std::io::Read;
-use std::fmt::Debug;
-use std::cell::RefCell;
-*/
-
-#[derive(Clone, PartialEq)]
-pub enum Tokn {
-    Nmbr(String), // Number
-    Chvc(String), // Charactor Vector 単なる文字の並び
-    Usnm(String), // under score and number (e.g. _0 _34)
-
-    // asciiのうち、記号は32(スペースを除く、また7Fも対象外)
-
-    Dbqt, // " double quotation
-
-    Lbkt, // [ left bracket
-    Rbkt, // ] right bracket
-    Lprn, // ( left parentheses
-    Rprn, // ) right parentheses
-    Lcrl, // { left curly brace
-    Rcrl, // } right curly brace
-
-    Coln, // : colon
-
-    Pipe, // | vertical bar
-    Crrt, // ^ carret
-    Dllr, // $ dollar
-    Smcl, // ; semi colon
-    Bang, // ! exclamation
-
-    // 残りの記号も列挙
-    Plus, // + plus
-    Star, // * asterisk
-    Bksl, // \ back slash
-    Stop, // . full stop (period)
-
-    Pcnt, // % percent
-    Qstn, // ? question mark
-    Amps, // & ampersand
-    Atsm, // @ at symbol
-    Hash, // # hash
-
-    Comm, // , comma
-    /*
-    Slsh, // / slash
-
-    Sgqt, // ' single quotation
-
-    Hphn, // - hyphen-minus
-    Less, // < less than
-    Grtr, // > greater than
-    Eqls, // = equal sign
-
-    Udsc, // _ underscore Usnmとは別に一度定義しておく
-    Tild, // ~ tilde
-    Bkqt, // ` back quote
-    */
-}
-
-impl fmt::Debug for Tokn {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
-            &Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
-            &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
-
-            &Tokn::Dbqt => write!(f, "Dbqt"),
-
-            &Tokn::Lbkt => write!(f, "Lbkt"),
-            &Tokn::Rbkt => write!(f, "Rbkt"),
-            &Tokn::Lprn => write!(f, "Lprn"),
-            &Tokn::Rprn => write!(f, "Rprn"),
-            &Tokn::Lcrl => write!(f, "Lcrl"),
-            &Tokn::Rcrl => write!(f, "Rcrl"),
-
-            &Tokn::Coln => write!(f, "Coln"),
-
-            &Tokn::Pipe => write!(f, "Pipe"),
-            &Tokn::Crrt => write!(f, "Crrt"),
-            &Tokn::Dllr => write!(f, "Dllr"),
-            &Tokn::Smcl => write!(f, "Smcl"),
-            &Tokn::Bang => write!(f, "Bang"),
-
-            // 扱いが不明瞭だがひとまず足しておく
-            &Tokn::Plus => write!(f, "Plus"),
-            &Tokn::Star => write!(f, "Star"),
-            &Tokn::Stop => write!(f, "Stop"),
-            &Tokn::Bksl => write!(f, "Bksl"),
-
-            &Tokn::Pcnt => write!(f, "Pcnt"),
-            &Tokn::Qstn => write!(f, "Qstn"),
-            &Tokn::Amps => write!(f, "Amps"),
-            &Tokn::Atsm => write!(f, "Atsm"),
-            &Tokn::Hash => write!(f, "Hash"),
-
-            &Tokn::Comm => write!(f, "Comm"),
-
-            _ => write!(f, "????"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum LexerError {
-    // Unknown,
-    First,
-    InvalidText(String),
-    InvalidNumber(String),
-    InvalidName(String),
-    InvalidTag(String),
-    EOF,
-}
-
-impl fmt::Display for LexerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "No matching cities with a population were found.")
-    }
-}
-
-impl Error for LexerError {
-    fn description(&self) -> &str {
-        "not found"
-    }
-}
+use super::token::Tokn;
+use super::lexer_error::LexerError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerState {
     Normal,
-    ZeroNumber,
-    InnerNumber,
-    InnerText,
-    FinishText,
+    // ZeroNumber,
+    // InnerNumber,
+    // InnerText,
+    // FinishText,
     InnerName,
-    AfterUnderscore,
+    // AfterUnderscore,
     AfterDot,
     InnerComment,
 }
@@ -184,57 +54,61 @@ impl<'a> Lexer<'a> {
 
         match self.state {
             LexerState::Normal => {
-                match c as char {
+                match c {
                     _ if self.eof => self.finish_error(LexerError::EOF), // 普通にEOF
 
-                    ';' => self.delimit(c, Tokn::Smcl),
+                    b'|' => self.delimit(c, Tokn::Pipe),
 
-                    '(' => self.delimit(c, Tokn::Lprn),
-                    ')' => self.delimit(c, Tokn::Rprn),
+                    // b';' => self.delimit(c, Tokn::Smcl),
 
-                    '|' => self.delimit(c, Tokn::Pipe),
+                    // b'(' => self.delimit(c, Tokn::Lprn),
+                    // b')' => self.delimit(c, Tokn::Rprn),
 
-                    '.' => {
+                    /*
+                    b'.' => {
                         self.delimit(c, Tokn::Stop);
                         self.state = LexerState::AfterDot;
                     },
+                    */
 
-                    '[' => self.delimit(c, Tokn::Lbkt),
-                    ']' => self.delimit(c, Tokn::Rbkt),
-                    '{' => self.delimit(c, Tokn::Lcrl),
-                    '}' => self.delimit(c, Tokn::Rcrl),
+                    // b'[' => self.delimit(c, Tokn::Lbkt),
+                    // b']' => self.delimit(c, Tokn::Rbkt),
+                    // b'{' => self.delimit(c, Tokn::Lcrl),
+                    // b'}' => self.delimit(c, Tokn::Rcrl),
 
-                    ':' => self.delimit(c, Tokn::Coln),
+                    // b':' => self.delimit(c, Tokn::Coln),
 
-                    '_' => self.advance(c, LexerState::AfterUnderscore),
+                    // b'_' => self.advance(c, LexerState::AfterUnderscore),
 
-                    '"' => {
+                    /*
+                    b'"' => {
                         self.delimit(c, Tokn::Dbqt);
                         self.state = LexerState::InnerText;
                     },
+                    */
 
-                    '^' => self.delimit(c, Tokn::Crrt),
-                    '$' => self.delimit(c, Tokn::Dllr),
-                    '!' => self.delimit(c, Tokn::Bang),
+                    // b'^' => self.delimit(c, Tokn::Crrt),
+                    // b'$' => self.delimit(c, Tokn::Dllr),
+                    // b'!' => self.delimit(c, Tokn::Bang),
 
-                    '@' => self.delimit(c, Tokn::Atsm),
+                    // b'@' => self.delimit(c, Tokn::Atsm),
 
-                    ',' => self.delimit(c, Tokn::Comm),
+                    // b',' => self.delimit(c, Tokn::Comm),
 
-                    // 以下、本来は2文字目に来るものばかり
-                    '#' => self.delimit(c, Tokn::Hash),
-                    '\\' => self.delimit(c, Tokn::Bksl),
-                    '+' => self.delimit(c, Tokn::Plus),
-                    '%' => self.delimit(c, Tokn::Pcnt),
-                    '?' => self.delimit(c, Tokn::Qstn),
-                    '&' => self.delimit(c, Tokn::Amps),
+                    // // 以下、本来は2文字目に来るものばかり
+                    // b'#' => self.delimit(c, Tokn::Hash),
+                    // b'\\' => self.delimit(c, Tokn::Bksl),
+                    // b'+' => self.delimit(c, Tokn::Plus),
+                    // b'%' => self.delimit(c, Tokn::Pcnt),
+                    // b'?' => self.delimit(c, Tokn::Qstn),
+                    // b'&' => self.delimit(c, Tokn::Amps),
 
                     // 現在テストの中には、乗算記号としてのみ出現している
-                    '*' => self.delimit(c, Tokn::Star),
+                    // b'*' => self.delimit(c, Tokn::Star),
 
-                    '0' => self.advance(c, LexerState::ZeroNumber),
+                    // b'0' => self.advance(c, LexerState::ZeroNumber),
 
-                    _ if self.is_digit(c) => self.advance(c, LexerState::InnerNumber),
+                    // _ if self.is_digit(c) => self.advance(c, LexerState::InnerNumber),
 
                     _ if self.is_alphabetic(c) => self.advance(c, LexerState::InnerName), // 独自のalphabet判定メソッドを使っているので注意
 
@@ -244,11 +118,12 @@ impl<'a> Lexer<'a> {
                 }
             },
 
+            /*
             LexerState::ZeroNumber => {
-                match c as char {
+                match c {
                     _ if self.eof => self.finish_number(), // 0でファイルが終わってもOK
 
-                    '[' | ']' => self.finish_number(),
+                    b'[' | b']' => self.finish_number(),
 
                     _ if self.is_whitespace(c) => self.finish_number(),
 
@@ -259,7 +134,9 @@ impl<'a> Lexer<'a> {
                     },
                 }
             },
+            */
 
+            /*
             LexerState::InnerNumber => {
                 // println!("LexerState::InnerNumber");
                 match self.lex_numeric(c) {
@@ -272,10 +149,12 @@ impl<'a> Lexer<'a> {
                     }
                 }
             },
+            */
 
+            /*
             LexerState::InnerText => {
-                match c as char {
-                    '"' => self.finish_text(),
+                match c {
+                    b'"' => self.finish_text(),
 
                     _ if self.eof => {
                         // 文字列の途中でファイルが終わってしまった
@@ -287,14 +166,17 @@ impl<'a> Lexer<'a> {
                     _ => self.advance(c, LexerState::InnerText),
                 }
             },
+            */
 
+            /*
             LexerState::FinishText => {
                 // println!("LexerState::FinishText");
                 self.finish(Ok(Tokn::Dbqt), LexerState::Normal);
             },
+            */
 
             LexerState::InnerName => {
-                match c as char {
+                match c {
                     // 途中で終わってもそこまでのNameとみなす
                     _ if self.eof => {
                         self.finish_charactor_vector();
@@ -302,7 +184,7 @@ impl<'a> Lexer<'a> {
 
                     // 区切り文字ならここでNameを終わらせる必要がある
                     // ただし、全ての区切り文字がここで判断されるわけではない
-                    '[' | ']' | '(' | ')' | '{' | '}' | ':' | ',' => self.finish_charactor_vector(),
+                    b'[' | b']' | b'(' | b')' | b'{' | b'}' | b':' | b',' => self.finish_charactor_vector(),
 
                     _ if self.is_whitespace(c) => self.finish_charactor_vector(),
 
@@ -319,6 +201,7 @@ impl<'a> Lexer<'a> {
                 }
             },
 
+            /*
             LexerState::AfterUnderscore => {
                 match self.lex_numeric(c) {
                     Some("next") => self.advance(c, LexerState::AfterUnderscore),
@@ -331,25 +214,29 @@ impl<'a> Lexer<'a> {
                     },
                 }
             },
+            */
 
             LexerState::AfterDot => {
-                match c as char {
+                match c {
                     // ..はコメント開始 改行まで
-                    '.' => {
+                    /*
+                    b'.' => {
                         self.delimit(c, Tokn::Stop);
                         self.state = LexerState::InnerComment;
                     },
+                    */
 
                     // `:` cons
-                    '%' => self.delimit(c, Tokn::Pcnt),
-                    '?' => self.delimit(c, Tokn::Qstn),
-                    '&' => self.delimit(c, Tokn::Amps),
-                    '@' => self.delimit(c, Tokn::Atsm),
-                    '#' => self.delimit(c, Tokn::Hash),
-                    '$' => self.delimit(c, Tokn::Dllr),
-                    '!' => self.delimit(c, Tokn::Bang),
-                    '+' => self.delimit(c, Tokn::Plus),
-                    '\\' => self.delimit(c, Tokn::Bksl),
+                    // b'%' => self.delimit(c, Tokn::Pcnt),
+                    // b'?' => self.delimit(c, Tokn::Qstn),
+                    // b'&' => self.delimit(c, Tokn::Amps),
+                    // b'@' => self.delimit(c, Tokn::Atsm),
+                    // b'#' => self.delimit(c, Tokn::Hash),
+                    // b'$' => self.delimit(c, Tokn::Dllr),
+                    // b'!' => self.delimit(c, Tokn::Bang),
+                    // b'+' => self.delimit(c, Tokn::Plus),
+                    // b'\\' => self.delimit(c, Tokn::Bksl),
+
                     // `%+` define
                     // '^' => self.delimit(c, Tokn::Crrt), metadataは未実装
 
@@ -363,8 +250,8 @@ impl<'a> Lexer<'a> {
             },
 
             LexerState::InnerComment => {
-                match c as char {
-                    '\n' => {
+                match c {
+                    b'\n' => {
                         self.finish_charactor_vector();
                     }
                     _ if self.eof => self.finish_charactor_vector(),
@@ -402,22 +289,24 @@ impl<'a> Lexer<'a> {
         self.finish(Ok(Tokn::Chvc(s)), LexerState::Normal);
     }
 
+    /*
     fn finish_text(&mut self) {
         self.consume_char();
         let s = self.get_token_string();
         self.finish(Ok(Tokn::Chvc(s)), LexerState::FinishText);
     }
+    */
 
+    /*
     fn finish_number(&mut self) {
         let s = self.get_token_string();
         self.finish(Ok(Tokn::Nmbr(s)), LexerState::Normal);
     }
-
     fn finish_underscore_number(&mut self) {
         let s = self.get_token_string().replace("_", "");
         self.finish(Ok(Tokn::Usnm(s)), LexerState::Normal);
     }
-
+    */
     fn finish_error(&mut self, e: LexerError) {
         // let s = self.token_bytes.clone();
         self.finish(Err(e), LexerState::Normal);
@@ -461,14 +350,14 @@ impl<'a> Lexer<'a> {
     }
 
     fn is_whitespace(&self, c: u8) -> bool {
-        c == ' ' as u8 || c == '\t' as u8 || c == '\n' as u8 || c == '\t' as u8
+        c == b' ' || c == b'\t' || c == b'\n' || c == b'\t'
     }
 
     fn is_digit(&self, c: u8) -> bool {
-        c >= '0' as u8 && c <= '9' as u8
+        c >= b'0' && c <= b'9'
     }
 
     fn is_alphabetic(&self, c: u8) -> bool {
-        (c >= 'A' as u8 && c <= 'Z' as u8) || (c >= 'a' as u8 && c <= 'z' as u8)
+        (c >= b'A' && c <= b'Z') || (c >= b'a' && c <= b'z')
     }
 }

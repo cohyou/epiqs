@@ -1,6 +1,7 @@
 // use std::fmt::Write;
 
-use super::lexer::{Lexer, Tokn};
+use super::token::Tokn;
+use super::lexer::Lexer;
 use super::core::{Epiq, Heliqs};
 
 #[derive(Debug)]
@@ -52,10 +53,12 @@ impl<'a> Parser<'a> {
                 // self.print_aexp(i);
                 // println!("");
 
+                /*
                 match self.vm.vctr.get(i) {
                     Some(&Epiq::Aexp{ a:_, e }) => self.beta_reduct(e),
                     _ => println!("{:?}", "not A-Expression"),
                 }
+                */
 
                 // 評価後
                 // self.print_aexp(i);
@@ -75,8 +78,11 @@ impl<'a> Parser<'a> {
     /* PARSING */
 
     fn parse_aexp(&mut self) -> Result<usize, ParseError> {
-        // println!("{:?}", ("parse_aexp", &self.tokens));
+        Ok(0)
 
+        /*
+
+        // println!("{:?}", ("parse_aexp", &self.tokens));
         match self.parse_affx() {
             Ok(a) => {
                 match self.parse_epiq() {
@@ -90,8 +96,10 @@ impl<'a> Parser<'a> {
             },
             Err(e) => Err(e),
         }
+        */
     }
 
+    /*
     /// for parsing of cons list
     fn parse_aexp_excluding_cons(&mut self) -> Result<usize, ParseError> {
         match self.parse_affx() {
@@ -699,8 +707,9 @@ impl<'a> Parser<'a> {
             self.vm.vctr.insert(is_ok.0, Epiq::Prmt(is_ok.1));
         }
     }
+    */
 }
-
+/*
 fn aexp_e<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
         Some(&Epiq::Aexp { a:_, e }) => Some((t.0, e)),
@@ -732,6 +741,7 @@ fn fpiq_p<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)>
         _ => None,
     }
 }
+*/
 /*
 fn pprn<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
     match t.0.vm.vctr.get(t.1) {
