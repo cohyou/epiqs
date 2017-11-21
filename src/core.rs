@@ -62,6 +62,7 @@ pub enum Epiq {
     Unit,
     Int8(i64),
     Text(String),
+    Name(String),
 
     Lpiq { p: usize, q: usize }, // (linked) list piq
     // Vpiq { p: usize, q: usize }, // vector piq

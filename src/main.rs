@@ -5,7 +5,9 @@ mod core;
 mod token;
 mod lexer_error;
 mod lexer;
+mod parser_error;
 mod parser;
+mod printer;
 
 // use std::io::prelude::*;
 use std::io::BufReader;

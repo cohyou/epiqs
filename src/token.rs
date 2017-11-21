@@ -5,6 +5,8 @@ pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar
 
+    Coln, // : colon
+
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
 
@@ -23,8 +25,6 @@ pub enum Tokn {
     Rprn, // ) right parentheses
     Lcrl, // { left curly brace
     Rcrl, // } right curly brace
-
-    Coln, // : colon
 
     Crrt, // ^ carret
     Dllr, // $ dollar
@@ -69,6 +69,8 @@ impl fmt::Debug for Tokn {
 
             &Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
 
+            &Tokn::Coln => write!(f, "Coln"),
+            
             /*
             &Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
@@ -82,7 +84,6 @@ impl fmt::Debug for Tokn {
             &Tokn::Lcrl => write!(f, "Lcrl"),
             &Tokn::Rcrl => write!(f, "Rcrl"),
 
-            &Tokn::Coln => write!(f, "Coln"),
 
             &Tokn::Crrt => write!(f, "Crrt"),
             &Tokn::Dllr => write!(f, "Dllr"),

@@ -1,31 +1,57 @@
 extern crate epiqs;
 use epiqs::lexer::*;
-
+use epiqs::parser::*;
+use epiqs::printer::*;
 
 // #[cfg(test)]
 // mod tests {
 //    use super::*;
 
 
-fn lexer_from_str(text: &str, right: &str) {
+fn lex_from_str(text: &str, right: &str) {
     let mut iter = text.bytes();
     let mut lexer = Lexer::new(&mut iter);
     let mut result = String::from("");
     while let Ok(t) = lexer.next_token() {
         let s = &format!("{:?} ", t);
         result.push_str(s);
-        // println!("{:?}", s);
     }
     let len = result.len() - 1;
     result.remove(len);
-    // result.trim_right();
+    assert_eq!(result, right);
+}
+
+fn parse_from_str(text: &str, right: &str) {
+    let mut iter = text.bytes();
+    let mut lexer = Lexer::new(&mut iter);
+    let mut parser = Parser::new(lexer);
+
+    let mut result = String::from("");
+    match parser.parse() {
+        Ok(p) => {
+            let s = &format!("{}", p);
+            result.push_str(s);
+        },
+        Err(e) => {
+            let s = &format!("{:?}", e);
+            result.push_str(s);
+        },
+    }
+
     assert_eq!(result, right);
 }
 
 #[test]
 fn lex_pipe() {
-    lexer_from_str("symbol", "Chvc<symbol>");
-    lexer_from_str("| a b", "Pipe Chvc<a> Chvc<b>");
+    lex_from_str("symbol", "Chvc<symbol>");
+    lex_from_str("|: a b", "Pipe Coln Chvc<a> Chvc<b>");
+}
+
+#[test]
+fn parse_pipe() {
+    parse_from_str("a", "a");
+    parse_from_str("|: a b", "|: a b");
+    parse_from_str("|: |: a |: b c d", "|: |: a |: b c d");
 }
 
 /*

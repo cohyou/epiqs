@@ -4,14 +4,15 @@ use super::lexer_error::LexerError;
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerState {
     Normal,
+    InnerName,
+
     // ZeroNumber,
     // InnerNumber,
     // InnerText,
     // FinishText,
-    InnerName,
     // AfterUnderscore,
-    AfterDot,
-    InnerComment,
+    // AfterDot,
+    // InnerComment,
 }
 
 pub struct Lexer<'a> {
@@ -59,6 +60,9 @@ impl<'a> Lexer<'a> {
 
                     b'|' => self.delimit(c, Tokn::Pipe),
 
+                    b':' => self.delimit(c, Tokn::Coln),
+
+
                     // b';' => self.delimit(c, Tokn::Smcl),
 
                     // b'(' => self.delimit(c, Tokn::Lprn),
@@ -75,8 +79,6 @@ impl<'a> Lexer<'a> {
                     // b']' => self.delimit(c, Tokn::Rbkt),
                     // b'{' => self.delimit(c, Tokn::Lcrl),
                     // b'}' => self.delimit(c, Tokn::Rcrl),
-
-                    // b':' => self.delimit(c, Tokn::Coln),
 
                     // b'_' => self.advance(c, LexerState::AfterUnderscore),
 
@@ -358,6 +360,15 @@ impl<'a> Lexer<'a> {
     }
 
     fn is_alphabetic(&self, c: u8) -> bool {
-        (c >= b'A' && c <= b'Z') || (c >= b'a' && c <= b'z')
+        is_alphabetic_uppercase() || is_alphabetic_lowercase()
     }
+
+    fn is_alphabetic_uppercase() -> bool {
+        (c >= b'A' && c <= b'Z')
+    }
+
+    fn is_alphabetic_lowercase() -> bool {
+        (c >= b'a' && c <= b'z')
+    }
+
 }
