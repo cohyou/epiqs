@@ -5,8 +5,9 @@ use std::error::Error;
 pub enum LexerError {
     // Unknown,
     First,
-    InvalidText(String),
-    InvalidNumber(String),
+    Invalid(String),
+    // InvalidText(String),
+    // InvalidNumber(String),
     InvalidName(String),
     InvalidTag(String),
     EOF,

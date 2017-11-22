@@ -1,11 +1,7 @@
 extern crate epiqs;
-use epiqs::lexer::*;
-use epiqs::parser::*;
-use epiqs::printer::*;
 
-// #[cfg(test)]
-// mod tests {
-//    use super::*;
+use epiqs::lexer_basic::*;
+use epiqs::parser::*;
 
 
 fn lex_from_str(text: &str, right: &str) {
@@ -23,7 +19,7 @@ fn lex_from_str(text: &str, right: &str) {
 
 fn parse_from_str(text: &str, right: &str) {
     let mut iter = text.bytes();
-    let mut lexer = Lexer::new(&mut iter);
+    let lexer = Lexer::new(&mut iter);
     let mut parser = Parser::new(lexer);
 
     let mut result = String::from("");
@@ -44,14 +40,15 @@ fn parse_from_str(text: &str, right: &str) {
 #[test]
 fn lex_pipe() {
     lex_from_str("symbol", "Chvc<symbol>");
-    lex_from_str("|: a b", "Pipe Coln Chvc<a> Chvc<b>");
+    lex_from_str("|: a b", "Pipe Otag<:> Chvc<a> Chvc<b>");
 }
 
 #[test]
 fn parse_pipe() {
     parse_from_str("a", "a");
-    parse_from_str("|: a b", "|: a b");
-    parse_from_str("|: |: a |: b c d", "|: |: a |: b c d");
+    parse_from_str("|: a b", ":<a b>");
+    parse_from_str("|Defn a b", "Defn<a b>");
+    parse_from_str("|: |: a |: b c d", ":< :<a :<b c>> d>");
 }
 
 /*

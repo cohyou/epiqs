@@ -5,7 +5,10 @@ pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar
 
-    Coln, // : colon
+    // Coln, // : colon
+
+    /* otag */
+    Otag(String), // Otag
 
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
@@ -64,13 +67,15 @@ pub enum Tokn {
 
 impl fmt::Debug for Tokn {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Tokn::Pipe => write!(f, "Pipe"),
+        match *self {
+            Tokn::Pipe => write!(f, "Pipe"),
 
-            &Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
+            Tokn::Otag(ref s) => write!(f, "Otag<{}>", s),
 
-            &Tokn::Coln => write!(f, "Coln"),
-            
+            Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
+
+            // &Tokn::Coln => write!(f, "Coln"),
+
             /*
             &Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
@@ -105,7 +110,7 @@ impl fmt::Debug for Tokn {
             &Tokn::Comm => write!(f, "Comm"),
             */
 
-            _ => write!(f, "????"),
+            // _ => write!(f, "????"),
         }
     }
 }
