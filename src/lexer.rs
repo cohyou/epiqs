@@ -4,7 +4,8 @@ use super::lexer_state::LexerState;
 use super::lexer_basic::Lexer;
 use super::util::*;
 
-use super::scanner::*;
+use super::scanner::Token;
+use super::nmbr::Nmbr;
 
 impl<'a> Lexer<'a> {
     pub fn scan(&mut self) {
@@ -27,7 +28,7 @@ impl<'a> Lexer<'a> {
             _ if self.eof => self.finish_error(LexerError::EOF),
 
             // scan_with_scanner
-            _ if self.check_scanner_condition(c) => Nmbr::condition(&self, c),
+            _ if self.check_scanner_condition::<Nmbr>(c) => { Nmbr::scan::<Nmbr>(&self, c); },
 
             // dispatcher
             _ if self.is_dispatcher_sign(c) => self.scan_dispatcher(c),
@@ -48,8 +49,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn check_scanner_condition(&self, t: Token, c: u8) -> bool {
-        t::condition(c)
+    fn check_scanner_condition<T: Token>(&self, c: u8) -> bool {
+        T::condition(c)
     }
 
     fn scan_dispatcher(&mut self, c: u8) {

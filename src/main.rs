@@ -13,6 +13,8 @@ mod parser_error;
 mod parser;
 mod printer;
 
+mod nmbr;
+
 // use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
