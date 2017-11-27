@@ -1,8 +1,8 @@
-use super::scanner::Token;
-use super::lexer_basic::Lexer;
+// use super::scanner::Token;
+// use super::lexer_basic::Lexer;
 
-pub struct Nmbr(String);
-
+// pub struct Nmbr(String);
+/*
 impl Token for Nmbr {
     fn condition(c: u8) -> bool {
         c == b'0'
@@ -12,3 +12,4 @@ impl Token for Nmbr {
         Nmbr("0".to_string())
     }
 }
+*/

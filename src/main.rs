@@ -1,20 +1,7 @@
 // #![feature(slice_patterns, advanced_slice_patterns)]
 // #![feature(box_syntax, box_patterns)]
 
-mod util;
-mod core;
-mod token;
-mod lexer_error;
-mod lexer_state;
-mod lexer_basic;
-mod scanner;
-mod lexer;
-mod parser_error;
-mod parser;
-mod printer;
-
-mod nmbr;
-
+extern crate epiqs;
 // use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
@@ -24,8 +11,8 @@ use std::error::Error;
 use std::io::Read;
 // use std::cell::RefCell;
 
-use lexer_basic::Lexer;
-use parser::Parser;
+use epiqs::lexer_basic::Lexer;
+use epiqs::parser::Parser;
 
 fn exec() -> Result<Vec<String>, Box<Error>> {
     let f = File::open("_.iq")?;
