@@ -1,16 +1,17 @@
+use std::cell::{Cell, RefCell};
+
 use super::token::Tokn;
-// use super::lexer::Lexer;
 use super::lexer_state::LexerState;
 use super::lexer_error::LexerError;
 use super::util::*;
 
 pub struct Lexer<'a> {
     iter: &'a mut Iterator<Item=u8>,
-    pub current_char: u8,
-    pub state: LexerState,
+    pub current_char: Cell<u8>,
+    pub state: Cell<LexerState>,
     pub token_bytes: Vec<u8>,
-    token: Result<Tokn, LexerError>,
-    pub eof: bool,
+    pub token: RefCell<Result<Tokn, LexerError>>,
+    pub eof: Cell<bool>,
 }
 
 /*
@@ -20,32 +21,19 @@ impl<'a> Lexer<'a> {
     pub fn new<I>(iter: &'a mut I) -> Lexer
     where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
-        Lexer { iter: iter, current_char: c, state: LexerState::Normal,
-            token_bytes: vec![], token: Err(LexerError::First), eof: false, }
+        Lexer { iter: iter,
+            current_char: Cell::new(c), state: Cell::new(LexerState::Normal),
+            token_bytes: vec![], token: RefCell::new(Err(LexerError::First)), eof: Cell::new(false), }
     }
 
-    pub fn finish_error(&mut self, e: LexerError) {
-        // let s = self.token_bytes.clone();
+    pub fn finish_error(&self, e: LexerError) {
         self.finish(Err(e), LexerState::Normal);
     }
 
-    pub fn next_token(&mut self) -> Result<Tokn, LexerError> {
-        self.reset_token();
-
-        loop {
-            match self.token {
-                Err(LexerError::First) => self.scan(),
-                _ => { break; },
-            }
-        }
-
-        (&self.token).clone()
-    }
-
-    pub fn advance(&mut self, c: u8, next: &LexerState) {
+    pub fn advance(&mut self, c: u8, next: LexerState) {
         self.token_bytes.push(c);
         self.consume_char();
-        self.state = next.clone();
+        self.state.set(next);
     }
 
     pub fn delimit(&mut self, c: u8, t: Tokn) {
@@ -54,21 +42,23 @@ impl<'a> Lexer<'a> {
         self.finish(Ok(t), LexerState::Normal);
     }
 
-    fn reset_token(&mut self) {
+    pub fn reset_token(&mut self) {
         self.token_bytes.clear();
-        self.token = Err(LexerError::First);
+        let mut t = self.token.borrow_mut();
+        *t = Err(LexerError::First);
     }
 
-    pub fn finish(&mut self, tokn: Result<Tokn, LexerError>, next: LexerState) {
-        self.token = tokn;
-        self.state = next;
+    pub fn finish(&self, tokn: Result<Tokn, LexerError>, next: LexerState) {
+        let mut t = self.token.borrow_mut();
+        *t = tokn;
+        self.state.set(next);
     }
 
     pub fn consume_char(&mut self) {
         if let Some(c) = self.iter.next() {
-            self.current_char = c;
+            self.current_char.set(c);
         } else {
-            self.eof = true;
+            self.eof.set(true);
         }
     }
 
