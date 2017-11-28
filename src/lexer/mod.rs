@@ -2,6 +2,7 @@ mod basic;
 mod error;
 mod main;
 // mod extension;
+mod number;
 
 use super::token::Tokn;
 use self::error::Error;

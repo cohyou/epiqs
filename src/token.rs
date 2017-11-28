@@ -12,9 +12,9 @@ pub enum Tokn {
 
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
+    Nmbr(String), // Number 数値（様々な形式を含むが、まずは整数のみ）
 
     /*
-    Nmbr(String), // Number
 
     Usnm(String), // under score and number (e.g. _0 _34)
 
@@ -73,11 +73,11 @@ impl fmt::Debug for Tokn {
             Tokn::Otag(ref s) => write!(f, "Otag<{}>", s),
 
             Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
+            Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
 
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*
-            &Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
 
             &Tokn::Dbqt => write!(f, "Dbqt"),

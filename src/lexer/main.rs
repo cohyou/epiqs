@@ -3,9 +3,6 @@ use super::error::Error;
 use super::{Lexer, State};
 use ::util::*;
 
-// use super::scanner::*;
-// use super::nmbr::Nmbr;
-
 impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Result<Tokn, Error> {
         self.reset_token();
@@ -38,9 +35,8 @@ impl<'a> Lexer<'a> {
             // 普通にEOF
             _ if self.eof => self.finish_error(Error::EOF),
 
-            // scan_with_scanner
-            // _ if self.check_scanner_condition::<Nmbr>(c) => { Nmbr::scan::<Nmbr>(&self, c); },
-            _ if Lexer::wowow() => {},
+            // ゼロを判別する
+            b'0' => self.scan_number_zero(c),
 
             // dispatcher
             _ if self.is_dispatcher_sign(c) => self.scan_dispatcher(c),
@@ -104,8 +100,8 @@ impl<'a> Lexer<'a> {
 
     fn error_with_state(&mut self, s: String, state: State) -> Error {
         match state {
-            State::InnerTag => Error::InvalidTag(s),
-            State::InnerName => Error::InvalidName(s),
+            State::InnerTag => Error::Invalid(format!("Invalid tag {}", s)),
+            State::InnerName => Error::Invalid(format!("Invalid name {}", s)),
             _ => Error::Invalid("Invalid State".to_string()),
         }
     }

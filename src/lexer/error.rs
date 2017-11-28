@@ -6,10 +6,6 @@ pub enum Error {
     // Unknown,
     First,
     Invalid(String),
-    // InvalidText(String),
-    // InvalidNumber(String),
-    InvalidName(String),
-    InvalidTag(String),
     EOF,
 }
 

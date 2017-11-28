@@ -12,9 +12,13 @@ fn lex_from_str(text: &str, right: &str) {
         let s = &format!("{:?} ", t);
         result.push_str(s);
     }
-    let len = result.len() - 1;
-    result.remove(len);
-    assert_eq!(result, right);
+    if result.len() > 0 {
+        let len = result.len() - 1;
+        result.remove(len);
+        assert_eq!(result, right);
+    } else {
+        assert_eq!("", right);
+    }
 }
 
 fn parse_from_str(text: &str, right: &str) {
@@ -41,6 +45,9 @@ fn parse_from_str(text: &str, right: &str) {
 fn lex_pipe() {
     lex_from_str("symbol", "Chvc<symbol>");
     lex_from_str("|: a b", "Pipe Otag<:> Chvc<a> Chvc<b>");
+    lex_from_str("|: a 0", "Pipe Otag<:> Chvc<a> Nmbr<0>");
+    lex_from_str("|: 0 a", "Pipe Otag<:> Nmbr<0> Chvc<a>");
+    lex_from_str("0", "Nmbr<0>");
 }
 
 #[test]
