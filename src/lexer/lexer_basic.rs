@@ -1,7 +1,7 @@
-use std::cell::{Cell, RefCell};
+// use std::cell::{Cell, RefCell};
 
 use super::{Lexer, LexerState};
-use super::token::Tokn;
+use super::Tokn;
 use super::lexer_error::LexerError;
 use ::util::*;
 
@@ -13,18 +13,18 @@ impl<'a> Lexer<'a> {
     where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
         Lexer { iter: iter,
-            current_char: Cell::new(c), state: Cell::new(LexerState::Normal),
-            token_bytes: vec![], token: RefCell::new(Err(LexerError::First)), eof: Cell::new(false), }
+            current_char: c, state: LexerState::Normal,
+            token_bytes: vec![], token: Err(LexerError::First), eof: false, }
     }
 
-    pub fn finish_error(&self, e: LexerError) {
+    pub fn finish_error(&mut self, e: LexerError) {
         self.finish(Err(e), LexerState::Normal);
     }
 
     pub fn advance(&mut self, c: u8, next: LexerState) {
         self.token_bytes.push(c);
         self.consume_char();
-        self.state.set(next);
+        self.state = next;
     }
 
     pub fn delimit(&mut self, c: u8, t: Tokn) {
@@ -35,21 +35,20 @@ impl<'a> Lexer<'a> {
 
     pub fn reset_token(&mut self) {
         self.token_bytes.clear();
-        let mut t = self.token.borrow_mut();
-        *t = Err(LexerError::First);
+        self.token = Err(LexerError::First);
     }
 
-    pub fn finish(&self, tokn: Result<Tokn, LexerError>, next: LexerState) {
-        let mut t = self.token.borrow_mut();
-        *t = tokn;
-        self.state.set(next);
+    pub fn finish(&mut
+        self, tokn: Result<Tokn, LexerError>, next: LexerState) {
+        self.token = tokn;
+        self.state = next;
     }
 
     pub fn consume_char(&mut self) {
         if let Some(c) = self.iter.next() {
-            self.current_char.set(c);
+            self.current_char = c;
         } else {
-            self.eof.set(true);
+            self.eof = true;
         }
     }
 

@@ -191,7 +191,7 @@ impl<'a> Lexer<'a> {
     fn scan_numeric(&mut self, c: u8) -> Option<&str> {
         // println!("lex_numeric");
         match c as char {
-            _ if self.eof.get() => {
+            _ if self.eof => {
                 // println!("eof finish");
                 Some("finish") // 数字の並びの途中で終わってもそこまでの数値とみなす
             },

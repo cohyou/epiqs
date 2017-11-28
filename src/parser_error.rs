@@ -1,4 +1,4 @@
-use lexer::token::Tokn;
+use super::token::Tokn;
 
 #[derive(Debug)]
 pub enum ParseError {
