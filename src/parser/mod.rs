@@ -1,7 +1,9 @@
+mod error;
+
 use super::core::{Epiq, Heliqs};
 use lexer::Lexer;
 use super::token::Tokn;
-use super::parser_error::ParseError;
+use self::error::Error;
 use super::printer::*;
 
 pub struct Parser<'a> {
@@ -22,7 +24,7 @@ impl<'a> Parser<'a> {
         Parser { lexer: l, tokens: ts, vm:Heliqs { vctr: vec![] }, p: 0, /* markers: vec![],*/ }
     }
 
-    pub fn parse(&mut self) -> Result<String, ParseError> {
+    pub fn parse(&mut self) -> Result<String, Error> {
         match self.parse_aexp() {
             Ok(i) => {
                 let printer = Printer{vm: &self.vm};
@@ -39,7 +41,7 @@ impl<'a> Parser<'a> {
 
 
     /* PARSING */
-    fn parse_aexp(&mut self) -> Result<usize, ParseError> {
+    fn parse_aexp(&mut self) -> Result<usize, Error> {
         match self.get_target_token() {
             Some(Tokn::Pipe) => {
                 self.consume_token();
@@ -50,7 +52,7 @@ impl<'a> Parser<'a> {
     }
 
     // Pipe QTag Pval QVal
-    fn parse_otag(&mut self) -> Result<usize, ParseError> {
+    fn parse_otag(&mut self) -> Result<usize, Error> {
         match self.get_target_token() {
             Some(Tokn::Otag(otag)) => {
                 self.consume_token();
@@ -61,25 +63,25 @@ impl<'a> Parser<'a> {
                                 self.vm.vctr.push(Epiq::Tpiq{o: otag, p: pidx, q: qidx});
                                 Ok(self.vm.vctr.len() - 1)
                             },
-                            _ => Err(ParseError::UnknownError(3)),
+                            _ => Err(Error::UnknownError(3)),
                         }
                     },
-                    _ => Err(ParseError::UnknownError(2)),
+                    _ => Err(Error::UnknownError(2)),
                 }
             },
-            Some(t) => Err(ParseError::TokenError(t)),
-            _ => Err(ParseError::UnknownError(1)),
+            Some(t) => Err(Error::TokenError(t)),
+            _ => Err(Error::UnknownError(1)),
         }
     }
 
-    fn parse_name(&mut self) -> Result<usize, ParseError> {
+    fn parse_name(&mut self) -> Result<usize, Error> {
         match self.get_target_token() {
             Some(Tokn::Chvc(s)) => {
                 self.consume_token();
                 self.vm.vctr.push(Epiq::Name(s));
                 Ok(self.vm.vctr.len() - 1)
             },
-            _ => Err(ParseError::UnknownError(10)),
+            _ => Err(Error::UnknownError(10)),
         }
     }
 

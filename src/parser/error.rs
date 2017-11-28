@@ -1,7 +1,7 @@
-use super::token::Tokn;
+use ::token::Tokn;
 
 #[derive(Debug)]
-pub enum ParseError {
+pub enum Error {
     UnknownError(u8),
     TokenError(Tokn)
     // Int8CastError,

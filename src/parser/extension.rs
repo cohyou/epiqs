@@ -1,6 +1,6 @@
 /*
 /// for parsing of cons list
-fn parse_aexp_excluding_cons(&mut self) -> Result<usize, ParseError> {
+fn parse_aexp_excluding_cons(&mut self) -> Result<usize, Error> {
     match self.parse_affx() {
         Ok(a) => {
             match self.parse_epiq_excluding_cons() {
@@ -16,29 +16,29 @@ fn parse_aexp_excluding_cons(&mut self) -> Result<usize, ParseError> {
     }
 }
 
-fn parse_affx(&mut self) -> Result<usize, ParseError> {
+fn parse_affx(&mut self) -> Result<usize, Error> {
     self.vm.vctr.push(Epiq::Unit);
     Ok(self.vm.vctr.len() - 1)
     /*
     match self.parse_ctgr() {
         Ok(i) => Ok(i),
-        Err(ParseError::Next(_)) => {},
-        _ => Err(ParseError::NotAffxError),
+        Err(Error::Next(_)) => {},
+        _ => Err(Error::NotAffxError),
     }
     */
 }
 
-fn parse_epiq(&mut self) -> Result<usize, ParseError> {
+fn parse_epiq(&mut self) -> Result<usize, Error> {
     match self.parse_ctgr() {
         Ok(i) => Ok(i),
-        Err(ParseError::Next(_)) => {
+        Err(Error::Next(_)) => {
             match self.parse_list() {
                 Ok(i) => {
                     println!("VM: {:?}", self.vm.vctr);
                     Ok(i)
                 },
 
-                Err(ParseError::Next(_)) => {
+                Err(Error::Next(_)) => {
                     if self.speculate_cpiq() {
                         self.parse_cpiq()
                     } else {
@@ -54,7 +54,7 @@ fn parse_epiq(&mut self) -> Result<usize, ParseError> {
 }
 
 /// for parsing of cons list
-fn parse_epiq_excluding_cons(&mut self) -> Result<usize, ParseError> {
+fn parse_epiq_excluding_cons(&mut self) -> Result<usize, Error> {
     // println!("parse_epiq_excluding_cons self.tokens: {:?}", &self.tokens[self.p..]);
     match self.parse_list() {
         Ok(i) => {
@@ -62,7 +62,7 @@ fn parse_epiq_excluding_cons(&mut self) -> Result<usize, ParseError> {
             Ok(i)
         },
 
-        Err(ParseError::Next(_)) => {
+        Err(Error::Next(_)) => {
             self.parse_pexp()
         },
 
@@ -71,7 +71,7 @@ fn parse_epiq_excluding_cons(&mut self) -> Result<usize, ParseError> {
 }
 
 
-fn parse_ctgr(&mut self) -> Result<usize, ParseError> {
+fn parse_ctgr(&mut self) -> Result<usize, Error> {
     // println!("parse_ctgr self.tokens: {:?}", &self.tokens[self.p..]);
     match self.get_target_token() {
         Some(Tokn::Crrt) => {
@@ -89,14 +89,14 @@ fn parse_ctgr(&mut self) -> Result<usize, ParseError> {
                         Err(e) => Err(e),
                     }
                 },
-                _ => Err(ParseError::NotAffxError),
+                _ => Err(Error::NotAffxError),
             }
         },
-        _ => Err(ParseError::Next("DontCTGR".to_string())),
+        _ => Err(Error::Next("DontCTGR".to_string())),
     }
 }
 
-fn parse_list(&mut self) -> Result<usize, ParseError> {
+fn parse_list(&mut self) -> Result<usize, Error> {
     // println!("{:?}", ("parse_list", &self.tokens));
     match self.get_target_token() {
         Some(Tokn::Lbkt) => {
@@ -104,11 +104,11 @@ fn parse_list(&mut self) -> Result<usize, ParseError> {
             self.parse_list_internal()
         },
 
-        _ => Err(ParseError::Next("DontStartWithLBKT".to_string())),
+        _ => Err(Error::Next("DontStartWithLBKT".to_string())),
     }
 }
 
-fn parse_list_internal(&mut self) -> Result<usize, ParseError> {
+fn parse_list_internal(&mut self) -> Result<usize, Error> {
     match self.get_target_token() {
         Some(Tokn::Rbkt) => {
             self.consume_token();
@@ -161,7 +161,7 @@ fn speculate_cpiq(&mut self) -> bool {
     res
 }
 
-fn parse_cpiq(&mut self) -> Result<usize, ParseError> {
+fn parse_cpiq(&mut self) -> Result<usize, Error> {
     // println!("parse_cpiq self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
     match self.parse_aexp_excluding_cons() {
         Ok(i1) => {
@@ -205,13 +205,13 @@ fn parse_cpiq(&mut self) -> Result<usize, ParseError> {
                                 Err(e) => Err(e),
                             }
                         },
-                        _ => Err(ParseError::NotCpiqError),
+                        _ => Err(Error::NotCpiqError),
                     }
                 },
 
                 _ => {
                     // self.parse_pexp()
-                    Err(ParseError::NotCpiqError)
+                    Err(Error::NotCpiqError)
                 },
             }
         },
@@ -219,20 +219,20 @@ fn parse_cpiq(&mut self) -> Result<usize, ParseError> {
     }
 }
 
-fn parse_pexp(&mut self) -> Result<usize, ParseError> {
+fn parse_pexp(&mut self) -> Result<usize, Error> {
     // println!("parse_pexp self.tokens: {:?}", &self.tokens[self.p..]);
     match self.parse_unit() {
         Ok(i) => return Ok(i),
-        Err(ParseError::Next(_)) => {},
+        Err(Error::Next(_)) => {},
         Err(e) => return Err(e),
     }
 
     match self.parse_primary_parentheses() {
-        Err(ParseError::Next(_)) => {
+        Err(Error::Next(_)) => {
             match self.parse_text() {
-                Err(ParseError::Next(_)) => {
+                Err(Error::Next(_)) => {
                     match self.parse_number() {
-                        Err(ParseError::Next(_)) => self.parse_de_bruijn_index(),
+                        Err(Error::Next(_)) => self.parse_de_bruijn_index(),
                         Ok(e) => Ok(e),
                         Err(e) => Err(e),
                     }
@@ -246,18 +246,18 @@ fn parse_pexp(&mut self) -> Result<usize, ParseError> {
     }
 }
 
-fn parse_unit(&mut self) -> Result<usize, ParseError> {
+fn parse_unit(&mut self) -> Result<usize, Error> {
     if self.get_target_token() == Some(Tokn::Smcl) {
         self.consume_token();
         self.vm.vctr.push(Epiq::Unit);
         return Ok(self.vm.vctr.len() - 1);
     } else {
-        Err(ParseError::Next("DontUNIT".to_string()))
+        Err(Error::Next("DontUNIT".to_string()))
     }
 }
 
 // これは優先順位表現用のカッコのparseなので、中に入れられる要素は一つだけ
-fn parse_primary_parentheses(&mut self) -> Result<usize, ParseError> {
+fn parse_primary_parentheses(&mut self) -> Result<usize, Error> {
     match self.get_target_token() {
         Some(Tokn::Lprn) => {
             self.consume_token();
@@ -271,17 +271,17 @@ fn parse_primary_parentheses(&mut self) -> Result<usize, ParseError> {
                             // Ok(self.vm.vctr.len() - 1)
                             Ok(i)
                         },
-                        _ => Err(ParseError::CanNotCloseParenError),
+                        _ => Err(Error::CanNotCloseParenError),
                     }
                 }
                 Err(e) => Err(e),
             }
         },
-        _ => Err(ParseError::Next("DontStartWithLPRN".to_string())),
+        _ => Err(Error::Next("DontStartWithLPRN".to_string())),
     }
 }
 
-fn parse_text(&mut self) -> Result<usize, ParseError> {
+fn parse_text(&mut self) -> Result<usize, Error> {
     // println!("parse_text self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
     match self.get_target_token() {
         Some(Tokn::Dbqt) => {
@@ -296,7 +296,7 @@ fn parse_text(&mut self) -> Result<usize, ParseError> {
                     }
                     res = Ok(self.vm.vctr.len() - 1);
                 },
-                _ => { res = Err(ParseError::TextError); },
+                _ => { res = Err(Error::TextError); },
             }
             if res.is_ok() {
                 self.consume_token();
@@ -304,11 +304,11 @@ fn parse_text(&mut self) -> Result<usize, ParseError> {
             }
             res
         },
-        _ => Err(ParseError::Next("DontStartWithDBQT".to_string())),
+        _ => Err(Error::Next("DontStartWithDBQT".to_string())),
     }
 }
 
-fn parse_number(&mut self) -> Result<usize, ParseError> {
+fn parse_number(&mut self) -> Result<usize, Error> {
     // println!("parse_number self.tokens: {:?}", &self.tokens[self.p..]);
     match self.get_target_token() {
         Some(Tokn::Nmbr(ref s)) => {
@@ -320,14 +320,14 @@ fn parse_number(&mut self) -> Result<usize, ParseError> {
                 }
                 Ok(self.vm.vctr.len() - 1)
             } else {
-                Err(ParseError::Int8CastError)
+                Err(Error::Int8CastError)
             }
         },
-        _ => Err(ParseError::Next("DontNMBR".to_string())),
+        _ => Err(Error::Next("DontNMBR".to_string())),
     }
 }
 
-fn parse_de_bruijn_index(&mut self) -> Result<usize, ParseError> {
+fn parse_de_bruijn_index(&mut self) -> Result<usize, Error> {
     match self.get_target_token() {
         Some(Tokn::Usnm(ref s)) => {
             self.consume_token();
@@ -337,10 +337,10 @@ fn parse_de_bruijn_index(&mut self) -> Result<usize, ParseError> {
                 }
                 Ok(self.vm.vctr.len() - 1)
             } else {
-                Err(ParseError::NotDebruijnIndexError)
+                Err(Error::NotDebruijnIndexError)
             }
         }
-        _ => Err(ParseError::Next("DontDBRI".to_string())),
+        _ => Err(Error::Next("DontDBRI".to_string())),
     }
 }
 
