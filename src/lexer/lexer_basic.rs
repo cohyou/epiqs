@@ -1,6 +1,6 @@
 // use std::cell::{Cell, RefCell};
 
-use super::{Lexer, LexerState};
+use super::{Lexer, State};
 use super::Tokn;
 use super::error::Error;
 use ::util::*;
@@ -13,15 +13,15 @@ impl<'a> Lexer<'a> {
     where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
         Lexer { iter: iter,
-            current_char: c, state: LexerState::Normal,
+            current_char: c, state: State::Normal,
             token_bytes: vec![], token: Err(Error::First), eof: false, }
     }
 
     pub fn finish_error(&mut self, e: Error) {
-        self.finish(Err(e), LexerState::Normal);
+        self.finish(Err(e), State::Normal);
     }
 
-    pub fn advance(&mut self, c: u8, next: LexerState) {
+    pub fn advance(&mut self, c: u8, next: State) {
         self.token_bytes.push(c);
         self.consume_char();
         self.state = next;
@@ -30,7 +30,7 @@ impl<'a> Lexer<'a> {
     pub fn delimit(&mut self, c: u8, t: Tokn) {
         self.token_bytes.push(c);
         self.consume_char();
-        self.finish(Ok(t), LexerState::Normal);
+        self.finish(Ok(t), State::Normal);
     }
 
     pub fn reset_token(&mut self) {
@@ -39,7 +39,7 @@ impl<'a> Lexer<'a> {
             Error::First);
     }
 
-    pub fn finish(&mut self, tokn: Result<Tokn, Error>, next: LexerState) {
+    pub fn finish(&mut self, tokn: Result<Tokn, Error>, next: State) {
         self.token = tokn;
         self.state = next;
     }

@@ -4,7 +4,7 @@ use ::util::*;
 impl<'a> Lexer<'a> {
     fn scan_zero_number() {
         /*
-        LexerState::ZeroNumber => {
+        State::ZeroNumber => {
             match c {
                 _ if self.eof => self.finish_number(), // 0でファイルが終わってもOK
 
@@ -24,10 +24,10 @@ impl<'a> Lexer<'a> {
 
     fn scan_inner_number() {
         /*
-        LexerState::InnerNumber => {
-            // println!("LexerState::InnerNumber");
+        State::InnerNumber => {
+            // println!("State::InnerNumber");
             match self.lex_numeric(c) {
-                Some("next") => self.advance(c, LexerState::InnerNumber),
+                Some("next") => self.advance(c, State::InnerNumber),
                 Some("finish") => self.finish_number(),
                 Some(&_) | None => {
                     self.token_bytes.push(c);
@@ -41,7 +41,7 @@ impl<'a> Lexer<'a> {
 
     fn scan_inner_text() {
         /*
-        LexerState::InnerText => {
+        State::InnerText => {
             match c {
                 b'"' => self.finish_text(),
 
@@ -52,7 +52,7 @@ impl<'a> Lexer<'a> {
                     self.finish_error(LexerError::InvalidText(s));
                 }
 
-                _ => self.advance(c, LexerState::InnerText),
+                _ => self.advance(c, State::InnerText),
             }
         },
         */
@@ -60,18 +60,18 @@ impl<'a> Lexer<'a> {
 
     fn scan_finish_text() {
         /*
-        LexerState::FinishText => {
-            // println!("LexerState::FinishText");
-            self.finish(Ok(Tokn::Dbqt), LexerState::Normal);
+        State::FinishText => {
+            // println!("State::FinishText");
+            self.finish(Ok(Tokn::Dbqt), State::Normal);
         },
         */
     }
 
     fn scan_after_underscore() {
         /*
-        LexerState::AfterUnderscore => {
+        State::AfterUnderscore => {
             match self.lex_numeric(c) {
-                Some("next") => self.advance(c, LexerState::AfterUnderscore),
+                Some("next") => self.advance(c, State::AfterUnderscore),
                 Some("finish") => self.finish_underscore_number(),
                 Some(&_) | None => {
                     self.token_bytes.push(c);
@@ -86,12 +86,12 @@ impl<'a> Lexer<'a> {
 
     fn scan_after_dot() {
         /*
-        LexerState::AfterDot => {
+        State::AfterDot => {
             match c {
                 // ..はコメント開始 改行まで
                 b'.' => {
                     self.delimit(c, Tokn::Stop);
-                    self.state = LexerState::InnerComment;
+                    self.state = State::InnerComment;
                 },
 
                 // `:` cons
@@ -121,13 +121,13 @@ impl<'a> Lexer<'a> {
 
     fn scan_inner_comment() {
         /*
-        LexerState::InnerComment => {
+        State::InnerComment => {
             match c {
                 b'\n' => {
                     self.finish_charactor_vector();
                 }
                 _ if self.eof => self.finish_charactor_vector(),
-                _ => self.advance(c, LexerState::InnerComment),
+                _ => self.advance(c, State::InnerComment),
             }
         }
         */
@@ -143,7 +143,7 @@ impl<'a> Lexer<'a> {
         // b'{' => self.delimit(c, Tokn::Lcrl),
         // b'}' => self.delimit(c, Tokn::Rcrl),
 
-        // b'_' => self.advance(c, LexerState::AfterUnderscore),
+        // b'_' => self.advance(c, State::AfterUnderscore),
     }
 
     fn scan_special_tag(&mut self) {
@@ -151,7 +151,7 @@ impl<'a> Lexer<'a> {
         /*
         b'.' => {
             self.delimit(c, Tokn::Stop);
-            self.state = LexerState::AfterDot;
+            self.state = State::AfterDot;
         },
         */
         // b'$' => self.delimit(c, Tokn::Dllr),
@@ -178,11 +178,11 @@ impl<'a> Lexer<'a> {
         /*
         b'"' => {
             self.delimit(c, Tokn::Dbqt);
-            self.state = LexerState::InnerText;
+            self.state = State::InnerText;
         },
         */
-        // b'0' => self.advance(c, LexerState::ZeroNumber),
-        // _ if self.is_digit(c) => self.advance(c, LexerState::InnerNumber),
+        // b'0' => self.advance(c, State::ZeroNumber),
+        // _ if self.is_digit(c) => self.advance(c, State::InnerNumber),
     }
 
     /// lex token like number
@@ -212,18 +212,18 @@ impl<'a> Lexer<'a> {
     fn finish_text(&mut self) {
         self.consume_char();
         let s = self.get_token_string();
-        self.finish(Ok(Tokn::Chvc(s)), LexerState::FinishText);
+        self.finish(Ok(Tokn::Chvc(s)), State::FinishText);
     }
     */
 
     /*
     fn finish_number(&mut self) {
         let s = self.get_token_string();
-        self.finish(Ok(Tokn::Nmbr(s)), LexerState::Normal);
+        self.finish(Ok(Tokn::Nmbr(s)), State::Normal);
     }
     fn finish_underscore_number(&mut self) {
         let s = self.get_token_string().replace("_", "");
-        self.finish(Ok(Tokn::Usnm(s)), LexerState::Normal);
+        self.finish(Ok(Tokn::Usnm(s)), State::Normal);
     }
     */
 }

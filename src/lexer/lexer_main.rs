@@ -1,6 +1,6 @@
 use super::Tokn;
 use super::error::Error;
-use super::{Lexer, LexerState};
+use super::{Lexer, State};
 use ::util::*;
 
 // use super::scanner::*;
@@ -24,15 +24,15 @@ impl<'a> Lexer<'a> {
         let c = self.current_char;
         let s = self.state;
         match s {
-            LexerState::Normal => self.scan_normal(c),
+            State::Normal => self.scan_normal(c),
 
-            LexerState::InnerTag | LexerState::InnerName => {
+            State::InnerTag | State::InnerName => {
                 self.scan_bytes_like_string(c, s)
             },
         }
     }
 
-    // LexerState::Normalの時に通る
+    // State::Normalの時に通る
     fn scan_normal(&mut self, c: u8) {
         match c {
             // 普通にEOF
@@ -46,11 +46,11 @@ impl<'a> Lexer<'a> {
             _ if self.is_dispatcher_sign(c) => self.scan_dispatcher(c),
 
             // otag
-            _ if self.is_first_otag_letter(c) => self.advance(c, LexerState::InnerTag),
+            _ if self.is_first_otag_letter(c) => self.advance(c, State::InnerTag),
 
             // normal name
             _ if is_alphabetic_lowercase(c) || is_digit(c) => {
-                self.advance(c, LexerState::InnerName)
+                self.advance(c, State::InnerName)
             },
 
             // whitespace
@@ -73,7 +73,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn scan_bytes_like_string(&mut self, c: u8, state: LexerState) {
+    fn scan_bytes_like_string(&mut self, c: u8, state: State) {
         match c {
             // 途中で終わってもそこまでのOtagとみなす
             _ if self.eof => self.finish_with_state(state),
@@ -94,29 +94,29 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn finish_with_state(&mut self, state: LexerState) {
+    fn finish_with_state(&mut self, state: State) {
         match state {
-            LexerState::InnerTag => self.finish_otag(),
-            LexerState::InnerName => self.finish_charactor_vector(),
+            State::InnerTag => self.finish_otag(),
+            State::InnerName => self.finish_charactor_vector(),
             _ => self.finish_error(Error::Invalid("Invalid State".to_string())),
         }
     }
 
-    fn error_with_state(&mut self, s: String, state: LexerState) -> Error {
+    fn error_with_state(&mut self, s: String, state: State) -> Error {
         match state {
-            LexerState::InnerTag => Error::InvalidTag(s),
-            LexerState::InnerName => Error::InvalidName(s),
+            State::InnerTag => Error::InvalidTag(s),
+            State::InnerName => Error::InvalidName(s),
             _ => Error::Invalid("Invalid State".to_string()),
         }
     }
 
     fn finish_otag(&mut self) {
         let s = self.get_token_string();
-        self.finish(Ok(Tokn::Otag(s)), LexerState::Normal);
+        self.finish(Ok(Tokn::Otag(s)), State::Normal);
     }
 
     fn finish_charactor_vector(&mut self) {
         let s = self.get_token_string();
-        self.finish(Ok(Tokn::Chvc(s)), LexerState::Normal);
+        self.finish(Ok(Tokn::Chvc(s)), State::Normal);
     }
 }

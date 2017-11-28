@@ -9,14 +9,14 @@ use self::error::Error;
 pub struct Lexer<'a> {
     iter: &'a mut Iterator<Item=u8>,
     current_char: u8,
-    state: LexerState,
+    state: State,
     token_bytes: Vec<u8>,
     token: Result<Tokn, Error>,
     eof: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
-pub enum LexerState {
+pub enum State {
     Normal,
     InnerTag,
     InnerName,
