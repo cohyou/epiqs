@@ -2,7 +2,7 @@
 
 use super::{Lexer, LexerState};
 use super::Tokn;
-use super::lexer_error::LexerError;
+use super::error::Error;
 use ::util::*;
 
 /*
@@ -14,10 +14,10 @@ impl<'a> Lexer<'a> {
         let c = iter.next().unwrap();
         Lexer { iter: iter,
             current_char: c, state: LexerState::Normal,
-            token_bytes: vec![], token: Err(LexerError::First), eof: false, }
+            token_bytes: vec![], token: Err(Error::First), eof: false, }
     }
 
-    pub fn finish_error(&mut self, e: LexerError) {
+    pub fn finish_error(&mut self, e: Error) {
         self.finish(Err(e), LexerState::Normal);
     }
 
@@ -35,11 +35,12 @@ impl<'a> Lexer<'a> {
 
     pub fn reset_token(&mut self) {
         self.token_bytes.clear();
-        self.token = Err(LexerError::First);
+        self.token = Err(
+            Error::First);
     }
 
     pub fn finish(&mut
-        self, tokn: Result<Tokn, LexerError>, next: LexerState) {
+        self, tokn: Result<Tokn, Error>, next: LexerState) {
         self.token = tokn;
         self.state = next;
     }

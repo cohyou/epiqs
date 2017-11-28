@@ -1,7 +1,5 @@
-// use std::cell::Cell;
-
 use super::Tokn;
-use super::lexer_error::LexerError;
+use super::error::Error;
 use super::{Lexer, LexerState};
 use ::util::*;
 
@@ -9,12 +7,12 @@ use ::util::*;
 // use super::nmbr::Nmbr;
 
 impl<'a> Lexer<'a> {
-    pub fn next_token(&mut self) -> Result<Tokn, LexerError> {
+    pub fn next_token(&mut self) -> Result<Tokn, Error> {
         self.reset_token();
 
         loop {
             match self.token {
-                Err(LexerError::First) => self.scan(),
+                Err(Error::First) => self.scan(),
                 _ => { break; },
             }
         }
@@ -38,7 +36,7 @@ impl<'a> Lexer<'a> {
     fn scan_normal(&mut self, c: u8) {
         match c {
             // 普通にEOF
-            _ if self.eof => self.finish_error(LexerError::EOF),
+            _ if self.eof => self.finish_error(Error::EOF),
 
             // scan_with_scanner
             // _ if self.check_scanner_condition::<Nmbr>(c) => { Nmbr::scan::<Nmbr>(&self, c); },
@@ -59,7 +57,7 @@ impl<'a> Lexer<'a> {
             _ if is_whitespace(c) => self.consume_char(),
 
             // other byte is error
-            _ => self.finish_error(LexerError::Invalid("Invalid Symbol".to_string())),
+            _ => self.finish_error(Error::Invalid("Invalid Symbol".to_string())),
         }
     }
     /*
@@ -100,15 +98,15 @@ impl<'a> Lexer<'a> {
         match state {
             LexerState::InnerTag => self.finish_otag(),
             LexerState::InnerName => self.finish_charactor_vector(),
-            _ => self.finish_error(LexerError::Invalid("Invalid State".to_string())),
+            _ => self.finish_error(Error::Invalid("Invalid State".to_string())),
         }
     }
 
-    fn error_with_state(&mut self, s: String, state: LexerState) -> LexerError {
+    fn error_with_state(&mut self, s: String, state: LexerState) -> Error {
         match state {
-            LexerState::InnerTag => LexerError::InvalidTag(s),
-            LexerState::InnerName => LexerError::InvalidName(s),
-            _ => LexerError::Invalid("Invalid State".to_string()),
+            LexerState::InnerTag => Error::InvalidTag(s),
+            LexerState::InnerName => Error::InvalidName(s),
+            _ => Error::Invalid("Invalid State".to_string()),
         }
     }
 
