@@ -11,7 +11,7 @@ use std::error::Error;
 use std::io::Read;
 // use std::cell::RefCell;
 
-use epiqs::lexer_basic::Lexer;
+use epiqs::lexer::Lexer;
 use epiqs::parser::Parser;
 
 fn exec() -> Result<Vec<String>, Box<Error>> {

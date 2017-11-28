@@ -2,9 +2,8 @@
 
 use super::token::Tokn;
 use super::lexer_error::LexerError;
-use super::lexer_state::LexerState;
-use super::lexer_basic::Lexer;
-use super::util::*;
+use super::{Lexer, LexerState};
+use ::util::*;
 
 // use super::scanner::*;
 // use super::nmbr::Nmbr;
@@ -15,7 +14,7 @@ impl<'a> Lexer<'a> {
 
         loop {
             match *self.token.borrow() {
-                Err(LexerError::First) => self.scan(),
+                Err(LexerError::First) => /*self.scan()*/{},
                 _ => { break; },
             }
         }

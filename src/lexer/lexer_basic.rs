@@ -1,18 +1,9 @@
 use std::cell::{Cell, RefCell};
 
+use super::{Lexer, LexerState};
 use super::token::Tokn;
-use super::lexer_state::LexerState;
 use super::lexer_error::LexerError;
-use super::util::*;
-
-pub struct Lexer<'a> {
-    iter: &'a mut Iterator<Item=u8>,
-    pub current_char: Cell<u8>,
-    pub state: Cell<LexerState>,
-    pub token_bytes: Vec<u8>,
-    pub token: RefCell<Result<Tokn, LexerError>>,
-    pub eof: Cell<bool>,
-}
+use ::util::*;
 
 /*
  Lexer用の各種基本関数

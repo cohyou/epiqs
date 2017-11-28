@@ -1,6 +1,6 @@
 use super::core::{Epiq, Heliqs};
-use super::token::Tokn;
-use super::lexer_basic::Lexer;
+use lexer::Lexer;
+use lexer::token::Tokn;
 use super::parser_error::ParseError;
 use super::printer::*;
 

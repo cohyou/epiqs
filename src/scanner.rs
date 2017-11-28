@@ -1,4 +1,4 @@
-use super::lexer_basic::Lexer;
+use super::lexer::Lexer;
 
 pub trait Token {
     fn condition(c: u8) -> bool;

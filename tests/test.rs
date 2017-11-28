@@ -1,6 +1,6 @@
 extern crate epiqs;
 
-use epiqs::lexer_basic::*;
+use epiqs::lexer::*;
 use epiqs::parser::*;
 
 
