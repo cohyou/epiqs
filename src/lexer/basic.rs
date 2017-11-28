@@ -47,6 +47,11 @@ impl<'a> Lexer<'a> {
         if let Some(c) = self.iter.next() {
             self.current_char = c;
         } else {
+            // TODO: 本来であれば、eofかどうかをself.current_char == 0かどうかで判断したいが、
+            // なぜかそうするとうまくループが終了しなくなるので、特別なフラグを立てたままにしている
+            // この場合、EOF時にcurrent_charが更新されないままになってしまうので、current_charを判断の基準には使えず、
+            // 分岐などでもEOFの場合を優先して判定しないといけなくなり、わかりづらく不便なのでできれば修正したい...
+
             // self.current_char = b'0';
             self.eof = true;
         }
@@ -72,6 +77,11 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn eof(&self) -> bool {
+        // TODO: 本来であれば、eofかどうかをself.current_char == 0かどうかで判断したいが、
+        // なぜかそうするとうまくループが終了しなくなるので、特別なフラグを立てたままにしている
+        // この場合、EOF時にcurrent_charが更新されないままになってしまうので、current_charを判断の基準には使えず、
+        // 分岐などでもEOFの場合を優先して判定しないといけなくなり、わかりづらく不便なのでできれば修正したい...
+
         // self.current_char == b'0'
         self.eof
     }
