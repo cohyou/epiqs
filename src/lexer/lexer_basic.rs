@@ -39,8 +39,7 @@ impl<'a> Lexer<'a> {
             Error::First);
     }
 
-    pub fn finish(&mut
-        self, tokn: Result<Tokn, Error>, next: LexerState) {
+    pub fn finish(&mut self, tokn: Result<Tokn, Error>, next: LexerState) {
         self.token = tokn;
         self.state = next;
     }
