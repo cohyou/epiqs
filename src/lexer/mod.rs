@@ -1,7 +1,7 @@
-mod lexer_basic;
+mod basic;
 mod error;
-mod lexer_main;
-// mod lexer_extension;
+mod main;
+// mod extension;
 
 use super::token::Tokn;
 use self::error::Error;
