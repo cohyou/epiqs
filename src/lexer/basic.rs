@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
         if let Some(c) = self.iter.next() {
             self.current_char = c;
         } else {
-            self.current_char = b'0';
+            // self.current_char = b'0';
             self.eof = true;
         }
     }

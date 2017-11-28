@@ -11,11 +11,12 @@ fn lex_pipe() {
     // lex_from_str("|: a 0", "Pipe Otag<:> Chvc<a> Nmbr<0>");
     // lex_from_str("|: 0 a", "Pipe Otag<:> Nmbr<0> Chvc<a>");
 
-    // lex_from_str("0", "Nmbr<0> ");
+    lex_from_str("0", "Nmbr<0>");
 
-    // lex_from_str("|: a 1", "Pipe Otag<:> Chvc<a> Nmbr<1>");
-    // lex_from_str("1", "Nmbr<1>");
-    // lex_from_str("21", "Nmbr<21>");
+    lex_from_str("1", "Nmbr<1>");
+    lex_from_str("21", "Nmbr<21>");
+
+    lex_from_str("|: 478 349578", "Pipe Otag<:> Nmbr<478> Nmbr<349578>");    
 }
 
 #[test]

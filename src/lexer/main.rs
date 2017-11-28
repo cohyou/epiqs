@@ -54,7 +54,7 @@ impl<'a> Lexer<'a> {
             // 0 => self.finish_error(Error::EOF),
 
             // 数値を判別する
-            // b'0' => self.scan_number(c),
+            _ if is_digit(c) => self.scan_number(c),
             // b'0' => self.scan_number_zero(c),
             // b'0' => { println!("scan_number_zero: {:?}", c); self.finish_error(Error::EOF); },
 

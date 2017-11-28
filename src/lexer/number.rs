@@ -13,7 +13,7 @@ impl<'a> Lexer<'a> {
             // ゼロを判別する
             b'0' => self.scan_number_zero(c),
             // ゼロ以外の数値を判別する
-            // _ if is_digit(c) => self.scan_number_normal(c),
+            _ if is_digit(c) => self.scan_number_normal(c),
             // ここは通らないはず
             _ => { unimplemented!() },
         }
@@ -24,15 +24,18 @@ impl<'a> Lexer<'a> {
         self.consume_char();
 
         loop {
-            if is_digit(self.current_char) {
-                // break;
-                println!("{:?}", "is_digit");
-                self.token_bytes.push(c);
-                self.consume_char();
-            } else if is_whitespace(self.current_char) || self.eof() {
-                println!("{:?}", "is_whitespace");
+            println!("is_digit current_char: {:?} token_bytes: {:?}", self.current_char, self.token_bytes);
+            if is_whitespace(self.current_char) || self.eof() {
+                println!("{:?}", "eof finish");
                 self.finish_number();
                 break;
+            } else if is_digit(self.current_char) {
+                self.token_bytes.push(self.current_char);
+                self.consume_char();
+            /*} else if is_whitespace(self.current_char) || self.eof() {
+                println!("{:?}", "is_whitespace");
+                self.finish_number();
+                break;*/
             } else {
                 self.finish_error_number();
                 break;
@@ -58,7 +61,7 @@ impl<'a> Lexer<'a> {
 
     fn finish_number(&mut self) {
         let s = self.get_token_string();
-        println!("Invalid number zero: {}", s);
+        println!("Valid number: {}", s);
         // self.finish_error(Error::Invalid(format!("Invalid number zero: {}", s)));
         self.finish(Ok(Tokn::Nmbr(s)), State::Normal);
     }
