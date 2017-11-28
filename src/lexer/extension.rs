@@ -2,43 +2,6 @@ use super::Lexer;
 use ::util::*;
 
 impl<'a> Lexer<'a> {
-    fn scan_zero_number() {
-        /*
-        State::ZeroNumber => {
-            match c {
-                _ if self.eof => self.finish_number(), // 0でファイルが終わってもOK
-
-                b'[' | b']' => self.finish_number(),
-
-                _ if self.is_whitespace(c) => self.finish_number(),
-
-                _ => {
-                    self.token_bytes.push(c);
-                    let s = self.get_token_string();
-                    self.finish_error(LexerError::InvalidNumber(s));
-                },
-            }
-        },
-        */
-    }
-
-    fn scan_inner_number() {
-        /*
-        State::InnerNumber => {
-            // println!("State::InnerNumber");
-            match self.lex_numeric(c) {
-                Some("next") => self.advance(c, State::InnerNumber),
-                Some("finish") => self.finish_number(),
-                Some(&_) | None => {
-                    self.token_bytes.push(c);
-                    let s = self.get_token_string();
-                    self.finish_error(LexerError::InvalidNumber(s));
-                }
-            }
-        },
-        */
-    }
-
     fn scan_inner_text() {
         /*
         State::InnerText => {
@@ -183,29 +146,6 @@ impl<'a> Lexer<'a> {
         */
         // b'0' => self.advance(c, State::ZeroNumber),
         // _ if self.is_digit(c) => self.advance(c, State::InnerNumber),
-    }
-
-    /// lex token like number
-    /// e.g. 63 845
-    /// not for 07246(=start with 0) 623452w(=end with no digit char)
-    fn scan_numeric(&mut self, c: u8) -> Option<&str> {
-        // println!("lex_numeric");
-        match c as char {
-            _ if self.eof => {
-                // println!("eof finish");
-                Some("finish") // 数字の並びの途中で終わってもそこまでの数値とみなす
-            },
-
-            _ if is_digit(c) => Some("next"),
-
-            // 区切り文字ならここで数値を終わらせる必要がある
-            // ただし、全ての区切り文字がここで判断されるわけではない
-            '[' | ']' | '(' | ')' | ':' | '|' => Some("finish"),
-
-            _ if is_whitespace(c) => Some("finish"),
-
-            _ => None,
-        }
     }
 
     /*

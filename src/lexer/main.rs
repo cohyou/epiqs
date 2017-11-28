@@ -7,19 +7,27 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Result<Tokn, Error> {
         self.reset_token();
 
+        /*match self.token {
+            Err(Error::First) => self.scan(),
+            _ => { /*break;*/ },
+        }*/
         loop {
             match self.token {
                 Err(Error::First) => self.scan(),
                 _ => { break; },
             }
+            // if self.current_char == 0 { self.token = Err(Error::EOF); break; }
         }
-
+        println!("self.token in next_token: {:?}", self.token);
         (&self.token).clone()
     }
 
     fn scan(&mut self) {
+        println!("scan: {:?}", "scan");
+
         let c = self.current_char;
         let s = self.state;
+        // println!("self.state: {:?}", s);
         match s {
             State::Normal => self.scan_normal(c),
 
@@ -27,22 +35,34 @@ impl<'a> Lexer<'a> {
                 self.scan_bytes_like_string(c, s)
             },
         }
+        println!("{:?}", "end of scan");
     }
 
     // State::Normalの時に通る
     fn scan_normal(&mut self, c: u8) {
+        println!("scan_normal: {:?}", c);
+        /*
+        if c == b'0' {
+            println!("scan_number_zero: {:?}", c);
+            self.scan_number_zero(c);
+            // return;
+        } else {
+        */
         match c {
             // 普通にEOF
-            _ if self.eof => self.finish_error(Error::EOF),
+            _ if self.eof() => self.finish_error(Error::EOF),
+            // 0 => self.finish_error(Error::EOF),
 
-            // ゼロを判別する
-            b'0' => self.scan_number_zero(c),
+            // 数値を判別する
+            // b'0' => self.scan_number(c),
+            // b'0' => self.scan_number_zero(c),
+            // b'0' => { println!("scan_number_zero: {:?}", c); self.finish_error(Error::EOF); },
 
             // dispatcher
             _ if self.is_dispatcher_sign(c) => self.scan_dispatcher(c),
 
             // otag
-            _ if self.is_first_otag_letter(c) => self.advance(c, State::InnerTag),
+             _ if self.is_first_otag_letter(c) => self.advance(c, State::InnerTag),
 
             // normal name
             _ if is_alphabetic_lowercase(c) || is_digit(c) => {
@@ -55,12 +75,10 @@ impl<'a> Lexer<'a> {
             // other byte is error
             _ => self.finish_error(Error::Invalid("Invalid Symbol".to_string())),
         }
+
+        // }
     }
-    /*
-    fn check_scanner_condition<T: Token>(&self, c: u8) -> bool {
-        T::condition(c)
-    }
-    */
+
     fn scan_dispatcher(&mut self, c: u8) {
         match c {
             b'|' => self.delimit(c, Tokn::Pipe),
@@ -72,7 +90,7 @@ impl<'a> Lexer<'a> {
     fn scan_bytes_like_string(&mut self, c: u8, state: State) {
         match c {
             // 途中で終わってもそこまでのOtagとみなす
-            _ if self.eof => self.finish_with_state(state),
+            _ if self.eof() => self.finish_with_state(state),
 
             // 空白が来たら区切る
             _ if is_whitespace(c) => self.finish_with_state(state),

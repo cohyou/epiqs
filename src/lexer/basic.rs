@@ -35,8 +35,7 @@ impl<'a> Lexer<'a> {
 
     pub fn reset_token(&mut self) {
         self.token_bytes.clear();
-        self.token = Err(
-            Error::First);
+        self.token = Err(Error::First);
     }
 
     pub fn finish(&mut self, tokn: Result<Tokn, Error>, next: State) {
@@ -48,6 +47,7 @@ impl<'a> Lexer<'a> {
         if let Some(c) = self.iter.next() {
             self.current_char = c;
         } else {
+            self.current_char = b'0';
             self.eof = true;
         }
     }
@@ -69,5 +69,10 @@ impl<'a> Lexer<'a> {
         // 区切り文字ならここでNameを終わらせる必要がある
         // ただし、全ての区切り文字がここで判断されるわけではない
         // b'[' | b']' | b'(' | b')' | b'{' | b'}' | b':' | b',' => self.finish_with_state(state),
+    }
+
+    pub fn eof(&self) -> bool {
+        // self.current_char == b'0'
+        self.eof
     }
 }
