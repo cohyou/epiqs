@@ -1,8 +1,9 @@
 mod basic;
 mod error;
 mod main;
-// mod extension;
 mod number;
+
+mod new;
 
 use super::token::Tokn;
 use self::error::Error;
