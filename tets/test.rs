@@ -1,8 +1,8 @@
 extern crate epiqs;
 
-use epiqs::lexer::*;
-use epiqs::parser::*;
-
+// use epiqs::lexer::*;
+// use epiqs::parser::*;
+/*
 #[test]
 fn lex_pipe() {
     lex_from_str("symbol", "Chvc<symbol>");
@@ -16,9 +16,10 @@ fn lex_pipe() {
     lex_from_str("1", "Nmbr<1>");
     lex_from_str("21", "Nmbr<21>");
 
-    lex_from_str("|: 478 349578", "Pipe Otag<:> Nmbr<478> Nmbr<349578>");    
+    lex_from_str("|: 478 349578", "Pipe Otag<:> Nmbr<478> Nmbr<349578>");
 }
-
+*/
+/*
 #[test]
 #[ignore]
 fn parse_pipe() {
@@ -27,7 +28,7 @@ fn parse_pipe() {
     parse_from_str("|Defn a b", "Defn<a b>");
     parse_from_str("|: |: a |: b c d", ":< :<a :<b c>> d>");
 }
-
+*/
 /*
     fn is_alphabetic(c: u8) -> bool {
         (c >= b'A' && c <= b'Z') || (c >= b'a' && c <= b'z')
@@ -324,7 +325,7 @@ fn parse_pipe() {
     }
     */
 // }
-
+/*
 fn lex_from_str(text: &str, right: &str) {
     let mut iter = text.bytes();
     let mut lexer = Lexer::new(&mut iter);
@@ -385,3 +386,4 @@ fn parse_from_str(text: &str, right: &str) {
 
     assert_eq!(result, right);
 }
+*/

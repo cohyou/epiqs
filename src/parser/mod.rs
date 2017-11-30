@@ -1,3 +1,4 @@
+/*
 mod error;
 
 use super::core::{Epiq, Heliqs};
@@ -130,3 +131,4 @@ impl<'a> Parser<'a> {
         self.sync_tokens(1);
     }
 }
+*/

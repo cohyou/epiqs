@@ -1,20 +1,24 @@
 // use std::cell::{Cell, RefCell};
 
+/*
 use super::{Lexer, State};
 use super::Tokn;
 use super::error::Error;
 use ::util::*;
+*/
 
 /*
  Lexer用の各種基本関数
 */
-impl<'a, 'b> Lexer<'a, 'b> {
+// impl<'a, 'b> Lexer<'a, 'b> {
+    /*
     pub fn new<I>(iter: &'a mut I) -> Lexer
     where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
+        let v = vec![];
         Lexer { iter: iter,
-            current_char: c, state: State::Normal,
-            token_bytes: vec![], token: Err(Error::First), eof: false, scanners: vec![], }
+            current_char: c, state: Cell::new(State::Normal),
+            token_bytes: RefCell::new(vec![]), token: Err(Error::First), eof: false, scanners: &v, }
     }
 
     pub fn finish_error(&mut self, e: Error) {
@@ -22,25 +26,25 @@ impl<'a, 'b> Lexer<'a, 'b> {
     }
 
     pub fn advance(&mut self, c: u8, next: State) {
-        self.token_bytes.push(c);
+        self.token_bytes.borrow_mut().push(c);
         self.consume_char();
-        self.state = next;
+        self.state.set(next);
     }
 
     pub fn delimit(&mut self, c: u8, t: Tokn) {
-        self.token_bytes.push(c);
+        self.token_bytes.borrow_mut().push(c);
         self.consume_char();
         self.finish(Ok(t), State::Normal);
     }
 
     pub fn reset_token(&mut self) {
-        self.token_bytes.clear();
+        self.token_bytes.borrow_mut().clear();
         self.token = Err(Error::First);
     }
 
     pub fn finish(&mut self, tokn: Result<Tokn, Error>, next: State) {
         self.token = tokn;
-        self.state = next;
+        self.state.set(next);
     }
 
     pub fn consume_char(&mut self) {
@@ -55,12 +59,9 @@ impl<'a, 'b> Lexer<'a, 'b> {
             // self.current_char = b'0';
             self.eof = true;
         }
-    }
+    }*/
 
-    pub fn get_token_string(&self) -> String {
-        String::from_utf8(self.token_bytes.clone()).expect("Found invalid UTF-8")
-    }
-
+/*
     pub fn is_first_otag_letter(&self, c: u8) -> bool {
         is_alphabetic_uppercase(c) || self.is_otag_sign(c)
     }
@@ -84,5 +85,5 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
         // self.current_char == b'0'
         self.eof
-    }
-}
+    }*/
+// }

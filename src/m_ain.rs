@@ -3,17 +3,18 @@
 
 extern crate epiqs;
 // use std::io::prelude::*;
-use std::io::BufReader;
-use std::fs::File;
+// use std::io::BufReader;
+// use std::fs::File;
 use std::error::Error;
 // use std::path::Path;
 // use std::io;
-use std::io::Read;
+// use std::io::Read;
 // use std::cell::RefCell;
 
-use epiqs::lexer::Lexer;
-use epiqs::parser::Parser;
+// use epiqs::lexer::Lexer;
+// use epiqs::parser::Parser;
 
+/*
 fn exec() -> Result<Vec<String>, Box<Error>> {
     let f = File::open("_.iq")?;
     let reader = BufReader::new(f);
@@ -24,12 +25,12 @@ fn exec() -> Result<Vec<String>, Box<Error>> {
         Ok(p) => println!("{:?}", p),
         Err(e) => println!("{:?}", e),
     }
-
     Ok(vec![])
-}
+}*/
+    /*
+fn m_ain() {
 
-fn main() {
     match exec() {
         _ => println!("{:?}", "finished"),
     }
-}
+}*/

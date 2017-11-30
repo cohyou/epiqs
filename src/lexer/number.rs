@@ -1,33 +1,72 @@
 use ::token::Tokn;
 use ::util::*;
-use lexer::{Lexer, Error, State};
-use lexer::new::*;
+use lexer::*;
 
 #[derive(Debug)]
 struct ZeroScanner;
 
 impl Scanner for ZeroScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
-        let mut res = ScanResult::Error;
+        let mut res = ScanResult::Continue(vec![]);
 
         if state == State::Normal && c == b'0' {
             let opt = vec![
-               ContinueOption::PushCharToToken,
-               ContinueOption::ChangeState(State::ZeroNumber),
+               ScanOption::PushCharToToken,
+               ScanOption::ChangeState(State::ZeroNumber),
             ];
             res = ScanResult::Continue(opt);
         } else if state == State::ZeroNumber {
             res = match c {
-                0 => ScanResult::Finish,
-                _ if is_whitespace(c) => ScanResult::Finish ,
+                0 => ScanResult::EOF,
+                _ if is_whitespace(c) => {
+                    let opts = vec![ScanOption::ChangeState(State::Normal)];
+                    ScanResult::Finish(opts)
+                },
                 _ => ScanResult::Error,
             };
         }
         res
     }
 
-    fn return_token(&self, token_string: String) -> Tokn {
-        Tokn::Nmbr(token_string)
+    fn return_token(&self, _state: State, token_string: String) -> Option<Tokn> {
+        Some(Tokn::Nmbr(token_string))
+    }
+
+    fn s(&self) -> String {
+        "ZeroScanner".to_string()
+    }
+}
+
+struct IntegerScanner;
+
+impl Scanner for IntegerScanner {
+    fn scan(&self, state: State, c: u8) -> ScanResult {
+        let mut res = ScanResult::Continue(vec![]);
+
+        if state == State::Normal && (c >= b'1' && c <= b'9') {
+            let opt = vec![
+               ScanOption::PushCharToToken,
+               ScanOption::ChangeState(State::InnerNumber),
+            ];
+            res = ScanResult::Continue(opt);
+        } else if state == State::InnerNumber {
+            res = match c {
+                0 => ScanResult::EOF,
+                _ if c >= b'0' && c <= b'9' =>
+                    ScanResult::Continue(vec![ScanOption::PushCharToToken]),
+
+                _ if is_whitespace(c) => {
+                    let opts = vec![ScanOption::ChangeState(State::Normal)];
+                    ScanResult::Finish(opts)
+                },
+                _ => ScanResult::Error,
+            };
+        }
+        res
+    }
+
+    fn return_token(&self, _state: State, token_string: String) -> Option<Tokn> {
+        Some(Tokn::Nmbr(token_string))
     }
 
     fn s(&self) -> String {
@@ -37,23 +76,14 @@ impl Scanner for ZeroScanner {
 
 #[test]
 fn test() {
-    lex_from_str("0", vec!["Nmbr<0>"]);
+    let scanners: &Vec<&Scanner> = &vec![&ZeroScanner, &IntegerScanner];
+    lex_from_str("0", vec!["Nmbr<0>"], scanners);
+    // lex_from_str("01", vec!["Nmbr<01>"], scanners);
+    lex_from_str("1", vec!["Nmbr<1>"], scanners);
+    lex_from_str("12", vec!["Nmbr<12>"], scanners);
 }
 
-fn lex_from_str(text: &str, right: Vec<&str>) {
-    let mut iter = text.bytes();
-    let mut lexer = Lexer::new2(&mut iter, vec![&ZeroScanner]);
-    let mut result = vec![];
-    if let TokenizeResult::Ok(t) = lexer.tokenize() {
-        let s = format!("{:?}", t);
-        result.push(s);
-    }
-    assert_eq!(result, right);
-}
-
-
-
-
+/*
 impl<'a, 'b> Lexer<'a, 'b> {
 
     // 区切り文字ならここで数値を終わらせる必要がある
@@ -72,7 +102,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
     }
 
     pub fn scan_number_normal(&mut self, c: u8) {
-        self.token_bytes.push(c);
+        self.token_bytes.borrow_mut().push(c);
         self.consume_char();
 
         loop {
@@ -82,7 +112,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
                 self.finish_number();
                 break;
             } else if is_digit(self.current_char) {
-                self.token_bytes.push(self.current_char);
+                self.token_bytes.borrow_mut().push(self.current_char);
                 self.consume_char();
             /*} else if is_whitespace(self.current_char) || self.eof() {
                 println!("{:?}", "is_whitespace");
@@ -98,7 +128,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
     pub fn scan_number_zero(&mut self, c: u8) {
         println!("scan_number_zero: {:?}", c);
-        self.token_bytes.push(c);
+        self.token_bytes.borrow_mut().push(c);
         self.consume_char();
 
         // if is_whitespace(self.current_char) {
@@ -122,3 +152,4 @@ impl<'a, 'b> Lexer<'a, 'b> {
         self.finish_error(Error::Invalid("Invalid number".to_string()));
     }
 }
+*/

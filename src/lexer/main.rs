@@ -1,3 +1,4 @@
+/*
 use super::Tokn;
 use super::error::Error;
 use super::{Lexer, State};
@@ -26,7 +27,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
         println!("scan: {:?}", "scan");
 
         let c = self.current_char;
-        let s = self.state;
+        let s = self.state.get();
         // println!("self.state: {:?}", s);
         match s {
             State::Normal => self.scan_normal(c),
@@ -102,7 +103,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
             // それ以外はエラー
             _ => {
-                self.token_bytes.push(c);
+                self.token_bytes.borrow_mut().push(c);
                 let s; { s = self.get_token_string(); }
                 let error = self.error_with_state(s, state);
                 self.finish_error(error);
@@ -136,3 +137,4 @@ impl<'a, 'b> Lexer<'a, 'b> {
         self.finish(Ok(Tokn::Chvc(s)), State::Normal);
     }
 }
+*/
