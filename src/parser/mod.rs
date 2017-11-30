@@ -7,7 +7,7 @@ use self::error::Error;
 use super::printer::*;
 
 pub struct Parser<'a> {
-    lexer: Lexer<'a>,
+    lexer: Lexer<'a, 'a>,
     tokens: Vec<Tokn>,
     p: usize, // index of current token
     // markers: Vec<usize>, // use as stack of returning points when backtracking
@@ -16,7 +16,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
 
-    pub fn new(mut l: Lexer<'a>) -> Parser {
+    pub fn new(mut l: Lexer<'a, 'a>) -> Parser {
         let ts = match l.next_token() {
             Ok(t) => vec![t],
             _ => vec![]

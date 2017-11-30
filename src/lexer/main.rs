@@ -3,7 +3,7 @@ use super::error::Error;
 use super::{Lexer, State};
 use ::util::*;
 
-impl<'a> Lexer<'a> {
+impl<'a, 'b> Lexer<'a, 'b> {
     pub fn next_token(&mut self) -> Result<Tokn, Error> {
         self.reset_token();
 
@@ -34,6 +34,8 @@ impl<'a> Lexer<'a> {
             State::InnerTag | State::InnerName => {
                 self.scan_bytes_like_string(c, s)
             },
+
+            _ => {},
         }
         println!("{:?}", "end of scan");
     }

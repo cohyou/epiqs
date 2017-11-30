@@ -2,46 +2,44 @@ use ::token::Tokn;
 use lexer::{Lexer, State, Error};
 use util::is_whitespace;
 
-enum ScanResult {
-    Continue,
+// やり方が分からないのでとりあえず
+#[derive(Debug)]
+pub enum ContinueOption {
+    PushCharToToken,
+    ChangeState(State),
+}
+
+#[derive(Debug)]
+pub enum ScanResult {
+    Continue(Vec<ContinueOption>),
     Finish,
     Error,
     EOF,
 }
 
-trait Scanner {
-    fn should_scan(&self, state: State, c: u8) -> bool;
-    fn scan(&self, c: u8) -> ScanResult;
+pub trait Scanner {
+    fn scan(&self, state: State, c: u8) -> ScanResult;
     fn return_token(&self, token_string: String) -> Tokn;
+
+    fn s(&self) -> String;
 }
 
-struct ZeroScanner;
-
-impl Scanner for ZeroScanner {
-    fn should_scan(&self, state: State, c: u8) -> bool {
-        state == State::Normal && c == b'0'
-    }
-
-    fn scan(&self, c: u8) -> ScanResult {
-        match c {
-            0 => ScanResult::Finish,
-            _ if is_whitespace(c) => ScanResult::Finish,
-            _ => ScanResult::Error,
-        }
-    }
-
-    fn return_token(&self, token_string: String) -> Tokn {
-        Tokn::Nmbr(token_string)
-    }
-}
-
-enum TokenizeResult {
+pub enum TokenizeResult {
     Ok(Tokn),
     Err(Error),
     EOF,
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, 'b> Lexer<'a, 'b> {
+    // newメソッドとほぼ同じだが、
+    // current_charの初期値を0にしている部分だけが異なる
+    pub fn new2<I>(iter: &'a mut I, scanners: Vec<&'b Scanner>) -> Lexer<'a, 'b>
+    where I: Iterator<Item=u8> {
+        Lexer { iter: iter,
+            current_char: 0, state: State::Normal,
+            token_bytes: vec![], token: Err(Error::First), eof: false, scanners: scanners, }
+    }
+
     fn consume_char_new(&mut self) {
         if let Some(c) = self.iter.next() {
             self.current_char = c;
@@ -50,12 +48,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn get_scanner<'b, T: Scanner>(&self) -> &'b T {
-        let scanner = ZeroScanner;
-        &scanner
-    }
-
-    fn tokenize(&mut self) -> TokenizeResult {
+    pub fn tokenize(&mut self) -> TokenizeResult {
         self.token_bytes.clear();
 
         loop {
@@ -64,29 +57,36 @@ impl<'a> Lexer<'a> {
             self.consume_char_new();
             let c = self.current_char;
 
-            let scanner = self.get_scanner();
-
-            if scanner.should_scan(s, c) {
-                let t = self.get_token_string();
-                match scanner.scan(c) {
-                    ScanResult::Continue => {},
+            for scanner in self.scanners.iter() {
+                println!("state: {:?} char: {:?} scanner: {:?}", s, c, scanner.s());
+                match scanner.scan(s, c) {
+                    ScanResult::Continue(ref opt) => {
+                        println!("Continue");
+                        for o in opt {
+                            match *o {
+                                ContinueOption::PushCharToToken => { self.token_bytes.push(c); },
+                                ContinueOption::ChangeState(s) => { self.state = s; },
+                            }
+                        }
+                    },
                     ScanResult::Finish => {
-                        return TokenizeResult::Ok(scanner.return_token(t));
+                        let t = self.get_token_string();
+                        let r = scanner.return_token(t);
+                        println!("Ok: {:?}", r);
+                        return TokenizeResult::Ok(r);
                     },
                     ScanResult::Error => {
+                        let t = self.get_token_string();
                         let error_info = format!("state: {:?} token_bytes: {:?} char: {:?}", s, t, c);
+                        println!("Error: {:?}", error_info);
                         return TokenizeResult::Err(Error::Invalid(error_info));
                     },
                     ScanResult::EOF => {
+                        println!("EOF");
                         return TokenizeResult::EOF;
                     },
                 }
             }
         }
     }
-}
-
-#[test]
-fn test() {
-    let scanner = ZeroScanner;
 }

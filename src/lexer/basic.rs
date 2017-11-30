@@ -8,13 +8,13 @@ use ::util::*;
 /*
  Lexer用の各種基本関数
 */
-impl<'a> Lexer<'a> {
+impl<'a, 'b> Lexer<'a, 'b> {
     pub fn new<I>(iter: &'a mut I) -> Lexer
     where I: Iterator<Item=u8> {
         let c = iter.next().unwrap();
         Lexer { iter: iter,
             current_char: c, state: State::Normal,
-            token_bytes: vec![], token: Err(Error::First), eof: false, }
+            token_bytes: vec![], token: Err(Error::First), eof: false, scanners: vec![], }
     }
 
     pub fn finish_error(&mut self, e: Error) {

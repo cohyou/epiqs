@@ -1,8 +1,60 @@
 use ::token::Tokn;
 use ::util::*;
 use lexer::{Lexer, Error, State};
+use lexer::new::*;
 
-impl<'a> Lexer<'a> {
+#[derive(Debug)]
+struct ZeroScanner;
+
+impl Scanner for ZeroScanner {
+    fn scan(&self, state: State, c: u8) -> ScanResult {
+        let mut res = ScanResult::Error;
+
+        if state == State::Normal && c == b'0' {
+            let opt = vec![
+               ContinueOption::PushCharToToken,
+               ContinueOption::ChangeState(State::ZeroNumber),
+            ];
+            res = ScanResult::Continue(opt);
+        } else if state == State::ZeroNumber {
+            res = match c {
+                0 => ScanResult::Finish,
+                _ if is_whitespace(c) => ScanResult::Finish ,
+                _ => ScanResult::Error,
+            };
+        }
+        res
+    }
+
+    fn return_token(&self, token_string: String) -> Tokn {
+        Tokn::Nmbr(token_string)
+    }
+
+    fn s(&self) -> String {
+        "ZeroScanner".to_string()
+    }
+}
+
+#[test]
+fn test() {
+    lex_from_str("0", vec!["Nmbr<0>"]);
+}
+
+fn lex_from_str(text: &str, right: Vec<&str>) {
+    let mut iter = text.bytes();
+    let mut lexer = Lexer::new2(&mut iter, vec![&ZeroScanner]);
+    let mut result = vec![];
+    if let TokenizeResult::Ok(t) = lexer.tokenize() {
+        let s = format!("{:?}", t);
+        result.push(s);
+    }
+    assert_eq!(result, right);
+}
+
+
+
+
+impl<'a, 'b> Lexer<'a, 'b> {
 
     // 区切り文字ならここで数値を終わらせる必要がある
     // ただし、全ての区切り文字がここで判断されるわけではない

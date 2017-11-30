@@ -7,14 +7,16 @@ mod new;
 
 use super::token::Tokn;
 use self::error::Error;
+use self::new::Scanner;
 
-pub struct Lexer<'a> {
+pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
     current_char: u8,
     state: State,
     token_bytes: Vec<u8>,
     token: Result<Tokn, Error>,
     eof: bool,
+    scanners: Vec<&'b Scanner>,
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -23,7 +25,7 @@ pub enum State {
     InnerTag,
     InnerName,
 
-    // ZeroNumber,
+    ZeroNumber,
     // InnerNumber,
     // InnerText,
     // FinishText,
