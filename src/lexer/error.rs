@@ -11,7 +11,12 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "No matching cities with a population were found.")
+        match self {
+            &Error::First => { write!(f, "First") },
+            &Error::Invalid(ref s) => { write!(f, "{}", s) },
+            &Error::EOF => { write!(f, "EOF") },
+        }
+
     }
 }
 

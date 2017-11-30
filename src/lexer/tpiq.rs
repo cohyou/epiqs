@@ -21,17 +21,18 @@ impl TpiqScanner {
 impl Scanner for TpiqScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
         let mut res = ScanResult::Continue(vec![]);
-
         if state == State::Normal {
-            if c == b'|' {
-                res = ScanResult::Finish(vec![]);
-            } else if self.is_first_otag_letter(c) {
-                let opt = vec![
-                   ScanOption::ChangeState(State::InnerTag),
-                ];
-                res = ScanResult::Continue(opt);
+            match c {
+                0 => { res = ScanResult::EOF }
+                b'|' => {
+                    let opts = vec![ScanOption::PushCharToToken];
+                    res = ScanResult::Finish(opts);
+                },
+                _ => { res = ScanResult::Error; },
             }
-        } else if state == State::InnerTag {
+        } /*else if state == State::InnerTag {
+            res = ScanResult::Finish(vec![]);
+
             match c {
                 // 途中で終わってもそこまでのOtagとみなす
                 0 => {
@@ -46,6 +47,7 @@ impl Scanner for TpiqScanner {
 
                 // 英数字なら、引き続き次の文字
                 _ if is_alphanumeric(c) => {
+                    // res = ScanResult::Finish(vec![ScanOption::PushCharToToken]);
                     res = ScanResult::Continue(vec![ScanOption::PushCharToToken]);
                 },
 
@@ -53,13 +55,16 @@ impl Scanner for TpiqScanner {
                 _ => { res = ScanResult::Error },
             }
         }
+        */
 
         res
     }
 
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
-            State::Normal => Some(Tokn::Pipe),
+            State::Normal => {
+                Some(Tokn::Pipe)
+            },
             State::InnerTag => Some(Tokn::Otag(token_string)),
             _ => None,
         }
@@ -73,6 +78,6 @@ impl Scanner for TpiqScanner {
 
 #[test]
 fn test() {
-    // let scanners: &Vec<&Scanner> = &vec![&TpiqScanner];
-    // lex_from_str("|Abc", vec!["Pipe", "Otag<Abc>"], scanners);
+    let scanners: &Vec<&Scanner> = &vec![&TpiqScanner];
+    lex_from_str("|Abc", vec!["Pipe", "Otag<Abc>"], scanners);
 }

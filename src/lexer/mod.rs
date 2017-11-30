@@ -47,6 +47,7 @@ pub enum ScanResult {
     Continue(Vec<ScanOption>),
     Finish(Vec<ScanOption>),
     Error,
+    Stop,
     EOF,
 }
 
@@ -60,7 +61,8 @@ pub trait Scanner {
 pub enum TokenizeResult {
     Ok(Tokn),
     Err(Error),
-    EOF(Tokn),
+    Stop(Tokn),
+    EOF,
 }
 
 impl<'a, 'b> Lexer<'a, 'b> {
@@ -85,6 +87,24 @@ impl<'a, 'b> Lexer<'a, 'b> {
         for o in opts.iter() {
             match *o {
                 ScanOption::PushCharToToken => { self.token_bytes.borrow_mut().push(c); },
+                ScanOption::ChangeState(s) => { self.state.set(s); },
+            }
+        }
+    }
+
+    fn push_char_if_needed(&self, _s: State, c: u8, opts: &Vec<ScanOption>) {
+        for o in opts.iter() {
+            match *o {
+                ScanOption::PushCharToToken => { self.token_bytes.borrow_mut().push(c); },
+                ScanOption::ChangeState(s) => { /* do nothing */ },
+            }
+        }
+    }
+
+    fn change_state_if_needed(&self, _s: State, c: u8, opts: &Vec<ScanOption>) {
+        for o in opts.iter() {
+            match *o {
+                ScanOption::PushCharToToken => { /* do nothing */ },
                 ScanOption::ChangeState(s) => { self.state.set(s); },
             }
         }
@@ -117,9 +137,10 @@ impl<'a, 'b> Lexer<'a, 'b> {
                         self.exec_option(s, c, opts);
                     },
                     ScanResult::Finish(ref opts) => {
+                        self.push_char_if_needed(s, c, opts);
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
-                            self.exec_option(s, c, opts);
+                            self.change_state_if_needed(s, c, opts);
                             println!("Ok: {:?}", r);
                             return TokenizeResult::Ok(r);
                         } else {
@@ -131,15 +152,20 @@ impl<'a, 'b> Lexer<'a, 'b> {
                         let t = self.get_token_string();
                         return self.get_tokenize_error(s, t, c);
                     },
-                    ScanResult::EOF => {
+
+                    ScanResult::Stop => {
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
                             println!("EOF: {:?}", r);
-                            return TokenizeResult::EOF(r);
+                            return TokenizeResult::Stop
+                            (r);
                         } else {
                             let t2 = self.get_token_string();
                             return self.get_tokenize_error(s, t2, c);
                         }
+                    },
+                    ScanResult::EOF => {
+                        return TokenizeResult::EOF;
                     },
                 }
             }
@@ -158,15 +184,18 @@ fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
                 result.push(s);
             },
             TokenizeResult::Err(e) => {
-                let s = format!("{:?}", e);
+                let s = format!("{}", e);
                 result.push(s);
                 break;
             },
-            TokenizeResult::EOF(t) => {
+            TokenizeResult::Stop(t) => {
                 let s = format!("{:?}", t);
                 result.push(s);
                 break;
             },
+            TokenizeResult::EOF => {
+                break;
+            }
         }
     }
     assert_eq!(result, right);

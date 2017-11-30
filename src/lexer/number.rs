@@ -17,7 +17,7 @@ impl Scanner for ZeroScanner {
             res = ScanResult::Continue(opt);
         } else if state == State::ZeroNumber {
             res = match c {
-                0 => ScanResult::EOF,
+                0 => ScanResult::Stop,
                 _ if is_whitespace(c) => {
                     let opts = vec![ScanOption::ChangeState(State::Normal)];
                     ScanResult::Finish(opts)
@@ -51,7 +51,7 @@ impl Scanner for IntegerScanner {
             res = ScanResult::Continue(opt);
         } else if state == State::InnerNumber {
             res = match c {
-                0 => ScanResult::EOF,
+                0 => ScanResult::Stop,
                 _ if c >= b'0' && c <= b'9' =>
                     ScanResult::Continue(vec![ScanOption::PushCharToToken]),
 
@@ -78,7 +78,6 @@ impl Scanner for IntegerScanner {
 fn test() {
     let scanners: &Vec<&Scanner> = &vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("0", vec!["Nmbr<0>"], scanners);
-    // lex_from_str("01", vec!["Nmbr<01>"], scanners);
     lex_from_str("1", vec!["Nmbr<1>"], scanners);
     lex_from_str("12", vec!["Nmbr<12>"], scanners);
 }
