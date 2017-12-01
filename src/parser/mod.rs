@@ -13,11 +13,11 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Ref<AbstractSyntaxTree> {
-        self.parse_name();
+        self.parse_literal();
         self.ast.borrow()
     }
 
-    fn parse_name(&mut self) {
+    fn parse_literal(&mut self) {
         match self.lexer.tokenize() {
             TokenizeResult::Ok(t) => {
                 self.push_literal(t)
