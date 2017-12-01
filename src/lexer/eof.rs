@@ -19,5 +19,5 @@ impl Scanner for EOFScanner {
 #[test]
 #[ignore]
 fn test() {
-    lex_from_str("", vec![], &mut vec![&EOFScanner]);
+    lex_from_str("", "", &mut vec![&EOFScanner]);
 }

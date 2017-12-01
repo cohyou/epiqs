@@ -58,6 +58,6 @@ impl Scanner for AlphanumericScanner {
 #[ignore]
 fn test() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
-    lex_from_str("Abc", vec!["Otag<Abc>"], scanners);
-    lex_from_str("abc", vec!["Chvc<abc>"], scanners);
+    lex_from_str("Abc", "Otag<Abc>", scanners);
+    lex_from_str("abc", "Chvc<abc>", scanners);
 }

@@ -37,5 +37,5 @@ impl Scanner for DelimiterScanner {
 #[ignore]
 fn test() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
-    lex_from_str("|", vec!["Pipe"], scanners);
+    lex_from_str("|", "Pipe", scanners);
 }

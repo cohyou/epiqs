@@ -235,10 +235,10 @@ fn test() {
         &IntegerScanner,
     ];
     // lex_from_str("|Ab", vec!["Pipe", "Otag<Ab>"], scanners);
-    lex_from_str("|: abc 123", vec!["Pipe", "Otag<:>", "Chvc<abc>", "Nmbr<123>"], scanners);
+    lex_from_str("|: abc 123", "Pipe Otag<:> Chvc<abc> Nmbr<123>", scanners);
 }
 
-fn lex_from_str(text: &str, right: Vec<&str>, scanners: &mut Vec<&Scanner>) {
+fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);
     let mut lexer = Lexer::new(&mut iter, scanners);
@@ -262,5 +262,6 @@ fn lex_from_str(text: &str, right: Vec<&str>, scanners: &mut Vec<&Scanner>) {
             TokenizeResult::EmptyEOF => { break; },
         }
     }
-    assert_eq!(result, right);
+    let r = result.join(" ");
+    assert_eq!(r, right);
 }
