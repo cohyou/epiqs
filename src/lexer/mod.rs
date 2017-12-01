@@ -1,10 +1,10 @@
-mod basic;
 mod error;
-mod main;
 
 mod number;
-mod tpiq;
+mod delimiter;
+mod alphanumeric;
 
+use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
 
 use super::token::Tokn;
@@ -15,19 +15,19 @@ pub struct Lexer<'a, 'b> {
     current_char: u8,
     state: Cell<State>,
     token_bytes: RefCell<Vec<u8>>,
-    // token: Result<Tokn, Error>,
-    // eof: bool,
     scanners: &'b Vec<&'b Scanner>,
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum State {
     Normal,
-    InnerTag,
+    InnerOtag,
     InnerName,
 
     ZeroNumber,
     InnerNumber,
+    Delimiter,
+
     // InnerText,
     // FinishText,
     // AfterUnderscore,
@@ -47,32 +47,29 @@ pub enum ScanResult {
     Continue(Vec<ScanOption>),
     Finish(Vec<ScanOption>),
     Error,
-    Stop,
     EOF,
 }
 
-pub trait Scanner {
+pub trait Scanner : Debug {
     fn scan(&self, state: State, c: u8) -> ScanResult;
-    fn return_token(&self, state: State, token_string: String) -> Option<Tokn>;
-
-    fn s(&self) -> String;
+    fn return_token(&self, _state: State, _token_string: String) -> Option<Tokn> {
+        None
+    }
 }
 
 pub enum TokenizeResult {
     Ok(Tokn),
     Err(Error),
-    Stop(Tokn),
-    EOF,
+    EOF(Tokn),
 }
 
 impl<'a, 'b> Lexer<'a, 'b> {
     // newメソッドとほぼ同じだが、
     // current_charの初期値を0にしている部分だけが異なる
-    pub fn new2<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
+    pub fn new<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
     where I: Iterator<Item=u8> {
-        Lexer { iter: iter,
-            current_char: 0, state: Cell::new(State::Normal),
-            token_bytes: RefCell::new(vec![]), /*token: Err(Error::First), eof: false,*/ scanners: scanners, }
+        Lexer { iter: iter, current_char: 0, state: Cell::new(State::Normal),
+            token_bytes: RefCell::new(vec![]), scanners: scanners, }
     }
 
     fn consume_char_new(&mut self) {
@@ -96,12 +93,12 @@ impl<'a, 'b> Lexer<'a, 'b> {
         for o in opts.iter() {
             match *o {
                 ScanOption::PushCharToToken => { self.token_bytes.borrow_mut().push(c); },
-                ScanOption::ChangeState(s) => { /* do nothing */ },
+                ScanOption::ChangeState(_) => { /* do nothing */ },
             }
         }
     }
 
-    fn change_state_if_needed(&self, _s: State, c: u8, opts: &Vec<ScanOption>) {
+    fn change_state_if_needed(&self, _s: State, _c: u8, opts: &Vec<ScanOption>) {
         for o in opts.iter() {
             match *o {
                 ScanOption::PushCharToToken => { /* do nothing */ },
@@ -130,12 +127,13 @@ impl<'a, 'b> Lexer<'a, 'b> {
             let c = self.current_char;
 
             for scanner in self.scanners.iter() {
-                println!("state: {:?} char: {:?} scanner: {:?}", s, c, scanner.s());
+                println!("state: {:?} char: {:?} scanner: {:?}", s, c, scanner);
                 match scanner.scan(s, c) {
                     ScanResult::Continue(ref opts) => {
                         println!("Continue");
                         self.exec_option(s, c, opts);
                     },
+
                     ScanResult::Finish(ref opts) => {
                         self.push_char_if_needed(s, c, opts);
                         let t = self.get_token_string();
@@ -148,24 +146,21 @@ impl<'a, 'b> Lexer<'a, 'b> {
                             return self.get_tokenize_error(s, t2, c);
                         }
                     },
+
                     ScanResult::Error => {
                         let t = self.get_token_string();
                         return self.get_tokenize_error(s, t, c);
                     },
 
-                    ScanResult::Stop => {
+                    ScanResult::EOF => {
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
                             println!("EOF: {:?}", r);
-                            return TokenizeResult::Stop
-                            (r);
+                            return TokenizeResult::EOF(r);
                         } else {
                             let t2 = self.get_token_string();
                             return self.get_tokenize_error(s, t2, c);
                         }
-                    },
-                    ScanResult::EOF => {
-                        return TokenizeResult::EOF;
                     },
                 }
             }
@@ -175,7 +170,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
 fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
     let mut iter = text.bytes();
-    let mut lexer = Lexer::new2(&mut iter, scanners);
+    let mut lexer = Lexer::new(&mut iter, scanners);
     let mut result = vec![];
     loop {
         match lexer.tokenize() {
@@ -188,12 +183,9 @@ fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
                 result.push(s);
                 break;
             },
-            TokenizeResult::Stop(t) => {
+            TokenizeResult::EOF(t) => {
                 let s = format!("{:?}", t);
                 result.push(s);
-                break;
-            },
-            TokenizeResult::EOF => {
                 break;
             }
         }
