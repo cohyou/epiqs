@@ -28,6 +28,7 @@ macro_rules! go_ahead {
 
 mod error;
 
+mod eof;
 mod number;
 mod delimiter;
 mod alphanumeric;
@@ -35,8 +36,13 @@ mod alphanumeric;
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
 
-use super::token::Tokn;
+use core::*;
 use self::error::Error;
+
+pub use self::eof::EOFScanner;
+pub use self::alphanumeric::AlphanumericScanner;
+pub use self::number::ZeroScanner;
+pub use self::number::IntegerScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -89,6 +95,7 @@ pub enum TokenizeResult {
     Ok(Tokn),
     Err(Error),
     EOF(Tokn),
+    EmptyEOF,
 }
 
 impl<'a, 'b> Lexer<'a, 'b> {
@@ -182,6 +189,9 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
                     ScanResult::EOF => {
                         let t = self.get_token_string();
+                        if t.len() == 0 {
+                            return TokenizeResult::EmptyEOF;
+                        }
                         if let Some(r) = scanner.return_token(s, t) {
                             println!("EOF: {:?}", r);
                             return TokenizeResult::EOF(r);
@@ -216,6 +226,7 @@ fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
                 result.push(s);
                 break;
             }
+            TokenizeResult::EmptyEOF => { break; },
         }
     }
     assert_eq!(result, right);

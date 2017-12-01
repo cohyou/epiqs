@@ -1,9 +1,9 @@
-use ::token::Tokn;
-use ::util::*;
+use core::*;
 use lexer::*;
+use util::*;
 
 #[derive(Debug)]
-struct AlphanumericScanner;
+pub struct AlphanumericScanner;
 
 impl AlphanumericScanner {
     fn is_first_otag_letter(&self, c: u8) -> bool {

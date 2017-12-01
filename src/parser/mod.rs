@@ -1,3 +1,64 @@
+use std::cell::{RefCell, Ref};
+use core::*;
+use lexer::*;
+
+pub struct Parser<'a> {
+    lexer: Lexer<'a, 'a>,
+    ast: RefCell<AbstractSyntaxTree>,
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(lexer: Lexer<'a, 'a>) -> Self {
+        Parser { lexer: lexer, ast: RefCell::new(AbstractSyntaxTree::new()) }
+    }
+
+    pub fn parse(&mut self) -> Ref<AbstractSyntaxTree> {
+        self.parse_name();
+        self.ast.borrow()
+    }
+
+    fn parse_name(&mut self) {
+        match self.lexer.tokenize() {
+            TokenizeResult::Ok(t) => {
+                self.push_literal(t)
+            },
+            TokenizeResult::Err(e) => {
+                println!("{}", e);
+                // break;
+            },
+            TokenizeResult::EOF(t) => {
+                self.push_literal(t)
+                // break;
+            }
+            TokenizeResult::EmptyEOF => { /* break; */ },
+        }
+    }
+
+    fn push_literal(&mut self, t: Tokn) {
+        // println!("{:?}", t);
+        match t {
+            Tokn::Chvc(ref s) => {
+                self.ast.borrow_mut().push(Epiq::Name(s.clone()));
+            },
+            Tokn::Nmbr(ref s) => {
+                self.ast.borrow_mut().push(Epiq::Uit8(s.parse::<u64>().unwrap()));
+            },
+            _ => {
+                // ast.push(Epiq::Tpiq{ o: "".to_string(), p: 0, q: 0 });
+            },
+        }
+    }
+}
+
+#[test]
+fn test_parser() {
+    let mut iter = "".bytes();
+    let scanners: &Vec<&Scanner> = &vec![&EOFScanner];
+    let lexer = Lexer::new(&mut iter, scanners);
+    let mut parser = Parser::new(lexer);
+    parser.parse();
+}
+
 /*
 mod error;
 

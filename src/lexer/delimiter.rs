@@ -1,4 +1,4 @@
-use ::token::Tokn;
+use core::*;
 use lexer::*;
 
 #[derive(Debug)]

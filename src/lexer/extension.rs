@@ -1,5 +1,5 @@
 use super::Lexer;
-use ::util::*;
+use util::*;
 
 impl<'a> Lexer<'a> {
     fn scan_inner_text() {

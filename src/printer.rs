@@ -1,3 +1,58 @@
+use std::ops::Deref;
+use core::*;
+use lexer::*;
+use parser::*;
+
+struct Printer<'a> {
+    ast: &'a AbstractSyntaxTree,
+}
+
+impl<'a> Printer<'a> {
+    pub fn new(ast: &'a AbstractSyntaxTree) -> Self {
+        Printer{ ast: ast }
+    }
+
+    pub fn print(&self) -> String {
+        if let Some(entrypoint) = self.ast.entrypoint {
+            self.print_aexp(entrypoint)
+        } else {
+            "".to_string()
+        }
+    }
+
+    fn print_aexp(&self, i: u32) -> String {
+        let epiq = self.ast.get(i);
+        match *epiq {
+            Epiq::Name(ref n) => n.to_string(),
+            Epiq::Uit8(ref n) => format!("{}", n),
+            Epiq::Tpiq { ref o, p, q } => {
+                format!("{}<{} {}>", o, self.print_aexp(p), self.print_aexp(q))
+            }
+            _ => "".to_string(),
+        }
+    }
+}
+
+#[test]
+fn test_print() {
+    let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner];
+    print_str("abc", "abc", scanners);
+
+    let scanners2: &Vec<&Scanner> = &vec![&EOFScanner, &ZeroScanner, &IntegerScanner];
+    print_str("123", "123", scanners2);
+}
+
+fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
+    let mut iter = left.bytes();
+    let lexer = Lexer::new(&mut iter, scanners);
+    let mut parser = Parser::new(lexer);
+    let mut ast = parser.parse();
+    let printer = Printer::new(ast.deref());
+
+    assert_eq!(printer.print(), right);
+}
+
+/*
 use super::core::{Epiq, Heliqs};
 
 pub struct Printer<'a> {
@@ -12,13 +67,14 @@ impl<'a> Printer<'a> {
                 Epiq::Tpiq { ref o, p, q } => {
                     format!(" {}<{} {}>", o, self.print_aexp(p), self.print_aexp(q))
                 }
-                // _ => "".to_string(),
+                _ => "".to_string(),
             }
         } else {
             "".to_string()
         }
     }
 }
+*/
 
 /*
 fn print_affx(&self, i: usize) -> String {

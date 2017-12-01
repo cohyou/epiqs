@@ -1,9 +1,9 @@
-use ::token::Tokn;
-use ::util::*;
+use core::*;
 use lexer::*;
+use util::*;
 
 #[derive(Debug)]
-struct ZeroScanner;
+pub struct ZeroScanner;
 
 impl Scanner for ZeroScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
@@ -26,7 +26,7 @@ impl Scanner for ZeroScanner {
 }
 
 #[derive(Debug)]
-struct IntegerScanner;
+pub struct IntegerScanner;
 
 impl Scanner for IntegerScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
