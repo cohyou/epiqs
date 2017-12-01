@@ -51,6 +51,7 @@ impl<'a> Parser<'a> {
 }
 
 #[test]
+#[ignore]
 fn test_parser() {
     let mut iter = "".bytes();
     let scanners: &Vec<&Scanner> = &vec![&EOFScanner];

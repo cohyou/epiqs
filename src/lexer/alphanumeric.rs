@@ -54,6 +54,7 @@ impl Scanner for AlphanumericScanner {
 }
 
 #[test]
+#[ignore]
 fn test() {
     let scanners: &Vec<&Scanner> = &vec![&AlphanumericScanner];
     lex_from_str("Abc", vec!["Otag<Abc>"], scanners);

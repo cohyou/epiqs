@@ -34,6 +34,7 @@ impl<'a> Printer<'a> {
 }
 
 #[test]
+#[ignore]
 fn test_print() {
     let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner];
     print_str("abc", "abc", scanners);

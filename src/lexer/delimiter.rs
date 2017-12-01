@@ -2,7 +2,7 @@ use core::*;
 use lexer::*;
 
 #[derive(Debug)]
-struct DelimiterScanner;
+pub struct DelimiterScanner;
 
 impl Scanner for DelimiterScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
@@ -34,6 +34,7 @@ impl Scanner for DelimiterScanner {
 }
 
 #[test]
+#[ignore]
 fn test() {
     let scanners: &Vec<&Scanner> = &vec![&DelimiterScanner];
     lex_from_str("|", vec!["Pipe"], scanners);

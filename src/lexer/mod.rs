@@ -43,6 +43,7 @@ pub use self::eof::EOFScanner;
 pub use self::alphanumeric::AlphanumericScanner;
 pub use self::number::ZeroScanner;
 pub use self::number::IntegerScanner;
+pub use self::delimiter::DelimiterScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -204,6 +205,12 @@ impl<'a, 'b> Lexer<'a, 'b> {
             }
         }
     }
+}
+
+#[test]
+fn test() {
+    let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner, &ZeroScanner, &IntegerScanner, &DelimiterScanner];
+    lex_from_str("|Abc abc 123", vec!["Pipe", "Otag<Abc>", "Chvc<abc>", "Nmbr<123>"], scanners);
 }
 
 fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
