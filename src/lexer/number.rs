@@ -61,7 +61,7 @@ impl Scanner for IntegerScanner {
 #[test]
 #[ignore]
 fn test() {
-    let scanners: &Vec<&Scanner> = &vec![&ZeroScanner, &IntegerScanner];
+    let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("0", vec!["Nmbr<0>"], scanners);
     lex_from_str("1", vec!["Nmbr<1>"], scanners);
     lex_from_str("12", vec!["Nmbr<12>"], scanners);

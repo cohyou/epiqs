@@ -7,6 +7,7 @@ pub struct AlphanumericScanner;
 
 impl AlphanumericScanner {
     fn is_first_otag_letter(&self, c: u8) -> bool {
+        // println!("is_first_otag_letter: {:?}", c);
         (c >= b'A' && c <= b'Z') || self.is_otag_sign(c)
     }
 
@@ -56,7 +57,7 @@ impl Scanner for AlphanumericScanner {
 #[test]
 #[ignore]
 fn test() {
-    let scanners: &Vec<&Scanner> = &vec![&AlphanumericScanner];
+    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
     lex_from_str("Abc", vec!["Otag<Abc>"], scanners);
     lex_from_str("abc", vec!["Chvc<abc>"], scanners);
 }

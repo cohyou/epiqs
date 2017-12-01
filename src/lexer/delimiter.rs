@@ -17,7 +17,7 @@ impl Scanner for DelimiterScanner {
                 // 何が来ても終了
                 match c {
                     0 => ScanResult::EOF,
-                    _ => finish!(),
+                    _ => delimite!(),
                 }
             },
             _ => go_ahead!(),
@@ -36,6 +36,6 @@ impl Scanner for DelimiterScanner {
 #[test]
 #[ignore]
 fn test() {
-    let scanners: &Vec<&Scanner> = &vec![&DelimiterScanner];
+    let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
     lex_from_str("|", vec!["Pipe"], scanners);
 }

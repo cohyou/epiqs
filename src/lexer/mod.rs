@@ -1,13 +1,11 @@
 macro_rules! push_into_mode {
-    ($e:ident) => {
-        {
-            let opt = vec![
-               ScanOption::PushCharToToken,
-               ScanOption::ChangeState(State::$e),
-            ];
-            ScanResult::Continue(opt)
-        }
-    }
+    ($e:ident) => {{
+        let opt = vec![
+           ScanOption::PushCharToToken,
+           ScanOption::ChangeState(State::$e),
+        ];
+        ScanResult::Continue(opt)
+    }}
 }
 macro_rules! push {
     () => {{
@@ -17,13 +15,41 @@ macro_rules! push {
 
 macro_rules! finish {
     () => {{
-        let opts = vec![ScanOption::ChangeState(State::Normal)];
+        let opts = vec![
+            ScanOption::ClearBytes,
+            ScanOption::ChangeState(State::Normal),
+            ScanOption::ConsumeChar,
+        ];
         ScanResult::Finish(opts)
     }}
 }
 
 macro_rules! go_ahead {
     () => { ScanResult::Continue(vec![]) }
+}
+
+macro_rules! delimite {
+    () => {{
+        let opts = vec![
+            ScanOption::ClearBytes,
+            ScanOption::ChangeState(State::Normal)
+        ];
+        ScanResult::Finish(opts)
+    }}
+}
+
+macro_rules! next_char {
+    () => { ScanResult::Continue(vec![ScanOption::ConsumeChar]) }
+}
+
+macro_rules! print_lexer_info {
+    ($slf:ident, $e:ident) => {{
+        let s = $slf.state.get();
+        let c = $slf.current_char;
+        let debug_t = $slf.get_token_string();
+        let debub_c = $slf.get_char_string(c);
+        println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
+    }}
 }
 
 mod error;
@@ -73,8 +99,10 @@ pub enum State {
 // やり方が分からないのでとりあえず
 #[derive(Debug)]
 pub enum ScanOption {
+    ClearBytes,
     PushCharToToken,
     ChangeState(State),
+    ConsumeChar,
 }
 
 #[derive(Debug)]
@@ -99,16 +127,18 @@ pub enum TokenizeResult {
     EmptyEOF,
 }
 
+const FIRST_CHAR: u8 = 255;
+
 impl<'a, 'b> Lexer<'a, 'b> {
     // newメソッドとほぼ同じだが、
     // current_charの初期値を0にしている部分だけが異なる
     pub fn new<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
     where I: Iterator<Item=u8> {
-        Lexer { iter: iter, current_char: 0, state: Cell::new(State::Normal),
+        Lexer { iter: iter, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
             token_bytes: RefCell::new(vec![]), scanners: scanners, }
     }
 
-    fn consume_char_new(&mut self) {
+    fn consume_char(&mut self) {
         if let Some(c) = self.iter.next() {
             self.current_char = c;
         } else {
@@ -116,29 +146,13 @@ impl<'a, 'b> Lexer<'a, 'b> {
         }
     }
 
-    fn exec_option(&self, _s: State, c: u8, opts: &Vec<ScanOption>) {
+    fn exec_option(&mut self, _s: State, c: u8, opts: &Vec<ScanOption>) {
         for o in opts.iter() {
             match *o {
+                ScanOption::ClearBytes => { self.token_bytes.borrow_mut().clear(); }
                 ScanOption::PushCharToToken => { self.token_bytes.borrow_mut().push(c); },
                 ScanOption::ChangeState(s) => { self.state.set(s); },
-            }
-        }
-    }
-
-    fn push_char_if_needed(&self, _s: State, c: u8, opts: &Vec<ScanOption>) {
-        for o in opts.iter() {
-            match *o {
-                ScanOption::PushCharToToken => { self.token_bytes.borrow_mut().push(c); },
-                ScanOption::ChangeState(_) => { /* do nothing */ },
-            }
-        }
-    }
-
-    fn change_state_if_needed(&self, _s: State, _c: u8, opts: &Vec<ScanOption>) {
-        for o in opts.iter() {
-            match *o {
-                ScanOption::PushCharToToken => { /* do nothing */ },
-                ScanOption::ChangeState(s) => { self.state.set(s); },
+                ScanOption::ConsumeChar => { self.consume_char(); },
             }
         }
     }
@@ -149,21 +163,27 @@ impl<'a, 'b> Lexer<'a, 'b> {
         return TokenizeResult::Err(Error::Invalid(error_info));
     }
 
-    pub fn get_token_string(&self) -> String {
+    fn get_char_string(&self, c: u8) -> String {
+        match c {
+            FIRST_CHAR => "<SOF>".to_string(),
+            0 => "<EOF>".to_string(),
+            _ => String::from_utf8(vec![c]).expect("Found invalid UTF-8"),
+        }
+
+    }
+
+    fn get_token_string(&self) -> String {
         String::from_utf8(self.token_bytes.borrow().clone()).expect("Found invalid UTF-8")
     }
 
     pub fn tokenize(&mut self) -> TokenizeResult {
-        self.token_bytes.borrow_mut().clear();
-
         loop {
             let s = self.state.get();
-
-            self.consume_char_new();
             let c = self.current_char;
 
             for scanner in self.scanners.iter() {
-                println!("state: {:?} char: {:?} scanner: {:?}", s, c, scanner);
+                print_lexer_info!(self, scanner);
+
                 match scanner.scan(s, c) {
                     ScanResult::Continue(ref opts) => {
                         println!("Continue");
@@ -171,10 +191,9 @@ impl<'a, 'b> Lexer<'a, 'b> {
                     },
 
                     ScanResult::Finish(ref opts) => {
-                        self.push_char_if_needed(s, c, opts);
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
-                            self.change_state_if_needed(s, c, opts);
+                            self.exec_option(s, c, opts);
                             println!("Ok: {:?}", r);
                             return TokenizeResult::Ok(r);
                         } else {
@@ -209,12 +228,19 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
 #[test]
 fn test() {
-    let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner, &ZeroScanner, &IntegerScanner, &DelimiterScanner];
-    lex_from_str("|Abc abc 123", vec!["Pipe", "Otag<Abc>", "Chvc<abc>", "Nmbr<123>"], scanners);
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphanumericScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+    ];
+    // lex_from_str("|Ab", vec!["Pipe", "Otag<Ab>"], scanners);
+    lex_from_str("|: abc 123", vec!["Pipe", "Otag<:>", "Chvc<abc>", "Nmbr<123>"], scanners);
 }
 
-fn lex_from_str(text: &str, right: Vec<&str>, scanners: &Vec<&Scanner>) {
+fn lex_from_str(text: &str, right: Vec<&str>, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
+    scanners.push(&EOFScanner);
     let mut lexer = Lexer::new(&mut iter, scanners);
     let mut result = vec![];
     loop {

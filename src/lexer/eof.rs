@@ -5,10 +5,13 @@ pub struct EOFScanner;
 
 impl Scanner for EOFScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
-        if state == State::Normal && c == 0 {
-            ScanResult::EOF
+        if state == State::Normal {
+            match c {
+                0 => ScanResult::EOF,
+                _ => next_char!(),
+            }
         } else {
-            go_ahead!()
+            next_char!()
         }
     }
 }
@@ -16,5 +19,5 @@ impl Scanner for EOFScanner {
 #[test]
 #[ignore]
 fn test() {
-    lex_from_str("", vec![], &vec![&EOFScanner]);
+    lex_from_str("", vec![], &mut vec![&EOFScanner]);
 }
