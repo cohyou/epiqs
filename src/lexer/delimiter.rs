@@ -6,33 +6,22 @@ struct DelimiterScanner;
 
 impl Scanner for DelimiterScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
-        let mut res = ScanResult::Continue(vec![]);
         match state {
             State::Normal => {
                 match c {
-                    b'|' => {
-                        let opt = vec![
-                           ScanOption::PushCharToToken,
-                           ScanOption::ChangeState(State::Delimiter),
-                        ];
-                        res = ScanResult::Continue(opt);
-                    },
-                    _ => {},
+                    b'|' => push_into_mode!(Delimiter),
+                    _    => go_ahead!(),
                 }
             },
-
             State::Delimiter => {
                 // 何が来ても終了
-                let opts = vec![ScanOption::ChangeState(State::Normal)];
                 match c {
-                    0 => { res = ScanResult::EOF; },
-                    _ => { res = ScanResult::Finish(opts); },
+                    0 => ScanResult::EOF,
+                    _ => finish!(),
                 }
             },
-
-            _ => {},
+            _ => go_ahead!(),
         }
-        res
     }
 
     fn return_token(&self, _state: State, token_string: String) -> Option<Tokn> {

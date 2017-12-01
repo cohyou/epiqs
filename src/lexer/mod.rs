@@ -1,3 +1,31 @@
+macro_rules! push_into_mode {
+    ($e:ident) => {
+        {
+            let opt = vec![
+               ScanOption::PushCharToToken,
+               ScanOption::ChangeState(State::$e),
+            ];
+            ScanResult::Continue(opt)
+        }
+    }
+}
+macro_rules! push {
+    () => {{
+        ScanResult::Continue(vec![ScanOption::PushCharToToken])
+    }}
+}
+
+macro_rules! finish {
+    () => {{
+        let opts = vec![ScanOption::ChangeState(State::Normal)];
+        ScanResult::Finish(opts)
+    }}
+}
+
+macro_rules! go_ahead {
+    () => { ScanResult::Continue(vec![]) }
+}
+
 mod error;
 
 mod number;

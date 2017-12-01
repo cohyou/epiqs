@@ -24,53 +24,24 @@ impl AlphanumericScanner {
 
 impl Scanner for AlphanumericScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
-        let mut res = ScanResult::Continue(vec![]);
         match state {
             State::Normal => {
                 match c {
-                    _ if self.is_first_otag_letter(c) => {
-                        let opt = vec![
-                           ScanOption::PushCharToToken,
-                           ScanOption::ChangeState(State::InnerOtag),
-                        ];
-                        res = ScanResult::Continue(opt);
-                    },
-
-                    _ if self.is_first_name_letter(c) => {
-                        let opt = vec![
-                           ScanOption::PushCharToToken,
-                           ScanOption::ChangeState(State::InnerName),
-                        ];
-                        res = ScanResult::Continue(opt);
-                    },
-
-                    _ => {},
+                    _ if self.is_first_otag_letter(c) => push_into_mode!(InnerOtag),
+                    _ if self.is_first_name_letter(c) => push_into_mode!(InnerName),
+                    _ => go_ahead!(),
                 }
             },
             State::InnerOtag | State::InnerName => {
-                res = match c {
-                    // 途中で終わってもそこまでとみなす
+                match c {
                     0 => ScanResult::EOF,
-
-                    // 空白が来たら区切る
-                    _ if is_whitespace(c) => {
-                        let opt = vec![
-                           ScanOption::ChangeState(State::Normal),
-                        ];
-                        ScanResult::Finish(opt)
-                    },
-
-                    // 英数字なら、引き続き次の文字
-                    _ if is_alphanumeric(c) =>
-                        ScanResult::Continue(vec![ScanOption::PushCharToToken]),
-
-                    // それ以外はエラー
+                    _ if is_whitespace(c) => finish!(),
+                    _ if is_alphanumeric(c) => push!(),
                     _ => ScanResult::Error,
                 }
             },
-            _ => {},
+            _ => go_ahead!(),
         }
-        res
     }
 
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
