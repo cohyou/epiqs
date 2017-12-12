@@ -35,7 +35,7 @@ impl Scanner for AlphanumericScanner {
             },
             State::InnerOtag | State::InnerName => {
                 match c {
-                    0 => ScanResult::EOF,
+                    0 => finish!()/*ScanResult::EOF*/,
                     _ if is_whitespace(c) => finish!(),
                     _ if is_alphanumeric(c) => push!(),
                     _ => ScanResult::Error,
@@ -56,8 +56,14 @@ impl Scanner for AlphanumericScanner {
 
 #[test]
 #[ignore]
-fn test() {
+fn test_otag() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
     lex_from_str("Abc", "Otag<Abc>", scanners);
+}
+
+#[test]
+#[ignore]
+fn test_character_vector() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
     lex_from_str("abc", "Chvc<abc>", scanners);
 }

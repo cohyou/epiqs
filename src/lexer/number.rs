@@ -11,7 +11,7 @@ impl Scanner for ZeroScanner {
             push_into_mode!(ZeroNumber)
         } else if state == State::ZeroNumber {
             match c {
-                0 => ScanResult::EOF,
+                0 => finish!()/*ScanResult::EOF*/,
                 _ if is_whitespace(c) => finish!(),
                 _ => ScanResult::Error,
             }
@@ -40,7 +40,7 @@ impl Scanner for IntegerScanner {
             },
             State::InnerNumber => {
                 match c {
-                    0 => ScanResult::EOF,
+                    0 => finish!()/*ScanResult::EOF*/,
                     _ if c >= b'0' && c <= b'9' => push!(),
                     _ if is_whitespace(c) => finish!(),
                     // 区切り文字ならここで数値を終わらせる必要がある
@@ -60,9 +60,21 @@ impl Scanner for IntegerScanner {
 
 #[test]
 #[ignore]
-fn test() {
+fn test_zero() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("0", "Nmbr<0>", scanners);
+}
+
+#[test]
+#[ignore]
+fn test_one_digit_integer() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("1", "Nmbr<1>", scanners);
+}
+
+#[test]
+#[ignore]
+fn test_multiple_digits_integer() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("12", "Nmbr<12>", scanners);
 }

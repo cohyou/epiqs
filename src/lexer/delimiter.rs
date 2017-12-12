@@ -16,7 +16,7 @@ impl Scanner for DelimiterScanner {
             State::Delimiter => {
                 // 何が来ても終了
                 match c {
-                    0 => ScanResult::EOF,
+                    0 => finish!()/*ScanResult::EOF*/,
                     _ => delimite!(),
                 }
             },

@@ -43,13 +43,13 @@ macro_rules! next_char {
 }
 
 macro_rules! print_lexer_info {
-    ($slf:ident, $e:ident) => {{
+    ($slf:ident, $e:ident) => {/*{
         let s = $slf.state.get();
         let c = $slf.current_char;
         let debug_t = $slf.get_token_string();
         let debub_c = $slf.get_char_string(c);
         println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
-    }}
+    }*/}
 }
 
 mod error;
@@ -123,15 +123,12 @@ pub trait Scanner : Debug {
 pub enum TokenizeResult {
     Ok(Tokn),
     Err(Error),
-    EOF(Tokn),
-    EmptyEOF,
+    EOF,
 }
 
 const FIRST_CHAR: u8 = 255;
 
 impl<'a, 'b> Lexer<'a, 'b> {
-    // newメソッドとほぼ同じだが、
-    // current_charの初期値を0にしている部分だけが異なる
     pub fn new<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
     where I: Iterator<Item=u8> {
         Lexer { iter: iter, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
@@ -207,19 +204,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
                         return self.get_tokenize_error(s, t, c);
                     },
 
-                    ScanResult::EOF => {
-                        let t = self.get_token_string();
-                        if t.len() == 0 {
-                            return TokenizeResult::EmptyEOF;
-                        }
-                        if let Some(r) = scanner.return_token(s, t) {
-                            println!("EOF: {:?}", r);
-                            return TokenizeResult::EOF(r);
-                        } else {
-                            let t2 = self.get_token_string();
-                            return self.get_tokenize_error(s, t2, c);
-                        }
-                    },
+                    ScanResult::EOF => return TokenizeResult::EOF,
                 }
             }
         }
@@ -235,7 +220,7 @@ fn test() {
         &ZeroScanner,
         &IntegerScanner,
     ];
-    // lex_from_str("|Ab", vec!["Pipe", "Otag<Ab>"], scanners);
+
     lex_from_str("|: abc 123", "Pipe Otag<:> Chvc<abc> Nmbr<123>", scanners);
 }
 
@@ -250,17 +235,16 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
                 let s = format!("{:?}", t);
                 result.push(s);
             },
+
             TokenizeResult::Err(e) => {
                 let s = format!("{}", e);
                 result.push(s);
                 break;
             },
-            TokenizeResult::EOF(t) => {
-                let s = format!("{:?}", t);
-                result.push(s);
+
+            TokenizeResult::EOF => {
                 break;
             }
-            TokenizeResult::EmptyEOF => { break; },
         }
     }
     let r = result.join(" ");

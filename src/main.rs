@@ -5,14 +5,15 @@ extern crate epiqs;
 // use std::io::prelude::*;
 // use std::io::BufReader;
 // use std::fs::File;
-use std::error::Error;
+// use std::error::Error;
 // use std::path::Path;
 // use std::io;
 // use std::io::Read;
 // use std::cell::RefCell;
 
-// use epiqs::lexer::Lexer;
-// use epiqs::parser::Parser;
+use epiqs::lexer::*;
+// use epiqs::parser::*;
+use epiqs::printer::*;
 
 /*
 fn exec() -> Result<Vec<String>, Box<Error>> {
@@ -27,10 +28,21 @@ fn exec() -> Result<Vec<String>, Box<Error>> {
     }
     Ok(vec![])
 }*/
-    /*
-fn m_ain() {
 
+fn main() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphanumericScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+        &EOFScanner,
+    ];
+
+    print_str("abc", "abc", scanners);
+
+    /*
     match exec() {
         _ => println!("{:?}", "finished"),
     }
-}*/
+    */
+}

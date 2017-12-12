@@ -41,8 +41,9 @@ impl AbstractSyntaxTree {
 
     pub fn push(&mut self, epiq: Epiq) {
         self.tree.push(epiq);
+        self.max_index.set((self.tree.len() - 1) as u32);
         self.entrypoint = Some(self.max_index.get());
-        self.max_index.set(self.tree.len() as u32);
+        println!("self.entrypoint: {:?}", self.entrypoint);
     }
 }
 
@@ -66,7 +67,7 @@ pub struct Aexp {
 
 use std::fmt;
 
-#[derive(Clone, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar

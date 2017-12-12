@@ -3,23 +3,28 @@ mod error;
 use std::cell::{RefCell, Ref};
 use core::*;
 use lexer::*;
-
 use self::error::Error;
-
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     ast: RefCell<AbstractSyntaxTree>,
     state: State,
-    current_token: RefCell<Option<Tokn>>,
+    current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     aexp_tokens: Vec<Vec<Tokn>>,
 }
 
+#[derive(Eq, PartialEq, Clone, Debug)]
 enum State {
     Aexp,
     WaitOtag,
     Error(String),
-    EOF,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug)]
+enum CurrentToken {
+    SOT, // Start Of Token
+    Has(Tokn),
+    EOT, // End Of Token
 }
 
 impl<'a> Parser<'a> {
@@ -28,7 +33,7 @@ impl<'a> Parser<'a> {
             lexer: lexer,
             ast: RefCell::new(AbstractSyntaxTree::new()),
             state: State::Aexp,
-            current_token: RefCell::new(None),
+            current_token: RefCell::new(/*None*/CurrentToken::SOT),
             aexp_tokens: vec![vec![]],
         }
     }
@@ -36,47 +41,81 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self) -> Ref<AbstractSyntaxTree> {
         /*
         loop {
-            let s = self.state;
-            let t = self.current_token;
+            let s = self.state.clone();
+            let t = self.current_token.borrow().clone();
 
+            println!("parser state: {:?} token: {:?}", s, t);
             match s {
                 State::Aexp => {
                     match t {
-                        Ok(Tokn::Pipe) => {
-                            self.state = State::WaitOtag;
+                        CurrentToken::SOT => {
+                            // 初期値状態 最初のトークンを取得する
                             self.consume_token();
+                        },
+
+                        CurrentToken::Has(Tokn::Pipe) => {
+                            self.state = State::WaitOtag;
+
+                            self.consume_token();
+
                             let len = self.aexp_tokens.len();
-                            self.aexp_tokens[len - 1].push(t);
+                            self.aexp_tokens[len - 1].push(Tokn::Pipe);
                         },
-                        Ok(Tokn::Chvc(ref s)) => {
 
-                        },
-                        Ok(Tokn::Nmbr(ref s)) => {
+                        CurrentToken::Has(Tokn::Chvc(ref s)) => {
+                            self.consume_token();
 
+                            let name = Epiq::Name(s.clone());
+                            self.ast.borrow_mut().push(name);
+
+                            let len = self.aexp_tokens.len();
+                            self.aexp_tokens[len - 1].push(Tokn::Chvc(s.to_string()));
                         },
+
+                        CurrentToken::Has(Tokn::Nmbr(ref s)) => {
+                            self.consume_token();
+                            self.ast.borrow_mut().push(Epiq::Uit8(s.parse::<u64>().unwrap()));
+
+                            let len = self.aexp_tokens.len();
+                            self.aexp_tokens[len - 1].push(Tokn::Nmbr(ref s));
+                        },
+
+                        CurrentToken::EOT => {
+                            break;
+                        },
+                        _ => {},
                     }
                 },
 
                 State::WaitOtag => {
                     match t {
-                        Ok(Tokn::Otag(":")) => {
-                            self.state = State::Aexp;
-                            self.consume_token();
-                            let len = self.aexp_tokens.len();
-                            self.aexp_tokens[len - 1].push(t);
-                            self.aexp_tokens.push(vec![]);
+                        CurrentToken::Has(Tokn::Otag(tag_name)) => {
+                            match tag_name.as_str() {
+                                ":" => {
+                                    self.state = State::Aexp;
+                                    self.consume_token();
+                                    let len = self.aexp_tokens.len();
+                                    self.aexp_tokens[len - 1].push(Tokn::Otag(tag_name));
+                                    self.aexp_tokens.push(vec![]);
+                                },
+                                _ => {},
+                            }
                         },
+                        _ => {},
                     }
                 },
 
-                State::Error(e) => {
-
-                }
+                State::Error(_e) => {
+                    break;
+                },
             }
         }
         */
+
         self.consume_token();
+
         self.parse_aexp();
+
         self.ast.borrow()
     }
 
@@ -85,26 +124,23 @@ impl<'a> Parser<'a> {
         match res {
             TokenizeResult::Ok(t) => {
                 let mut token = self.current_token.borrow_mut();
-                *token = Some(t);
+                *token = CurrentToken::Has(t);
             },
             TokenizeResult::Err(e) => {
                 self.state = State::Error(format!("{}", e));
             }
-            TokenizeResult::EOF(t) => {
+            TokenizeResult::EOF => {
                 let mut token = self.current_token.borrow_mut();
-                *token = Some(t);
-                self.state = State::EOF;
-            },
-            TokenizeResult::EmptyEOF => {
-                self.state = State::EOF;
+                *token = CurrentToken::EOT;
             },
         }
     }
 
     fn parse_aexp(&mut self) -> Result<u32, Error> {
-        let res = self.current_token.borrow();
-        match *res {
-            Some(Tokn::Pipe) => {
+        let res = self.current_token.borrow().clone();
+
+        match res {
+            CurrentToken::Has(Tokn::Pipe) => {
                 self.consume_token();
                 self.parse_otag()
             },
@@ -114,8 +150,9 @@ impl<'a> Parser<'a> {
 
     // Pipe QTag Pval QVal
     fn parse_otag(&mut self) -> Result<u32, Error> {
-        match *self.current_token.borrow() {
-            Some(Tokn::Otag(ref otag)) => {
+        let current_token = self.current_token.borrow().clone();
+        match current_token {
+            CurrentToken::Has(Tokn::Otag(ref otag)) => {
                 self.consume_token();
                 match self.parse_aexp() {
                     Ok(pidx) => {
@@ -130,19 +167,20 @@ impl<'a> Parser<'a> {
                     _ => Err(Error::UnknownError(2)),
                 }
             },
-            Some(ref t) => Err(Error::TokenError(t.clone())),
+            CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),
             _ => Err(Error::UnknownError(1)),
         }
     }
 
     fn parse_literal(&mut self) -> Result<u32, Error> {
-        match *self.current_token.borrow() {
-            Some(Tokn::Chvc(ref s)) => {
+        let current_token = self.current_token.borrow().clone();
+        match current_token {
+            CurrentToken::Has(Tokn::Chvc(ref s)) => {
                 self.consume_token();
                 self.ast.borrow_mut().push(Epiq::Name(s.clone()));
                 Ok(self.ast.borrow().max_index.get())
             },
-            Some(Tokn::Nmbr(ref s)) => {
+            CurrentToken::Has(Tokn::Nmbr(ref s)) => {
                 self.consume_token();
                 self.ast.borrow_mut().push(Epiq::Uit8(s.parse::<u64>().unwrap()));
                 Ok(self.ast.borrow().max_index.get())

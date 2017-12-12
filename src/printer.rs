@@ -14,31 +14,36 @@ impl<'a> Printer<'a> {
 
     pub fn print(&self) -> String {
         if let Some(entrypoint) = self.ast.entrypoint {
-            self.print_aexp(entrypoint)
+            println!("Printer print");
+            self.print_aexp(entrypoint, 0)
         } else {
             "".to_string()
         }
     }
 
-    fn print_aexp(&self, i: u32) -> String {
+    fn print_aexp(&self, i: u32, nest_level: u32) -> String {
         let epiq = self.ast.get(i);
         match *epiq {
             Epiq::Name(ref n) => n.to_string(),
             Epiq::Uit8(ref n) => format!("{}", n),
             Epiq::Tpiq { ref o, p, q } => {
-                format!("{}<{} {}>", o, self.print_aexp(p), self.print_aexp(q))
+                format!("{}<{} {}>", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             }
-            _ => "".to_string(),
+            // _ => "".to_string(),
         }
     }
 }
 
 #[test]
-#[ignore]
-fn test_print() {
+// #[ignore]
+fn test_print_symbol() {
     let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner];
     print_str("abc", "abc", scanners);
+}
 
+#[test]
+// #[ignore]
+fn test_print_number() {
     let scanners2: &Vec<&Scanner> = &vec![&EOFScanner, &ZeroScanner, &IntegerScanner];
     print_str("123", "123", scanners2);
 }
@@ -52,14 +57,26 @@ fn test_print_tpiq() {
         &IntegerScanner,
         &EOFScanner,
     ];
-    print_str("|: abc 123", "|: abc 123", scanners);
+    print_str("|: abc 123", ":<abc 123>", scanners);
 }
 
-fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
+#[test]
+fn test_print_nested_tpiq() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphanumericScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+        &EOFScanner,
+    ];
+    print_str("|: |: cde |: abc 123 456", ":<:<cde :<abc 123>> 456>", scanners);
+}
+
+pub fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
     let mut iter = left.bytes();
     let lexer = Lexer::new(&mut iter, scanners);
     let mut parser = Parser::new(lexer);
-    let mut ast = parser.parse();
+    let ast = parser.parse();
     let printer = Printer::new(ast.deref());
 
     assert_eq!(printer.print(), right);
