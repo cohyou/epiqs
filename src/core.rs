@@ -29,6 +29,7 @@ pub struct AbstractSyntaxTree {
     tree: Vec<Epiq>,
     pub max_index: Cell<u32>,
 }
+
 impl AbstractSyntaxTree {
     pub fn new() -> Self {
         AbstractSyntaxTree{ entrypoint: None, tree: vec![], max_index: Cell::new(0) }

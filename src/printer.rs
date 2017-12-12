@@ -43,6 +43,18 @@ fn test_print() {
     print_str("123", "123", scanners2);
 }
 
+#[test]
+fn test_print_tpiq() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphanumericScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+        &EOFScanner,
+    ];
+    print_str("|: abc 123", "|: abc 123", scanners);
+}
+
 fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
     let mut iter = left.bytes();
     let lexer = Lexer::new(&mut iter, scanners);

@@ -1,4 +1,4 @@
-use ::token::Tokn;
+use core::*;
 
 #[derive(Debug)]
 pub enum Error {

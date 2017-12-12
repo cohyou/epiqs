@@ -227,6 +227,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 }
 
 #[test]
+#[ignore]
 fn test() {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &DelimiterScanner,

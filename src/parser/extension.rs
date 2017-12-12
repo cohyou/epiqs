@@ -1,4 +1,35 @@
 /*
+pub struct Parser<'a> {
+    lexer: Lexer<'a, 'a>,
+    tokens: Vec<Tokn>,
+    p: usize, // index of current token
+    // markers: Vec<usize>, // use as stack of returning points when backtracking
+    vm: Heliqs,
+}
+
+impl<'a> Parser<'a> {
+
+    /// garantee existence of i tokens in self.tokens
+    fn sync_tokens(&mut self, i: usize) {
+        // println!("sync_tokens self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
+        if self.p + i > self.tokens.len() {
+            let n = (self.p + i) - self.tokens.len();
+            self.consume_tokens(n);
+        }
+    }
+
+    /// consume multiple (count of n) tokens
+    fn consume_tokens(&mut self, n: usize) {
+        for _ in 0..n {
+            match self.lexer.next_token() {
+                Ok(t) => { self.tokens.push(t); },
+                Err(_) => {},
+            }
+
+        }
+    }
+}
+
 /// for parsing of cons list
 fn parse_aexp_excluding_cons(&mut self) -> Result<usize, Error> {
     match self.parse_affx() {
