@@ -27,7 +27,7 @@ impl<'a> Printer<'a> {
             Epiq::Name(ref n) => n.to_string(),
             Epiq::Uit8(ref n) => format!("{}", n),
             Epiq::Tpiq { ref o, p, q } => {
-                format!("{}<{} {}>", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
+                format!("{}< {} {} >", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             }
             // _ => "".to_string(),
         }
@@ -57,7 +57,7 @@ fn test_print_tpiq() {
         &IntegerScanner,
         &EOFScanner,
     ];
-    print_str("|: abc 123", ":<abc 123>", scanners);
+    print_str("|: abc 123", ":< abc 123 >", scanners);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn test_print_nested_tpiq() {
         &IntegerScanner,
         &EOFScanner,
     ];
-    print_str("|: |: cde |: abc 123 456", ":<:<cde :<abc 123>> 456>", scanners);
+    print_str("|: |: cde |: abc 123 456", ":< :< cde :< abc 123 > > 456 >", scanners);
 }
 
 pub fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
