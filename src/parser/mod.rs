@@ -1,3 +1,10 @@
+macro_rules! push {
+    ($s:ident, $t:expr) => {{
+        $s.ast.borrow_mut().push($t);
+        Ok($s.ast.borrow().max_index.get())
+    }}
+}
+
 mod error;
 
 use std::cell::{RefCell, Ref};
@@ -8,18 +15,18 @@ use self::error::Error;
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     ast: RefCell<AbstractSyntaxTree>,
-    state: State,
+    // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
-    aexp_tokens: Vec<Vec<Tokn>>,
+    // aexp_tokens: Vec<Vec<Tokn>>,
 }
-
+/*
 #[derive(Eq, PartialEq, Clone, Debug)]
 enum State {
     Aexp,
     WaitOtag,
     Error(String),
 }
-
+*/
 #[derive(Eq, PartialEq, Clone, Debug)]
 enum CurrentToken {
     SOT, // Start Of Token
@@ -32,13 +39,19 @@ impl<'a> Parser<'a> {
         Parser {
             lexer: lexer,
             ast: RefCell::new(AbstractSyntaxTree::new()),
-            state: State::Aexp,
+            // state: State::Aexp,
             current_token: RefCell::new(/*None*/CurrentToken::SOT),
-            aexp_tokens: vec![vec![]],
+            // aexp_tokens: vec![vec![]],
         }
     }
 
     pub fn parse(&mut self) -> Ref<AbstractSyntaxTree> {
+        self.consume_token();
+
+        self.parse_aexp();
+
+        self.ast.borrow()
+
         /*
         loop {
             let s = self.state.clone();
@@ -111,12 +124,6 @@ impl<'a> Parser<'a> {
             }
         }
         */
-
-        self.consume_token();
-
-        self.parse_aexp();
-
-        self.ast.borrow()
     }
 
     fn consume_token(&mut self) {
@@ -127,7 +134,7 @@ impl<'a> Parser<'a> {
                 *token = CurrentToken::Has(t);
             },
             TokenizeResult::Err(e) => {
-                self.state = State::Error(format!("{}", e));
+                // self.state = State::Error(format!("{}", e));
             }
             TokenizeResult::EOF => {
                 let mut token = self.current_token.borrow_mut();
@@ -154,19 +161,13 @@ impl<'a> Parser<'a> {
         match current_token {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
                 self.consume_token();
-                match self.parse_aexp() {
-                    Ok(pidx) => {
-                        match self.parse_aexp() {
-                            Ok(qidx) => {
-                                self.ast.borrow_mut().push(Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx});
-                                Ok(self.ast.borrow().max_index.get())
-                            },
-                            _ => Err(Error::UnknownError(3)),
-                        }
-                    },
-                    _ => Err(Error::UnknownError(2)),
-                }
+
+                /* ?マクロを使いたい */
+                let pidx = (self.parse_aexp())?;
+                let qidx = (self.parse_aexp())?;
+                push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
             },
+
             CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),
             _ => Err(Error::UnknownError(1)),
         }
@@ -177,13 +178,11 @@ impl<'a> Parser<'a> {
         match current_token {
             CurrentToken::Has(Tokn::Chvc(ref s)) => {
                 self.consume_token();
-                self.ast.borrow_mut().push(Epiq::Name(s.clone()));
-                Ok(self.ast.borrow().max_index.get())
+                push!(self, Epiq::Name(s.clone()))
             },
             CurrentToken::Has(Tokn::Nmbr(ref s)) => {
                 self.consume_token();
-                self.ast.borrow_mut().push(Epiq::Uit8(s.parse::<u64>().unwrap()));
-                Ok(self.ast.borrow().max_index.get())
+                push!(self, Epiq::Uit8(s.parse::<u64>().unwrap()))
             },
             _ => Err(Error::UnknownError(10)),
         }
