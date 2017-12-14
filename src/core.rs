@@ -5,9 +5,9 @@ use std::cell::Cell;
 pub enum Epiq {
     Name(String),
     Uit8(u64),
+    Unit,
     Tpiq { o: String, p: u32, q: u32}, // tagged piq
 
-    // Unit,
     // Text(String),
 
     // Lpiq { p: usize, q: usize }, // (linked) list piq
@@ -42,28 +42,13 @@ impl AbstractSyntaxTree {
     pub fn push(&mut self, epiq: Epiq) {
         self.tree.push(epiq);
         self.max_index.set((self.tree.len() - 1) as u32);
+    }
+
+    pub fn push_and_entry(&mut self, epiq: Epiq) {
+        self.push(epiq);
         self.entrypoint = Some(self.max_index.get());
-        println!("self.entrypoint: {:?}", self.entrypoint);
     }
 }
-
-/*
-use std::fmt;
-use std::fmt::Debug;
-
-/// A(ffix)-expression
-#[derive(Debug)]
-pub struct Aexp {
-    mark: Vec<Epiq>, // @ annotation
-    envr: Vec<Epiq>, // $ attribute
-    evnt: Vec<Epiq>, // % attribute
-    cond: Vec<Epiq>, // ? attribute
-    appl: Vec<Epiq>, // ! action
-    ctgr: Vec<Epiq>, // ^ annotation
-    epiq: Epiq,
-    slce: Vec<Epiq>, // / action
-}
-*/
 
 use std::fmt;
 
@@ -80,6 +65,8 @@ pub enum Tokn {
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
     Nmbr(String), // Number 数値（様々な形式を含むが、まずは整数のみ）
+
+    Smcl, // ; semi colon
 
     /*
 
@@ -98,7 +85,7 @@ pub enum Tokn {
 
     Crrt, // ^ carret
     Dllr, // $ dollar
-    Smcl, // ; semi colon
+
     Bang, // ! exclamation
 
     // 残りの記号も列挙
@@ -142,6 +129,8 @@ impl fmt::Debug for Tokn {
             Tokn::Chvc(ref s) => write!(f, "Chvc<{}>", s),
             Tokn::Nmbr(ref s) => write!(f, "Nmbr<{}>", s),
 
+            Tokn::Smcl => write!(f, "Smcl"),
+
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*
@@ -159,7 +148,7 @@ impl fmt::Debug for Tokn {
 
             &Tokn::Crrt => write!(f, "Crrt"),
             &Tokn::Dllr => write!(f, "Dllr"),
-            &Tokn::Smcl => write!(f, "Smcl"),
+
             &Tokn::Bang => write!(f, "Bang"),
 
             // 扱いが不明瞭だがひとまず足しておく

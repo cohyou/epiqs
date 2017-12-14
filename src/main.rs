@@ -11,7 +11,7 @@ extern crate epiqs;
 // use std::io::Read;
 // use std::cell::RefCell;
 
-use epiqs::lexer::*;
+// use epiqs::lexer::*;
 // use epiqs::parser::*;
 use epiqs::printer::*;
 
@@ -30,15 +30,7 @@ fn exec() -> Result<Vec<String>, Box<Error>> {
 }*/
 
 fn main() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![
-        &DelimiterScanner,
-        &AlphanumericScanner,
-        &ZeroScanner,
-        &IntegerScanner,
-        &EOFScanner,
-    ];
-
-    print_str("abc", "abc", scanners);
+    print_str("abc", "abc");
 
     /*
     match exec() {

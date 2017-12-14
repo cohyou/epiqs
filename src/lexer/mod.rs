@@ -52,6 +52,18 @@ macro_rules! print_lexer_info {
     }*/}
 }
 
+macro_rules! print_continue {
+    () => {
+        // println!("Continue");
+    }
+}
+
+macro_rules! print_finished_token {
+    () => {
+        // println!("Ok: {:?}", r);
+    }
+}
+
 mod error;
 
 mod eof;
@@ -183,7 +195,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
                 match scanner.scan(s, c) {
                     ScanResult::Continue(ref opts) => {
-                        println!("Continue");
+                        print_continue!();
                         self.exec_option(s, c, opts);
                     },
 
@@ -191,7 +203,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
                             self.exec_option(s, c, opts);
-                            println!("Ok: {:?}", r);
+                            print_finished_token!();
                             return TokenizeResult::Ok(r);
                         } else {
                             let t2 = self.get_token_string();
@@ -213,7 +225,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
 #[test]
 #[ignore]
-fn test() {
+fn test_lexer_one_piq() {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &DelimiterScanner,
         &AlphanumericScanner,
@@ -222,6 +234,18 @@ fn test() {
     ];
 
     lex_from_str("|: abc 123", "Pipe Otag<:> Chvc<abc> Nmbr<123>", scanners);
+}
+
+#[test]
+fn test_lexer_bind_piq() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphanumericScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+    ];
+
+    lex_from_str("|# abc 123", "Pipe Otag<#> Chvc<abc> Nmbr<123>", scanners);
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {

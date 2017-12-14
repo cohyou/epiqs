@@ -1,3 +1,73 @@
+use std::cell::RefCell;
+use std::u32::MAX;
+use core::*;
+
+pub struct Evaluator<'a> {
+    ast :&'a RefCell<AbstractSyntaxTree>,
+}
+
+impl<'a> Evaluator<'a> {
+    pub fn new(ast :&'a RefCell<AbstractSyntaxTree>) -> Evaluator {
+        Evaluator{ ast: ast }
+    }
+
+    pub fn eval(&self) -> Option<&RefCell<AbstractSyntaxTree>> {
+        let index;
+        {
+            let borrowed_ast = self.ast.borrow();
+            index = borrowed_ast.entrypoint.unwrap();
+        }
+        let result = self.eval_internal(index);
+        println!("max: {:?} index: {:?}", result, index);
+        if result != index {
+            // なんらかの変化があったので反映する必要がある
+            // ここだと、entrypointを変更する
+            let mut ast = self.ast.borrow_mut();
+            (*ast).entrypoint = Some(result);
+        }
+
+        Some(self.ast)
+    }
+
+    fn eval_internal(&self, index: u32) -> u32 {
+        let should_push = {
+            let borrowed_ast = self.ast.borrow();
+            let piq = borrowed_ast.get(index);
+
+            match piq {
+                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => false,
+                &Epiq::Tpiq{ref o,p:_p,q:_q} => {
+                    match o.as_ref() {
+                        "#" => {
+                            true
+                        },
+                        _ => false,
+                    }
+                },
+                // _ => MAX,
+            }
+        };
+
+        if should_push {
+            // TODO: 実際のbindはあとにして、値だけ返す
+            let v = Epiq::Unit;
+            // まずpushだけ
+            self.ast.borrow_mut().push(v);
+            self.ast.borrow().max_index.get()
+        } else {
+            index
+        }
+    }
+}
+
+#[test]
+#[ignore]
+fn test() {
+    let ast = &RefCell::new(AbstractSyntaxTree::new());
+    let evaluator = Evaluator::new(ast);
+    evaluator.eval();
+}
+
 /*
 fn beta_reduct(&mut self, entry: usize) {
     /*

@@ -1,20 +1,21 @@
-use std::ops::Deref;
+use std::cell::RefCell;
+// use std::ops::Deref;
 use core::*;
 use lexer::*;
 use parser::*;
+use evaluator::*;
 
 struct Printer<'a> {
-    ast: &'a AbstractSyntaxTree,
+    ast: &'a RefCell<AbstractSyntaxTree>,
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(ast: &'a AbstractSyntaxTree) -> Self {
+    pub fn new(ast: &'a RefCell<AbstractSyntaxTree>) -> Self {
         Printer{ ast: ast }
     }
 
     pub fn print(&self) -> String {
-        if let Some(entrypoint) = self.ast.entrypoint {
-            println!("Printer print");
+        if let Some(entrypoint) = self.ast.borrow().entrypoint {
             self.print_aexp(entrypoint, 0)
         } else {
             "".to_string()
@@ -22,10 +23,12 @@ impl<'a> Printer<'a> {
     }
 
     fn print_aexp(&self, i: u32, nest_level: u32) -> String {
-        let epiq = self.ast.get(i);
+        let ast = self.ast.borrow();
+        let epiq = ast.get(i);
         match *epiq {
             Epiq::Name(ref n) => n.to_string(),
             Epiq::Uit8(ref n) => format!("{}", n),
+            Epiq::Unit => ";".to_string(),
             Epiq::Tpiq { ref o, p, q } => {
                 format!("{}< {} {} >", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             }
@@ -35,49 +38,87 @@ impl<'a> Printer<'a> {
 }
 
 #[test]
-// #[ignore]
+#[ignore]
 fn test_print_symbol() {
-    let scanners: &Vec<&Scanner> = &vec![&EOFScanner, &AlphanumericScanner];
-    print_str("abc", "abc", scanners);
+    print_str("abc", "abc");
 }
 
 #[test]
-// #[ignore]
+#[ignore]
 fn test_print_number() {
-    let scanners2: &Vec<&Scanner> = &vec![&EOFScanner, &ZeroScanner, &IntegerScanner];
-    print_str("123", "123", scanners2);
+    print_str("123", "123");
 }
 
 #[test]
+fn test_print_unit() {
+    print_str(";", ";");
+}
+
+#[test]
+#[ignore]
 fn test_print_tpiq() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![
-        &DelimiterScanner,
-        &AlphanumericScanner,
-        &ZeroScanner,
-        &IntegerScanner,
-        &EOFScanner,
-    ];
-    print_str("|: abc 123", ":< abc 123 >", scanners);
+    // print_str("|: abc 123", ":< abc 123 >");
+    print_str("|# abc 123", "#< abc 123 >");
 }
 
 #[test]
 fn test_print_nested_tpiq() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![
-        &DelimiterScanner,
-        &AlphanumericScanner,
-        &ZeroScanner,
-        &IntegerScanner,
-        &EOFScanner,
-    ];
-    print_str("|: |: cde |: abc 123 456", ":< :< cde :< abc 123 > > 456 >", scanners);
+    print_str("|: |: cde |: abc 123 456", ":< :< cde :< abc 123 > > 456 >");
 }
 
-pub fn print_str(left: &str, right: &str, scanners: &Vec<&Scanner>) {
+#[test]
+#[ignore]
+fn test_print_evaled_empty_ast() {
+    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    let evaluator = Evaluator::new(empty_ast);
+    let evaled_ast = evaluator.eval().unwrap();
+    let printer = Printer::new(evaled_ast);
+    assert_eq!(printer.print(), "");
+}
+
+#[test]
+fn test_print_evaled_symbol_ast() {
+    print_evaled_str("abc", "abc");
+}
+
+#[test]
+fn test_print_evaled_number_ast() {
+    print_evaled_str("123", "123");
+}
+
+#[test]
+fn test_print_evaled_define_ast() {
+    // define symbol is number
+    print_evaled_str("|# abc 123", ";");
+}
+
+pub fn print_str(left: &str, right: &str) {
     let mut iter = left.bytes();
+    let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
-    let mut parser = Parser::new(lexer);
-    let ast = parser.parse();
-    let printer = Printer::new(ast.deref());
+
+    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    let mut parser = Parser::new(lexer, empty_ast);
+    let parsed_ast = parser.parse();
+
+    let printer = Printer::new(parsed_ast);
+
+    assert_eq!(printer.print(), right);
+}
+
+fn print_evaled_str(left: &str, right: &str) {
+    let mut iter = left.bytes();
+    let scanners: &Vec<&Scanner> = &all_scanners!();
+    let lexer = Lexer::new(&mut iter, scanners);
+
+    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    let mut parser = Parser::new(lexer, empty_ast);
+    let parsed_ast = parser.parse();
+
+    let evaluator = Evaluator::new(parsed_ast);
+    let evaled_ast = evaluator.eval().unwrap();
+
+    let printer = Printer::new(evaled_ast);
 
     assert_eq!(printer.print(), right);
 }

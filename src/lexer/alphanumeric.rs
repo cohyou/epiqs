@@ -12,7 +12,7 @@ impl AlphanumericScanner {
     }
 
     fn is_otag_sign(&self, c: u8) -> bool {
-        c == b':'
+        c == b':' || c == b'#'
         // 区切り文字ならここでNameを終わらせる必要がある
         // ただし、全ての区切り文字がここで判断されるわけではない
         // b'[' | b']' | b'(' | b')' | b'{' | b'}' | b':' | b',' => self.finish_with_state(state),
