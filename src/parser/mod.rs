@@ -126,7 +126,7 @@ impl<'a, 'b> Parser<'a, 'b> {
             },
             CurrentToken::Has(Tokn::Nmbr(ref s)) => {
                 self.consume_token();
-                push!(self, Epiq::Uit8(s.parse::<u64>().unwrap()))
+                push!(self, Epiq::Uit8(s.parse::<i64>().unwrap()))
             },
             _ => Err(Error::UnknownError(10)),
         }

@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::u32::MAX;
 use std::collections::HashMap;
 use core::*;
 
@@ -47,15 +46,22 @@ impl<'a> Evaluator<'a> {
                         "#" => {
                             true
                         },
+                        // block
+                        r"\" => {
+                            // TODO: 一つ目の環境の中身も、返す-1もひとまず無視する
+                            // qのリストだけを逐次実行して、勝手に最後の値を返却するようにする
+                            // ただ、そもそも、blockを評価しても実行されるわけではなく、
+                            // 実行形式になるだけだ。
+                            true
+                        }
                         _ => false,
                     }
                 },
-                // _ => MAX,
             }
         };
 
         if should_push {
-            // TODO: 実際のbindはあとにして、値だけ返す
+            // TODO: 実際のbindではなく、適当に固定値をbindしている
             let v = Epiq::Unit;
 
             // bind

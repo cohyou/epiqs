@@ -72,6 +72,21 @@ fn test_print_list() {
 }
 
 #[test]
+fn test_print_empty_env() {
+    print_str("|% ; -1", "%< ; -1 >");
+}
+
+#[test]
+fn test_print_resolve_piq() {
+    print_str("|@ abc ;", "@< abc ; >");
+}
+
+#[test]
+fn test_print_block() {
+    print_str(r"|\ |% ; -1 [|# abc 123 |@ abc ;]", r"\< %< ; -1 > :< #< abc 123 > :< @< abc ; > ; > > >");
+}
+
+#[test]
 #[ignore]
 fn test_print_evaled_empty_ast() {
     let empty_ast = &RefCell::new(AbstractSyntaxTree::new());

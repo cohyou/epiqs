@@ -33,7 +33,7 @@ impl Scanner for IntegerScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
         match state {
             State::Normal => {
-                if c >= b'1' && c <= b'9' {
+                if c == b'-' || (c >= b'1' && c <= b'9') {
                     push_into_mode!(InnerNumber)
                 } else {
                     go_ahead!()

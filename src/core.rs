@@ -4,7 +4,7 @@ use std::cell::Cell;
 #[derive(Debug)]
 pub enum Epiq {
     Name(String),
-    Uit8(u64),
+    Uit8(i64),
     Unit,
     Tpiq { o: String, p: u32, q: u32}, // tagged piq
 
