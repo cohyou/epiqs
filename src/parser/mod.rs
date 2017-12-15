@@ -75,6 +75,10 @@ impl<'a, 'b> Parser<'a, 'b> {
                 self.consume_token();
                 push!(self, Epiq::Unit)
             }
+            CurrentToken::Has(Tokn::Lbkt) => {
+                self.consume_token();
+                self.parse_list()
+            }
             _ => self.parse_literal(),
         }
     }
@@ -94,6 +98,22 @@ impl<'a, 'b> Parser<'a, 'b> {
 
             CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),
             _ => Err(Error::UnknownError(1)),
+        }
+    }
+
+    fn parse_list(&mut self) -> Result<u32, Error> {
+        let mut current_token = self.current_token.borrow().clone();
+        // 閉じbracketが出るまで再帰呼出
+        match current_token {
+            CurrentToken::Has(Tokn::Rbkt) => {
+                self.consume_token();
+                push!(self, Epiq::Unit)
+            },
+            _ => {
+                let pidx = (self.parse_aexp())?;
+                let qidx = (self.parse_list())?;
+                push!(self, Epiq::Tpiq{o: ":".to_string(), p: pidx, q: qidx})
+            }
         }
     }
 
@@ -121,7 +141,7 @@ impl<'a, 'b> Parser<'a, 'b> {
         Error(String),
     }
     */
-    
+
     /*
     fn parse_flat() {
         loop {

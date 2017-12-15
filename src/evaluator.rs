@@ -1,17 +1,23 @@
 use std::cell::RefCell;
 use std::u32::MAX;
+use std::collections::HashMap;
 use core::*;
+
+struct SymbolTable {
+    pub table: HashMap<String, Option<Epiq>>,
+}
 
 pub struct Evaluator<'a> {
     ast :&'a RefCell<AbstractSyntaxTree>,
+    symbol_table: SymbolTable,
 }
 
 impl<'a> Evaluator<'a> {
     pub fn new(ast :&'a RefCell<AbstractSyntaxTree>) -> Evaluator {
-        Evaluator{ ast: ast }
+        Evaluator{ ast: ast, symbol_table: SymbolTable{ table: HashMap::new() } }
     }
 
-    pub fn eval(&self) -> Option<&RefCell<AbstractSyntaxTree>> {
+    pub fn eval(&mut self) -> Option<&RefCell<AbstractSyntaxTree>> {
         let index;
         {
             let borrowed_ast = self.ast.borrow();
@@ -29,7 +35,7 @@ impl<'a> Evaluator<'a> {
         Some(self.ast)
     }
 
-    fn eval_internal(&self, index: u32) -> u32 {
+    fn eval_internal(&mut self, index: u32) -> u32 {
         let should_push = {
             let borrowed_ast = self.ast.borrow();
             let piq = borrowed_ast.get(index);
@@ -51,6 +57,10 @@ impl<'a> Evaluator<'a> {
         if should_push {
             // TODO: 実際のbindはあとにして、値だけ返す
             let v = Epiq::Unit;
+
+            // bind
+            self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
+
             // まずpushだけ
             self.ast.borrow_mut().push(v);
             self.ast.borrow().max_index.get()
@@ -64,7 +74,7 @@ impl<'a> Evaluator<'a> {
 #[ignore]
 fn test() {
     let ast = &RefCell::new(AbstractSyntaxTree::new());
-    let evaluator = Evaluator::new(ast);
+    let mut evaluator = Evaluator::new(ast);
     evaluator.eval();
 }
 

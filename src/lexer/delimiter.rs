@@ -9,7 +9,8 @@ impl Scanner for DelimiterScanner {
         match state {
             State::Normal => {
                 match c {
-                    b'|' | b';' => push_into_mode!(Delimiter),
+                    b'|' | b';' |
+                    b'[' | b']' => push_into_mode!(Delimiter),
                     _    => go_ahead!(),
                 }
             },
@@ -28,6 +29,8 @@ impl Scanner for DelimiterScanner {
         match token_string.as_ref() {
             "|" => Some(Tokn::Pipe),
             ";" => Some(Tokn::Smcl),
+            "[" => Some(Tokn::Lbkt),
+            "]" => Some(Tokn::Rbkt),
             _ => None,
         }
     }

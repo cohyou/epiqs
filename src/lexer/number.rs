@@ -11,8 +11,9 @@ impl Scanner for ZeroScanner {
             push_into_mode!(ZeroNumber)
         } else if state == State::ZeroNumber {
             match c {
-                0 => finish!()/*ScanResult::EOF*/,
+                0 => finish!(),
                 _ if is_whitespace(c) => finish!(),
+                _ if is_token_end_delimiter(c) => delimite!(),
                 _ => ScanResult::Error,
             }
         } else {
@@ -40,12 +41,10 @@ impl Scanner for IntegerScanner {
             },
             State::InnerNumber => {
                 match c {
-                    0 => finish!()/*ScanResult::EOF*/,
-                    _ if c >= b'0' && c <= b'9' => push!(),
+                    0 => finish!(),
                     _ if is_whitespace(c) => finish!(),
-                    // 区切り文字ならここで数値を終わらせる必要がある
-                    // ただし、全ての区切り文字がここで判断されるわけではない
-                    // '[' | ']' | '(' | ')' | ':' | '|' => Some("finish"),
+                    _ if is_token_end_delimiter(c) => delimite!(),
+                    _ if c >= b'0' && c <= b'9' => push!(),
                     _ => ScanResult::Error,
                 }
             }

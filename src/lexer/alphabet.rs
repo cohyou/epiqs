@@ -3,9 +3,9 @@ use lexer::*;
 use util::*;
 
 #[derive(Debug)]
-pub struct AlphanumericScanner;
+pub struct AlphabetScanner;
 
-impl AlphanumericScanner {
+impl AlphabetScanner {
     fn is_first_otag_letter(&self, c: u8) -> bool {
         // println!("is_first_otag_letter: {:?}", c);
         (c >= b'A' && c <= b'Z') || self.is_otag_sign(c)
@@ -13,9 +13,6 @@ impl AlphanumericScanner {
 
     fn is_otag_sign(&self, c: u8) -> bool {
         c == b':' || c == b'#'
-        // 区切り文字ならここでNameを終わらせる必要がある
-        // ただし、全ての区切り文字がここで判断されるわけではない
-        // b'[' | b']' | b'(' | b')' | b'{' | b'}' | b':' | b',' => self.finish_with_state(state),
     }
 
     fn is_first_name_letter(&self, c: u8) -> bool {
@@ -23,7 +20,7 @@ impl AlphanumericScanner {
     }
 }
 
-impl Scanner for AlphanumericScanner {
+impl Scanner for AlphabetScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
         match state {
             State::Normal => {
@@ -35,8 +32,9 @@ impl Scanner for AlphanumericScanner {
             },
             State::InnerOtag | State::InnerName => {
                 match c {
-                    0 => finish!()/*ScanResult::EOF*/,
+                    0 => finish!(),
                     _ if is_whitespace(c) => finish!(),
+                    _ if is_token_end_delimiter(c) => delimite!(),
                     _ if is_alphanumeric(c) => push!(),
                     _ => ScanResult::Error,
                 }
@@ -57,13 +55,13 @@ impl Scanner for AlphanumericScanner {
 #[test]
 #[ignore]
 fn test_otag() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
+    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphabetScanner];
     lex_from_str("Abc", "Otag<Abc>", scanners);
 }
 
 #[test]
 #[ignore]
 fn test_character_vector() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphanumericScanner];
+    let scanners: &mut Vec<&Scanner> = &mut vec![&AlphabetScanner];
     lex_from_str("abc", "Chvc<abc>", scanners);
 }

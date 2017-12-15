@@ -43,13 +43,13 @@ macro_rules! next_char {
 }
 
 macro_rules! print_lexer_info {
-    ($slf:ident, $e:ident) => {/*{
+    ($slf:ident, $e:ident) => {{
         let s = $slf.state.get();
         let c = $slf.current_char;
         let debug_t = $slf.get_token_string();
         let debub_c = $slf.get_char_string(c);
         println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
-    }*/}
+    }}
 }
 
 macro_rules! print_continue {
@@ -59,8 +59,8 @@ macro_rules! print_continue {
 }
 
 macro_rules! print_finished_token {
-    () => {
-        // println!("Ok: {:?}", r);
+    ($r:ident) => {
+        println!("Ok: {:?}", $r);
     }
 }
 
@@ -69,7 +69,7 @@ mod error;
 mod eof;
 mod number;
 mod delimiter;
-mod alphanumeric;
+mod alphabet;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -78,7 +78,7 @@ use core::*;
 use self::error::Error;
 
 pub use self::eof::EOFScanner;
-pub use self::alphanumeric::AlphanumericScanner;
+pub use self::alphabet::AlphabetScanner;
 pub use self::number::ZeroScanner;
 pub use self::number::IntegerScanner;
 pub use self::delimiter::DelimiterScanner;
@@ -203,7 +203,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
                         let t = self.get_token_string();
                         if let Some(r) = scanner.return_token(s, t) {
                             self.exec_option(s, c, opts);
-                            print_finished_token!();
+                            print_finished_token!(r);
                             return TokenizeResult::Ok(r);
                         } else {
                             let t2 = self.get_token_string();
@@ -228,7 +228,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 fn test_lexer_one_piq() {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &DelimiterScanner,
-        &AlphanumericScanner,
+        &AlphabetScanner,
         &ZeroScanner,
         &IntegerScanner,
     ];
@@ -237,15 +237,14 @@ fn test_lexer_one_piq() {
 }
 
 #[test]
+#[ignore]
 fn test_lexer_bind_piq() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![
-        &DelimiterScanner,
-        &AlphanumericScanner,
-        &ZeroScanner,
-        &IntegerScanner,
-    ];
+    lex_from_str_with_all_scanners("|# abc 123", "Pipe Otag<#> Chvc<abc> Nmbr<123>");
+}
 
-    lex_from_str("|# abc 123", "Pipe Otag<#> Chvc<abc> Nmbr<123>", scanners);
+#[test]
+fn test_bracket_list() {
+    lex_from_str_with_all_scanners("[dog 256 cat 512]", "Lbkt Chvc<dog> Nmbr<256> Chvc<cat> Nmbr<512> Rbkt");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
@@ -273,4 +272,15 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     }
     let r = result.join(" ");
     assert_eq!(r, right);
+}
+
+fn lex_from_str_with_all_scanners(text: &str, right: &str) {
+    let scanners: &mut Vec<&Scanner> = &mut vec![
+        &DelimiterScanner,
+        &AlphabetScanner,
+        &ZeroScanner,
+        &IntegerScanner,
+    ];
+
+    lex_from_str(text, right, scanners);
 }

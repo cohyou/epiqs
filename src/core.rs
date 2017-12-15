@@ -68,6 +68,9 @@ pub enum Tokn {
 
     Smcl, // ; semi colon
 
+    Lbkt, // [ left bracket
+    Rbkt, // ] right bracket
+
     /*
 
     Usnm(String), // under score and number (e.g. _0 _34)
@@ -76,8 +79,6 @@ pub enum Tokn {
 
     Dbqt, // " double quotation
 
-    Lbkt, // [ left bracket
-    Rbkt, // ] right bracket
     Lprn, // ( left parentheses
     Rprn, // ) right parentheses
     Lcrl, // { left curly brace
@@ -131,6 +132,9 @@ impl fmt::Debug for Tokn {
 
             Tokn::Smcl => write!(f, "Smcl"),
 
+            Tokn::Lbkt => write!(f, "Lbkt"),
+            Tokn::Rbkt => write!(f, "Rbkt"),
+
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*
@@ -138,8 +142,6 @@ impl fmt::Debug for Tokn {
 
             &Tokn::Dbqt => write!(f, "Dbqt"),
 
-            &Tokn::Lbkt => write!(f, "Lbkt"),
-            &Tokn::Rbkt => write!(f, "Rbkt"),
             &Tokn::Lprn => write!(f, "Lprn"),
             &Tokn::Rprn => write!(f, "Rprn"),
             &Tokn::Lcrl => write!(f, "Lcrl"),

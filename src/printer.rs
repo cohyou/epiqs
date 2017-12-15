@@ -67,10 +67,15 @@ fn test_print_nested_tpiq() {
 }
 
 #[test]
+fn test_print_list() {
+    print_str("[abc 123]", ":< abc :< 123 ; > >");
+}
+
+#[test]
 #[ignore]
 fn test_print_evaled_empty_ast() {
     let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
-    let evaluator = Evaluator::new(empty_ast);
+    let mut evaluator = Evaluator::new(empty_ast);
     let evaled_ast = evaluator.eval().unwrap();
     let printer = Printer::new(evaled_ast);
     assert_eq!(printer.print(), "");
@@ -115,7 +120,7 @@ fn print_evaled_str(left: &str, right: &str) {
     let mut parser = Parser::new(lexer, empty_ast);
     let parsed_ast = parser.parse();
 
-    let evaluator = Evaluator::new(parsed_ast);
+    let mut evaluator = Evaluator::new(parsed_ast);
     let evaled_ast = evaluator.eval().unwrap();
 
     let printer = Printer::new(evaled_ast);
