@@ -69,7 +69,11 @@ impl<'a, 'b> Parser<'a, 'b> {
         match res {
             CurrentToken::Has(Tokn::Pipe) => {
                 self.consume_token();
-                self.parse_otag()
+                self.parse_otag(Tokn::Pipe)
+            },
+            CurrentToken::Has(Tokn::Crrt) => {
+                self.consume_token();
+                self.parse_otag(Tokn::Crrt)
             },
             CurrentToken::Has(Tokn::Smcl) => {
                 self.consume_token();
@@ -84,7 +88,7 @@ impl<'a, 'b> Parser<'a, 'b> {
     }
 
     // Pipe QTag Pval QVal
-    fn parse_otag(&mut self) -> Result<u32, Error> {
+    fn parse_otag(&mut self, tokn: Tokn) -> Result<u32, Error> {
         let current_token = self.current_token.borrow().clone();
         match current_token {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
@@ -93,7 +97,11 @@ impl<'a, 'b> Parser<'a, 'b> {
                 /* ?マクロを使いたい */
                 let pidx = (self.parse_aexp())?;
                 let qidx = (self.parse_aexp())?;
-                push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
+                match tokn {
+                    Tokn::Pipe => push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx}),
+                    Tokn::Crrt => push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx}),
+                    _ => Err(Error::UnknownError(255)),
+                }
             },
 
             CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),

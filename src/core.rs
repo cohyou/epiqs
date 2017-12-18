@@ -1,19 +1,21 @@
 use std::cell::Cell;
 
 /// E(lemantal) piq
-#[derive(Debug)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Epiq {
     Name(String),
     Uit8(i64),
     Unit,
     Tpiq { o: String, p: u32, q: u32}, // tagged piq
+    Mpiq { o: String, p: u32, q: u32}, // metadata piq
+    // Apiq { p: u32, q: u32 }, // application piq
 
     // Text(String),
 
     // Lpiq { p: usize, q: usize }, // (linked) list piq
     // Vpiq { p: usize, q: usize }, // vector piq
     // Fpiq { p: usize, q: usize }, // function piq
-    // Apiq { p: usize, q: usize }, // application piq
+
     // Aexp { a: usize, e: usize }, // A-Expression
     // Prmt(usize), // anonymous parameter
     // Pprn(usize), // priority parentheses
@@ -56,6 +58,7 @@ use std::fmt;
 pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar
+    Crrt, // ^ carret
 
     // Coln, // : colon
 
@@ -84,7 +87,6 @@ pub enum Tokn {
     Lcrl, // { left curly brace
     Rcrl, // } right curly brace
 
-    Crrt, // ^ carret
     Dllr, // $ dollar
 
     Bang, // ! exclamation
@@ -124,6 +126,7 @@ impl fmt::Debug for Tokn {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Tokn::Pipe => write!(f, "Pipe"),
+            Tokn::Crrt => write!(f, "Crrt"),
 
             Tokn::Otag(ref s) => write!(f, "Otag<{}>", s),
 
@@ -148,7 +151,6 @@ impl fmt::Debug for Tokn {
             &Tokn::Rcrl => write!(f, "Rcrl"),
 
 
-            &Tokn::Crrt => write!(f, "Crrt"),
             &Tokn::Dllr => write!(f, "Dllr"),
 
             &Tokn::Bang => write!(f, "Bang"),

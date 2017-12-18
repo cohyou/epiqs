@@ -43,13 +43,13 @@ macro_rules! next_char {
 }
 
 macro_rules! print_lexer_info {
-    ($slf:ident, $e:ident) => {{
+    ($slf:ident, $e:ident) => {/*{
         let s = $slf.state.get();
         let c = $slf.current_char;
         let debug_t = $slf.get_token_string();
         let debub_c = $slf.get_char_string(c);
         println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
-    }}
+    }*/}
 }
 
 macro_rules! print_continue {
@@ -60,7 +60,7 @@ macro_rules! print_continue {
 
 macro_rules! print_finished_token {
     ($r:ident) => {
-        println!("Ok: {:?}", $r);
+        // println!("Ok: {:?}", $r);
     }
 }
 
@@ -245,6 +245,12 @@ fn test_lexer_bind_piq() {
 #[test]
 fn test_bracket_list() {
     lex_from_str_with_all_scanners("[dog 256 cat 512]", "Lbkt Chvc<dog> Nmbr<256> Chvc<cat> Nmbr<512> Rbkt");
+}
+
+#[test]
+fn test_lexer_mpiq() {
+    // lex_from_str_with_all_scanners("^> 246", "Crrt Otag<>> Nmbr<246>");
+    // lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {

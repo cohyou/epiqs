@@ -11,19 +11,25 @@ pub struct Evaluator<'a> {
     symbol_table: SymbolTable,
 }
 
+enum Result {
+    MakeEpiq(Option<Epiq>),
+    NewIndex(u32),
+}
+
 impl<'a> Evaluator<'a> {
     pub fn new(ast :&'a RefCell<AbstractSyntaxTree>) -> Evaluator {
         Evaluator{ ast: ast, symbol_table: SymbolTable{ table: HashMap::new() } }
     }
 
-    pub fn eval(&mut self) -> Option<&RefCell<AbstractSyntaxTree>> {
+    pub fn walk(&mut self) -> Option<&RefCell<AbstractSyntaxTree>> {
+        println!("\n");
         let index;
         {
             let borrowed_ast = self.ast.borrow();
             index = borrowed_ast.entrypoint.unwrap();
         }
-        let result = self.eval_internal(index);
-        println!("max: {:?} index: {:?}", result, index);
+        let result = self.walk_internal(index, 0);
+        // println!("max: {:?} index: {:?}", result, index);
         if result != index {
             // なんらかの変化があったので反映する必要がある
             // ここだと、entrypointを変更する
@@ -34,44 +40,248 @@ impl<'a> Evaluator<'a> {
         Some(self.ast)
     }
 
-    fn eval_internal(&mut self, index: u32) -> u32 {
-        if let Some(new_epiq) = {
+    fn walk_internal(&mut self, index: u32, nest_level: u32) -> u32 {
+        let lvl = (nest_level * 2) as usize;
+
+        // self.eval_internal(index)
+        let res = {
             let borrowed_ast = self.ast.borrow();
             let piq = borrowed_ast.get(index);
+            println!("{}walk ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => None,
-                &Epiq::Tpiq{ref o,p:_p,q:_q} => {
+                &Epiq::Tpiq{ref o, p, q} => {
+                    match o.as_ref() {
+                        ">" => {
+                            // ひとまずpは無視
+                            let new_q = self.eval_internal(q, nest_level+1);
+                            if new_q == q {
+                                Result::MakeEpiq(None)
+                            } else {
+                                Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
+                            }
+                        },
+
+                        _ => {
+
+                            // その他のTpiqの場合は、pとq両方をwalkしてみて、
+                            // 結果が両方とも変わらなければそのまま返す、
+                            // そうでなければ新しくTpiqを作ってそのindexを返す
+                            println!("{}walk >以外 pに入ります", " ".repeat(lvl));
+                            let new_p = self.walk_internal(p, nest_level+1);
+                            println!("{}walk >以外 qに入ります", " ".repeat(lvl));
+                            let new_q = self.walk_internal(q, nest_level+1);
+                            if new_p == p && new_q == q {
+                                // println!("{}pもqも同じなので変化なし", " ".repeat(lvl));
+                                Result::MakeEpiq(None)
+                            } else {
+                                // 新しくTpiqを作成
+
+                                Result::MakeEpiq(Some(Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q}))
+                            }
+                        },
+                    }
+                },
+                _ => Result::MakeEpiq(None),
+            }
+        };
+
+        match res {
+            Result::MakeEpiq(Some(new_epiq)) => {
+                // まずpushだけ
+                println!("{}walk 生み出す: {:?}", " ".repeat(lvl), new_epiq);
+                self.ast.borrow_mut().push(new_epiq);
+                self.ast.borrow().max_index.get()
+            },
+            Result::MakeEpiq(None) => {
+                // 変化なし
+                let borrowed_ast = self.ast.borrow();
+                let piq = borrowed_ast.get(index);
+                println!("{}walk 変化なし: {:?}", " ".repeat(lvl), piq);
+                index
+            },
+            Result::NewIndex(i) => {
+                let borrowed_ast = self.ast.borrow();
+                let piq1 = borrowed_ast.get(index);
+                let piq2 = borrowed_ast.get(i);
+                println!("{}walk 付け替え: {:?} から {:?}", " ".repeat(lvl), piq1, piq2);
+                i
+            },
+        }
+    }
+
+    fn eval_internal(&mut self, index: u32, nest_level: u32) -> u32 {
+        let lvl = (nest_level * 2) as usize;
+
+        let res = {
+            let borrowed_ast = self.ast.borrow();
+            let piq = borrowed_ast.get(index);
+            println!("{}eval ＿開始＿: {:?}", " ".repeat(lvl), piq);
+
+            match piq {
+                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => Result::MakeEpiq(None),
+                &Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         "#" => {
                             // bind
                             // TODO: 実際のbindではなく、適当に固定値をbindしている
                             self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
 
-                            Some(Epiq::Unit)
+                            // Result::MakeEpiq(Some(Epiq::Unit))
+                            Result::MakeEpiq(Some(Epiq::Uit8(123)))                            
                         },
 
                         // environment
                         "%" => {
-                            Some(Tpiq)
+                            // ひとまずNoneを返しておく
+                            Result::MakeEpiq(None)
                         },
 
                         // block
                         r"\" => {
-                            // TODO: 一つ目の環境の中身も、返す-1もひとまず無視する
-                            // qのリストだけを逐次実行して、勝手に最後の値を返却するようにする
-                            // ただ、そもそも、blockを評価しても実行されるわけではなく、
-                            // 実行形式になるだけだ。
-                            None
+                            // TODO: 一つ目の環境の中身はひとまず無視する
+                            // qのリストだけを逐次実行して、勝手に最後の値をwalkしてから返却するようにする
+                            // ただ、そもそも、blockをevalしても、何も変化はないはず。
+                            Result::MakeEpiq(None)
+                        },
+
+                        // apply
+                        "!" => {
+                            // p: lambda q:arguments
+                            // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
+
+                            // TODO: とりあえず引数なしとして処理する
+
+                            // 2. p.q(関数本体)をそのまま返却する
+                            let lambda_piq = borrowed_ast.get(p);
+                            if let &Epiq::Tpiq{o:_, p:_, q:lambda_body} = lambda_piq {
+                                // 本来は一応walkを挟むべきかもしれない
+                                let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
+                                /*
+                                if new_lambda_body == lambda_body {
+                                    // walk_internalの結果でも変化はないし、Noneを返す
+                                    Result::MakeEpiq(None)
+                                } else {
+                                    // walk_internalの結果、変化があったんだけど、
+                                    // それってもうepiqとしては作られているので、
+                                    // そのままNoneを返せばいい？
+                                    // でもそうなると、新しいnew_lambda_bodyが返せない
+
+                                    // Some(borrowed_ast.get(new_lambda_body).clone())
+                                    Result::NewIndex(new_lambda_body)
+                                }
+                                */
+                                Result::NewIndex(new_lambda_body)
+
+                            } else {
+                                Result::MakeEpiq(None)
+                            }
+                        },
+
+                        // eval
+                        ">" => {
+                            println!("eval");
+                            // p: 用途未定。新しく何かを限定したりとかかなあ。
+                            //    アイディアは思いつくけど、
+                            //    そもそもパーサを変えたりとか？
+                            //    環境を変更したりとか？
+                            //    継続っぽく使うとか？
+                            // q: evalされる本体。
+                            let new_q = self.eval_internal(q, nest_level+1);
+                            if new_q == q {
+                                Result::MakeEpiq(None)
+                            } else {
+                                Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
+                            }
+                        },
+
+                        // resolve
+                        "@" => {
+                            // p: 用途未定。ひとまず無視
+                            // q: シンボルというか名前
+                            Result::MakeEpiq(Some(Epiq::Uit8(666)))
                         }
-                        _ => None,
+
+                        _ => Result::MakeEpiq(None),
+                    }
+                },
+
+                &Epiq::Mpiq{ref o, p, q} => {
+                    match o.as_ref() {
+                        ">" => {
+                            // ^> リストのeval
+                            // リストの要素それぞれをevalする
+                            // pは-1だとして処理する(最後の項目の評価結果が最終的な結果となる)
+                            // Result::MakeEpiq(None)
+                            let res = self.eval_list(q, nest_level+1);
+                            // 戻り値のindexがすでに存在するなら何もしない
+                            if res <= self.ast.borrow().max_index.get() {
+                                Result::NewIndex(res)
+                            } else {
+                                Result::MakeEpiq(Some(borrowed_ast.get(res).clone()))
+                            }
+
+                        },
+                        _ => Result::MakeEpiq(None),
                     }
                 },
             }
+        };
+
+        match res {
+            Result::MakeEpiq(Some(new_epiq)) => {
+                // まずpushだけ
+                println!("{}eval 生み出す: {:?}", " ".repeat(lvl), new_epiq);
+                self.ast.borrow_mut().push(new_epiq);
+                self.ast.borrow().max_index.get()
+            },
+            Result::MakeEpiq(None) => {
+                // 変化なし
+                let borrowed_ast = self.ast.borrow();
+                let piq = borrowed_ast.get(index);
+                println!("{}eval 変化なし: {:?}", " ".repeat(lvl), piq);
+                index
+            },
+            Result::NewIndex(i) => {
+                let borrowed_ast = self.ast.borrow();
+                let piq1 = borrowed_ast.get(index);
+                let piq2 = borrowed_ast.get(i);
+                println!("{}eval 付け替え: {:?} から {:?}", " ".repeat(lvl), piq1, piq2);
+                i
+            },
+        }
+    }
+
+    fn eval_list(&mut self, index: u32, nest_level: u32) -> u32 {
+        let lvl = (nest_level * 2) as usize;
+
+        if let Some(res_index) = {
+            let borrowed_ast = self.ast.borrow();
+            let piq = borrowed_ast.get(index);
+            println!("{}eval_list ＿開始＿: {:?}", " ".repeat(lvl), piq);
+
+            match piq {
+                &Epiq::Tpiq{ref o,p,q} => {
+                    match o.as_ref() {
+                        ":" => {
+                            let q_piq = borrowed_ast.get(q);
+                            if *q_piq == Epiq::Unit {
+                                // リストの最後なので評価の結果を返す
+                                Some(self.eval_internal(p, nest_level+1))
+                            } else {
+                                // 評価はするが返さない
+                                let _p_ret = self.eval_internal(p, nest_level+1);
+                                // 次の項目へ
+                                Some(self.eval_list(q, nest_level+1))
+                            }
+                        },
+                        _ => None,
+                    }
+                },
+                _ => None,
+            }
         } {
-            // まずpushだけ
-            self.ast.borrow_mut().push(new_epiq);
-            self.ast.borrow().max_index.get()
+            res_index
         } else {
             index
         }
@@ -83,7 +293,7 @@ impl<'a> Evaluator<'a> {
 fn test() {
     let ast = &RefCell::new(AbstractSyntaxTree::new());
     let mut evaluator = Evaluator::new(ast);
-    evaluator.eval();
+    evaluator.walk();
 }
 
 /*

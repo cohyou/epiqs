@@ -30,8 +30,11 @@ impl<'a> Printer<'a> {
             Epiq::Uit8(ref n) => format!("{}", n),
             Epiq::Unit => ";".to_string(),
             Epiq::Tpiq { ref o, p, q } => {
-                format!("{}< {} {} >", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
-            }
+                format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
+            },
+            Epiq::Mpiq { ref o, p, q } => {
+                format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
+            },
             // _ => "".to_string(),
         }
     }
@@ -63,27 +66,27 @@ fn test_print_tpiq() {
 
 #[test]
 fn test_print_nested_tpiq() {
-    print_str("|: |: cde |: abc 123 456", ":< :< cde :< abc 123 > > 456 >");
+    print_str("|: |: cde |: abc 123 456", ":(:(cde :(abc 123)) 456)");
 }
 
 #[test]
 fn test_print_list() {
-    print_str("[abc 123]", ":< abc :< 123 ; > >");
+    print_str("[abc 123]", ":(abc :(123 ;))");
 }
 
 #[test]
 fn test_print_empty_env() {
-    print_str("|% ; -1", "%< ; -1 >");
+    print_str("|% ; -1", "%(; -1)");
 }
 
 #[test]
 fn test_print_resolve_piq() {
-    print_str("|@ abc ;", "@< abc ; >");
+    print_str("|@ abc ;", "@(abc ;)");
 }
 
 #[test]
 fn test_print_block() {
-    print_str(r"|\ |% ; -1 [|# abc 123 |@ abc ;]", r"\< %< ; -1 > :< #< abc 123 > :< @< abc ; > ; > > >");
+    print_str(r"|> ; |! |\ |% ; ; ^> -1 [|# abc 123 |@ ; abc] ;", r">(; !(\(%(; ;) >(-1 :(#(abc 123) :(@(; abc) ;)))) ;))");
 }
 
 #[test]
@@ -91,7 +94,7 @@ fn test_print_block() {
 fn test_print_evaled_empty_ast() {
     let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
     let mut evaluator = Evaluator::new(empty_ast);
-    let evaled_ast = evaluator.eval().unwrap();
+    let evaled_ast = evaluator.walk().unwrap();
     let printer = Printer::new(evaled_ast);
     assert_eq!(printer.print(), "");
 }
@@ -107,9 +110,28 @@ fn test_print_evaled_number_ast() {
 }
 
 #[test]
+// #[ignore]
 fn test_print_evaled_define_ast() {
     // define symbol is number
-    print_evaled_str("|# abc 123", ";");
+    print_evaled_str("|> ; |# abc 123", ";");
+}
+
+#[test]
+fn test_print_evaled_apply() {
+    print_evaled_str(r"|> ; |! |\ ; 0 ;", r"0");
+}
+
+#[test]
+fn test_print_evaled_list() {
+    print_evaled_str(r"|> ; ^> -1 [1 2 3]", r"3");
+}
+
+#[test]
+#[ignore]
+fn test_print_evaled_defining_list() {
+    print_evaled_str(r"|> ; |# abc 123", r"3");
+    // print_evaled_str(r"|> ; ^> -1 [|# abc 123]", r"3");
+    // print_evaled_str(r"|> ; ^> -1 [|# abc 123 |@ ; abc]", r"3");
 }
 
 pub fn print_str(left: &str, right: &str) {
@@ -136,7 +158,7 @@ fn print_evaled_str(left: &str, right: &str) {
     let parsed_ast = parser.parse();
 
     let mut evaluator = Evaluator::new(parsed_ast);
-    let evaled_ast = evaluator.eval().unwrap();
+    let evaled_ast = evaluator.walk().unwrap();
 
     let printer = Printer::new(evaled_ast);
 
