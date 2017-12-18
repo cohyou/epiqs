@@ -45,12 +45,14 @@ impl<'a> Evaluator<'a> {
 
         // self.eval_internal(index)
         let res = {
-            let borrowed_ast = self.ast.borrow();
-            let piq = borrowed_ast.get(index);
+            let piq = {
+                let borrowed_ast = self.ast.borrow();
+                borrowed_ast.get(index).clone()
+            };
             println!("{}walk ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                &Epiq::Tpiq{ref o, p, q} => {
+                Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         ">" => {
                             // ひとまずpは無視
@@ -58,6 +60,7 @@ impl<'a> Evaluator<'a> {
                             if new_q == q {
                                 Result::MakeEpiq(None)
                             } else {
+                                let borrowed_ast = self.ast.borrow();
                                 Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
                             }
                         },
@@ -114,13 +117,15 @@ impl<'a> Evaluator<'a> {
         let lvl = (nest_level * 2) as usize;
 
         let res = {
-            let borrowed_ast = self.ast.borrow();
-            let piq = borrowed_ast.get(index);
+            let piq = {
+                let borrowed_ast = self.ast.borrow();
+                borrowed_ast.get(index).clone()
+            };
             println!("{}eval ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => Result::MakeEpiq(None),
-                &Epiq::Tpiq{ref o, p, q} => {
+                Epiq::Unit | Epiq::Uit8(_) | Epiq::Name(_) => Result::MakeEpiq(None),
+                Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         "#" => {
                             // bind
@@ -128,7 +133,7 @@ impl<'a> Evaluator<'a> {
                             self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
 
                             // Result::MakeEpiq(Some(Epiq::Unit))
-                            Result::MakeEpiq(Some(Epiq::Uit8(123)))                            
+                            Result::MakeEpiq(Some(Epiq::Unit))
                         },
 
                         // environment
@@ -153,6 +158,7 @@ impl<'a> Evaluator<'a> {
                             // TODO: とりあえず引数なしとして処理する
 
                             // 2. p.q(関数本体)をそのまま返却する
+                            let borrowed_ast = self.ast.borrow();
                             let lambda_piq = borrowed_ast.get(p);
                             if let &Epiq::Tpiq{o:_, p:_, q:lambda_body} = lambda_piq {
                                 // 本来は一応walkを挟むべきかもしれない
@@ -191,6 +197,7 @@ impl<'a> Evaluator<'a> {
                             if new_q == q {
                                 Result::MakeEpiq(None)
                             } else {
+                                let borrowed_ast = self.ast.borrow();
                                 Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
                             }
                         },
@@ -206,7 +213,7 @@ impl<'a> Evaluator<'a> {
                     }
                 },
 
-                &Epiq::Mpiq{ref o, p, q} => {
+                Epiq::Mpiq{ref o, p, q} => {
                     match o.as_ref() {
                         ">" => {
                             // ^> リストのeval
@@ -218,6 +225,7 @@ impl<'a> Evaluator<'a> {
                             if res <= self.ast.borrow().max_index.get() {
                                 Result::NewIndex(res)
                             } else {
+                                let borrowed_ast = self.ast.borrow();
                                 Result::MakeEpiq(Some(borrowed_ast.get(res).clone()))
                             }
 
