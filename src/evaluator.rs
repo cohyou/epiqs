@@ -35,40 +35,42 @@ impl<'a> Evaluator<'a> {
     }
 
     fn eval_internal(&mut self, index: u32) -> u32 {
-        let should_push = {
+        if let Some(new_epiq) = {
             let borrowed_ast = self.ast.borrow();
             let piq = borrowed_ast.get(index);
 
             match piq {
-                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => false,
+                &Epiq::Unit | &Epiq::Uit8(_) | &Epiq::Name(_) => None,
                 &Epiq::Tpiq{ref o,p:_p,q:_q} => {
                     match o.as_ref() {
                         "#" => {
-                            true
+                            // bind
+                            // TODO: 実際のbindではなく、適当に固定値をbindしている
+                            self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
+
+                            Some(Epiq::Unit)
                         },
+
+                        // environment
+                        "%" => {
+                            Some(Tpiq)
+                        },
+
                         // block
                         r"\" => {
                             // TODO: 一つ目の環境の中身も、返す-1もひとまず無視する
                             // qのリストだけを逐次実行して、勝手に最後の値を返却するようにする
                             // ただ、そもそも、blockを評価しても実行されるわけではなく、
                             // 実行形式になるだけだ。
-                            true
+                            None
                         }
-                        _ => false,
+                        _ => None,
                     }
                 },
             }
-        };
-
-        if should_push {
-            // TODO: 実際のbindではなく、適当に固定値をbindしている
-            let v = Epiq::Unit;
-
-            // bind
-            self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
-
+        } {
             // まずpushだけ
-            self.ast.borrow_mut().push(v);
+            self.ast.borrow_mut().push(new_epiq);
             self.ast.borrow().max_index.get()
         } else {
             index
