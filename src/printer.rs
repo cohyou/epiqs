@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use core::*;
 use lexer::*;
 use parser::*;
-use evaluator::*;
+use walker::*;
 
 struct Printer<'a> {
     ast: &'a RefCell<AbstractSyntaxTree>,
