@@ -448,7 +448,7 @@ impl<'a> Evaluator<'a> {
             },
             _ => {
                 /* 普通は通らない */
-                println!("assign parameters_piqがおかしい");
+                println!("assign arguments_piqがおかしい");
             },
         }
     }
