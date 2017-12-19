@@ -17,7 +17,7 @@ use self::error::Error;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
-    ast: /*&'b RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
+    ast: NodeArena<Epiq>,
     // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
     pub fn new(lexer: Lexer<'a, 'a>, ast: NodeArena<Epiq>) -> Self {
         Parser {
             lexer: lexer,
-            ast: ast/*RefCell::new(AbstractSyntaxTree::new())*/,
+            ast: ast,
             // state: State::Aexp,
             current_token: RefCell::new(/*None*/CurrentToken::SOT),
             // aexp_tokens: vec![vec![]],
