@@ -253,6 +253,16 @@ fn test_lexer_mpiq() {
     lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
+#[test]
+fn test_lexer_tval() {
+    lex_from_str_with_all_scanners("^T", "Crrt Otag<T>");
+}
+
+#[test]
+fn test_lexer_primitive_function() {
+    lex_from_str_with_all_scanners("decr", "Chvc<decr>");
+}
+
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);

@@ -26,9 +26,12 @@ impl<'a> Printer<'a> {
         let ast = self.ast.borrow();
         let epiq = ast.get(i);
         match *epiq {
+            Epiq::Unit => ";".to_string(),
+            Epiq::Tval => "^T".to_string(),
+            Epiq::Fval => "^F".to_string(),
             Epiq::Name(ref n) => n.to_string(),
             Epiq::Uit8(ref n) => format!("{}", n),
-            Epiq::Unit => ";".to_string(),
+            Epiq::Prim(ref n) => format!("Prim({})", n),
             Epiq::Tpiq { ref o, p, q } => {
                 format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             },
@@ -141,7 +144,29 @@ fn test_print_evaled_defining_list() {
 fn test_exec_func() {
     // print_str(r"|% ; ;", ";a")
     // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
-    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", ";")
+    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
+}
+
+#[test]
+fn test_access() {
+    // print_str("|. a p", ".(a p)");
+    // print_evaled_str("|> ; |. |: 1 3 p", "p")
+    print_evaled_str("|> ; |. |: 1 3 q", "3")
+}
+
+#[test]
+fn test_condition() {
+    // print_str("|? abc 123", "?(abc 123)");
+    // print_str("^T", "^T");
+    // print_str("^F", "^F");
+    print_evaled_str("|> ; |? ^T |: 1 0", "1");
+    print_evaled_str("|> ; |? ^F |: 1 0", "0");
+}
+
+#[test]
+fn test_primitive_function() {
+    print_evaled_str("|> ; |@ ; decr", "Prim(decr)")
+    // print_evaled_str("|> ; |! |> ; |@ ; decr [4]", ";")
 }
 
 pub fn print_str(left: &str, right: &str) {
@@ -176,43 +201,6 @@ fn print_evaled_str(left: &str, right: &str) {
 }
 
 /*
-use super::core::{Epiq, Heliqs};
-
-pub struct Printer<'a> {
-    pub vm: &'a Heliqs,
-}
-
-impl<'a> Printer<'a> {
-    pub fn print_aexp(&self, i: usize) -> String {
-        if let Some(c) = self.vm.vctr.get(i) {
-            match *c {
-                Epiq::Name(ref n) => n.to_string(),
-                Epiq::Tpiq { ref o, p, q } => {
-                    format!(" {}<{} {}>", o, self.print_aexp(p), self.print_aexp(q))
-                }
-                _ => "".to_string(),
-            }
-        } else {
-            "".to_string()
-        }
-    }
-}
-*/
-
-/*
-fn print_affx(&self, i: usize) -> String {
-    let result = "".to_string();
-
-    if let Some(c) = self.vm.vctr.get(i) {
-        match c {
-            &Epiq::Unit => {}, // case of 'has no affx'
-            _ => {},
-        }
-    }
-
-    return result;
-}
-
 fn print_epiq(&self, i: usize) -> String {
     let mut result = "".to_string();
 
@@ -249,20 +237,6 @@ fn print_epiq(&self, i: usize) -> String {
             },
             _ => result.push_str(&format!("{:?}", c)),
         }
-    }
-
-    return result;
-}
-
-fn print_piq(&self, op: &str, p: usize, q: usize) -> String {
-    let mut result = "".to_string();
-
-    if self.vm.vctr.get(p).is_some() {
-        result.push_str(&self.print_aexp(p));
-    }
-    print!("{:}",op);
-    if self.vm.vctr.get(q).is_some() {
-        result.push_str(&self.print_aexp(q));
     }
 
     return result;
@@ -312,62 +286,5 @@ fn print_list(&self, pi: usize, qi: usize) -> String {
     }
 
     return result;
-}
-*/
-
-/*
-fn aexp_e<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(&Epiq::Aexp { a:_, e }) => Some((t.0, e)),
-    _ => None,
-}
-}
-
-fn apiq_f<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(&Epiq::Apiq { p, q:_ }) => Some((t.0, p)),
-    _ => None,
-}
-}
-
-fn apiq_q<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(&Epiq::Apiq { p:_, q }) => Some((t.0, q)),
-    _ => None,
-}
-}
-
-fn fpiq_p<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(&Epiq::Fpiq { p, q:_ }) => Some((t.0, p)),
-    Some(a) => {
-        println!("not fpiq: {:?}", a);
-        None
-    },
-    _ => None,
-}
-}
-*/
-/*
-fn pprn<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(&Epiq::Pprn(i)) => Some((t.0, i)),
-    Some(a) => {
-        println!("not pprn: {:?}", a);
-        None
-    },
-    _ => None,
-}
-}
-*/
-/*
-fn print_one_piq<'p, 'a>(t: (&'p Parser<'a>, usize)) -> Option<(&'p Parser<'a>, usize)> {
-match t.0.vm.vctr.get(t.1) {
-    Some(e) => {
-        println!("print_one_piq: {:?}", e);
-        Some(t)
-    },
-    _ => None,
-}
 }
 */

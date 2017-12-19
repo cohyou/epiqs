@@ -94,13 +94,19 @@ impl<'a, 'b> Parser<'a, 'b> {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
                 self.consume_token();
 
-                /* ?マクロを使いたい */
-                let pidx = (self.parse_aexp())?;
-                let qidx = (self.parse_aexp())?;
-                match tokn {
-                    Tokn::Pipe => push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx}),
-                    Tokn::Crrt => push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx}),
-                    _ => Err(Error::UnknownError(255)),
+                // ^Tと^Fは特別扱い
+                match otag.as_ref() {
+                    "T" => push!(self, Epiq::Tval),
+                    "F" => push!(self, Epiq::Fval),
+                    _ => {
+                        let pidx = (self.parse_aexp())?;
+                        let qidx = (self.parse_aexp())?;
+                        match tokn {
+                            Tokn::Pipe => push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx}),
+                            Tokn::Crrt => push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx}),
+                            _ => Err(Error::UnknownError(255)),
+                        }
+                    }
                 }
             },
 

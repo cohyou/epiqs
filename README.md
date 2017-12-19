@@ -119,9 +119,9 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 記号|説明
 :-:|-
 `;`|Unit
-`N`|nil
-`T`|true
-`F`|false
+`^N`|nil
+`^T`|true
+`^F`|false
 
 
 #### ディスパッチャ
@@ -372,7 +372,6 @@ Less, // < less than
 `Accs{trgt, kynm}`|`(. piq q)` `obj.attr`|access
 `Lmbd{envn, body}`|`'\ .0` `(\ '% [i] @incl!, .i)`|function piq block
 `Same{val1, val2}`|`(= money happiness)`|equal
-`Meta{mtag, trgt}`|`^{}` `^[]`|metadata
 `Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
 
 
@@ -402,12 +401,12 @@ Less, // < less than
 ## TODO
 
 ### その1 簡単そう
-- Accs（とはいえ最初はpとqだけ）
-- Same（これもまずは数値だけ）
+- READMEにcond抜けてる
+- Same（これもまずは数値だけ、ただしこれはotagではなく関数では？）
 - 文字列
 - dispatcherの追加（'と&#x7C;だが、どちらがどちらかは迷っている）
 - 中置記法(Lpiq, Accs, Rslv, Appl) 優先順位も決める必要がある
-- N, T, F(ただ、すぐできるし、使い道が出た時で良いかも)
+- N(ただ、すぐできるし、使い道が出た時で良いかも)
 - プリミティブな数値の演算（加減乗除/ビット演算 shift, rotate）
 - マクロをキックする（定義はできるようになったが、それをキックするタイミングを決めていない）
 

@@ -3,9 +3,13 @@ use std::cell::Cell;
 /// E(lemantal) piq
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Epiq {
+    Unit,
+    Tval,
+    Fval,
     Name(String),
     Uit8(i64),
-    Unit,
+    Prim(String), // primitive function
+    
     Tpiq { o: String, p: u32, q: u32}, // tagged piq
     Mpiq { o: String, p: u32, q: u32}, // metadata piq
     // Apiq { p: u32, q: u32 }, // application piq

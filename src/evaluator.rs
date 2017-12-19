@@ -57,7 +57,7 @@ impl<'a> Evaluator<'a> {
         Evaluator {
             ast: ast,
             symbol_table: SymbolTable {
-                table: vec![vec![]],
+                table: vec![vec![("decr".to_string(), Some(Epiq::Prim("decr".to_string())))]],
                 current_index: Default::default(),
             }
         }
@@ -166,7 +166,23 @@ impl<'a> Evaluator<'a> {
             println!("{}eval ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                Epiq::Unit | Epiq::Uit8(_) | Epiq::Name(_) => Result::MakeEpiq(None),
+                Epiq::Unit | Epiq::Tval | Epiq::Fval |
+                Epiq::Uit8(_) | Epiq::Name(_) => Result::MakeEpiq(None),
+
+                // primitive function
+                Epiq::Prim(_) => {
+                    /*
+                    println!("primitive");
+
+                    // まずは引き算
+
+                    Result::MakeEpiq(Some(Epiq::Uit8(3)))
+                    */
+                    // と思ったけど、これはapplyから呼ばれるので、ここを通ることはなさそう
+                    println!("Primはapplyから呼ばれるので、ここを通ることはなさそう");
+                    Result::MakeEpiq(None)
+                },
+
                 Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         // bind
@@ -208,57 +224,80 @@ impl<'a> Evaluator<'a> {
 
                             let lambda_piq = {
                                 let borrowed_ast = self.ast.borrow();
+                                // let new_p_index = { self.walk_internal(p, nest_level+1) };
                                 borrowed_ast.get(p).clone()
                             };
 
                             let arguments_piq = {
                                 let borrowed_ast = self.ast.borrow();
+                                // let new_q_index = self.walk_internal(p, nest_level+1);
                                 borrowed_ast.get(q).clone()
                             };
 
-                            if let Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body} = lambda_piq {
-                                // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
-                                // まず環境を取得
-                                let env_piq = {
-                                    let borrowed_ast = self.ast.borrow();
-                                    borrowed_ast.get(lambda_env).clone()
-                                };
+                            match lambda_piq {
+                                Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body} => {
+                                    // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
+                                    // まず環境を取得
+                                    let env_piq = {
+                                        let borrowed_ast = self.ast.borrow();
+                                        borrowed_ast.get(lambda_env).clone()
+                                    };
 
-                                if let Epiq::Tpiq{o:ref otag, p:_, q:symbol_table} = env_piq {
-                                    if otag == "%" {
-                                        // pは無視
-                                        // qはシンボルのリストになる
-                                        let parameters_piq = {
-                                            let borrowed_ast = self.ast.borrow();
-                                            borrowed_ast.get(symbol_table).clone()
-                                        };
+                                    if let Epiq::Tpiq{o:ref otag, p:_, q:symbol_table} = env_piq {
+                                        if otag == "%" {
+                                            // pは無視
+                                            // qはシンボルのリストになる
+                                            let parameters_piq = {
+                                                let borrowed_ast = self.ast.borrow();
+                                                borrowed_ast.get(symbol_table).clone()
+                                            };
 
-                                        // 新しい環境フレームを作る
-                                        self.symbol_table.extend();
+                                            // 新しい環境フレームを作る
+                                            self.symbol_table.extend();
 
-                                        // 束縛を追加する
-                                        self.assign_arguments(parameters_piq, arguments_piq);
+                                            // 束縛を追加する
+                                            self.assign_arguments(parameters_piq, arguments_piq);
 
 
-                                        // 2. p.q(関数本体)をそのまま返却する
-                                        // walkを挟んでから返す
-                                        let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
+                                            // 2. p.q(関数本体)をそのまま返却する
+                                            // walkを挟んでから返す
+                                            let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
 
-                                        // 環境フレームを削除する
-                                        self.symbol_table.pop();
+                                            // 環境フレームを削除する
+                                            self.symbol_table.pop();
 
-                                        Result::NewIndex(new_lambda_body)
+                                            Result::NewIndex(new_lambda_body)
+                                        } else {
+                                            println!("{:?}", 1);
+                                            Result::MakeEpiq(None)
+                                        }
                                     } else {
-                                        println!("{:?}", 1);
+                                        println!("env_piqがTpiqじゃないのでエラー");
                                         Result::MakeEpiq(None)
                                     }
-                                } else {
-                                    println!("{:?}", 2);
+                                },
+
+                                Epiq::Prim(ref n) => {
+                                    match n.as_ref() {
+                                        "decr" => {
+                                            // 面倒なので 1- を実装
+                                            Result::MakeEpiq(Some(Epiq::Uit8(3)))
+                                        },
+                                        "ltoreq" => {
+                                            // <=を実装
+                                            Result::MakeEpiq(None)
+                                        },
+                                        _ => {
+                                            println!("Primitive関数名が想定外なのでエラー");
+                                            Result::MakeEpiq(None)
+                                        }
+                                    }
+                                },
+
+                                _ => {
+                                    println!("関数部分がlambdaでもprimでもないのでエラー");
                                     Result::MakeEpiq(None)
-                                }
-                            } else {
-                                println!("{:?}", 3);
-                                Result::MakeEpiq(None)
+                                },
                             }
                         },
 
@@ -284,19 +323,127 @@ impl<'a> Evaluator<'a> {
                         "@" => {
                             // p: 用途未定。ひとまず無視
                             // q: シンボルというか名前
-                            let p_name = {
+                            let q_name = {
                                 let borrowed_ast = self.ast.borrow();
                                 borrowed_ast.get(q).clone()
                             };
-                            if let Epiq::Name(ref n) = p_name {
+                            if let Epiq::Name(ref n) = q_name {
                                 match self.symbol_table.resolve(n) {
                                     Some(Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
-                                    _ => Result::MakeEpiq(None),
+                                    _ => {
+                                        println!("resolve時に指定されたキーが見つからない: {:?}", n);
+                                        Result::MakeEpiq(None)
+                                    },
                                 }
                             } else {
+                                println!("resolve時のキーがNameじゃないのでエラー");
                                 Result::MakeEpiq(None)
                             }
-                        }
+                        },
+
+                        // access
+                        "." => {
+                            println!("access");
+                            // p: レシーバ
+                            // q: アクセッサ
+                            let p_reciever = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(p).clone()
+                            };
+
+                            let q_accessor = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(q).clone()
+                            };
+
+                            // レシーバの種類によってできることが変わる
+                            match p_reciever {
+                                Epiq::Tpiq{ref o, p, q} => {
+                                    match o.as_ref() {
+                                        ":" => {
+                                            // Lpiqならば、pとqが使える、それ以外は無理
+                                            match q_accessor {
+                                                Epiq::Name(ref n) => {
+                                                    match n.as_ref() {
+                                                        "p" => Result::NewIndex(p),
+                                                        "q" => Result::NewIndex(q),
+                                                        _ => {
+                                                            /* Lpiqならばpとq以外はエラー */
+                                                            println!("Lpiqならばpとq以外はエラー");
+                                                            Result::MakeEpiq(None)
+                                                        },
+                                                    }
+                                                },
+
+                                                _ => {
+                                                    /* アクセッサがNameではないのでエラー */
+                                                    println!("アクセッサがNameではないのでエラー");
+                                                    Result::MakeEpiq(None)
+                                                },
+                                            }
+                                        },
+                                        _ => {
+                                            /* Lpiq以外はまだ定義されていないが、これから増える */
+                                            println!("Lpiq以外はまだ定義されていないが、これから増える");
+                                            Result::MakeEpiq(None)
+                                        },
+                                    }
+                                },
+                                _ => {
+                                    /* レシーバは今のところTpiq以外にも構造体とかが増えるはずだが、これから */
+                                    println!("レシーバは今のところTpiq以外にも構造体とかが増えるはずだが、これから");
+                                    Result::MakeEpiq(None)
+                                },
+                            }
+                        },
+
+                        // condition
+                        "?" => {
+                            println!("condition");
+                            // p: ^T or ^F(他の値の評価はひとまず考えない)
+                            // q: Lpiq、^Tならpを返し、^Fならqを返す
+                            let p_condition = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(p).clone()
+                            };
+
+                            let q_result = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(q).clone()
+                            };
+
+                            match p_condition {
+                                Epiq::Tval | Epiq::Fval => {
+                                    match q_result {
+                                        Epiq::Tpiq{ref o,p,q} => {
+                                            if o == ":" {
+                                                match p_condition {
+                                                    Epiq::Tval => Result::NewIndex(p),
+                                                    Epiq::Fval => Result::NewIndex(q),
+                                                    _ => {
+                                                        println!("condtion部分は^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
+                                                        Result::MakeEpiq(None)
+                                                    },
+                                                }
+                                            } else {
+                                                println!("result部分がLpiqじゃないのでエラー");
+                                                Result::MakeEpiq(None)
+                                            }
+                                        },
+
+                                        _ => {
+                                            println!("result部分がTpiqじゃないのでエラー");
+                                            Result::MakeEpiq(None)
+                                        },
+                                    }
+                                },
+
+                                _ => {
+                                    println!("condtion部分は^Tか^Fしか取れないようにしたいのでエラー");
+                                    Result::MakeEpiq(None)
+                                },
+                            }
+                        },
 
                         _ => Result::MakeEpiq(None),
                     }
@@ -318,6 +465,12 @@ impl<'a> Evaluator<'a> {
                                 Result::MakeEpiq(Some(borrowed_ast.get(res).clone()))
                             }
                         },
+
+                        // true
+                        "T" => Result::MakeEpiq(Some(Epiq::Tval)),
+                        // false
+                        "F" => Result::MakeEpiq(Some(Epiq::Fval)),
+
                         _ => Result::MakeEpiq(None),
                     }
                 },
