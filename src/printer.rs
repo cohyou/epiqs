@@ -86,7 +86,10 @@ fn test_print_resolve_piq() {
 
 #[test]
 fn test_print_block() {
-    print_str(r"|> ; |! |\ |% ; ; ^> -1 [|# abc 123 |@ ; abc] ;", r">(; !(\(%(; ;) >(-1 :(#(abc 123) :(@(; abc) ;)))) ;))");
+    print_str(
+        r"|> ; |! |\ |% ; ; ^> -1 [|# abc 123 |@ ; abc] ;",
+        r">(; !(\(%(; ;) >(-1 :(#(abc 123) :(@(; abc) ;)))) ;))"
+    );
 }
 
 #[test]
@@ -118,7 +121,7 @@ fn test_print_evaled_define_ast() {
 
 #[test]
 fn test_print_evaled_apply() {
-    print_evaled_str(r"|> ; |! |\ ; 0 ;", r"0");
+    print_evaled_str(r"|> ; |! |\ |% ; ; 0 ;", r"0");
 }
 
 #[test]
@@ -132,6 +135,13 @@ fn test_print_evaled_defining_list() {
     // print_evaled_str(r"|> ; |# abc 123", r";");
     // print_evaled_str(r"|> ; |@ ; abc", r";");
     print_evaled_str(r"|> ; ^> -1 [|# abc 1234 |@ ; abc]", r"1234");
+}
+
+#[test]
+fn test_exec_func() {
+    // print_str(r"|% ; ;", ";a")
+    // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
+    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", ";")
 }
 
 pub fn print_str(left: &str, right: &str) {

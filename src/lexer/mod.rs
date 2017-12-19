@@ -250,7 +250,7 @@ fn test_bracket_list() {
 #[test]
 fn test_lexer_mpiq() {
     // lex_from_str_with_all_scanners("^> 246", "Crrt Otag<>> Nmbr<246>");
-    // lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
+    lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {

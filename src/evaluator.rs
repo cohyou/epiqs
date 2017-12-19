@@ -3,17 +3,42 @@ use std::collections::HashMap;
 use core::*;
 
 struct SymbolTable {
-    table: Vec<HashMap<String, Option<Epiq>>>,
+    table: Vec<Vec<(String, Option<Epiq>)>>,
     current_index: usize,
 }
 
 impl SymbolTable {
     fn define(&mut self, name: &str, value: Epiq) {
-        self.table[self.current_index].insert(name.to_string(), Some(value));
+        if {
+            if let Some(&(_, ref r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+                // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
+                // *r = Some(value);
+                false
+            } else {
+                true
+            }
+        } {
+            self.table[self.current_index].push( (name.to_string(), Some(value)) );
+        }
     }
 
-    fn resolve(&self, name: &str) -> Option<&Option<Epiq>> {
-        self.table[self.current_index].get(name)
+    fn resolve(&self, name: &str) -> Option<Option<Epiq>> {
+        if let Some(&(_, ref r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+            Some(r.clone())
+        } else {
+            None
+        }
+    }
+
+    fn extend(&mut self) {
+        let new_frame = vec![];
+        self.table.push(new_frame);
+        self.current_index = self.table.len() - 1;
+    }
+
+    fn pop(&mut self) {
+        let _ = self.table.pop();
+        self.current_index = self.table.len() - 1;
     }
 }
 
@@ -32,7 +57,7 @@ impl<'a> Evaluator<'a> {
         Evaluator {
             ast: ast,
             symbol_table: SymbolTable {
-                table: vec![HashMap::new()],
+                table: vec![vec![]],
                 current_index: Default::default(),
             }
         }
@@ -180,18 +205,59 @@ impl<'a> Evaluator<'a> {
                         // apply
                         "!" => {
                             // p: lambda q:arguments
-                            // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
 
-                            // 2. p.q(関数本体)をそのまま返却する
-                            let borrowed_ast = self.ast.borrow();
-                            let lambda_piq = borrowed_ast.get(p);
-                            if let &Epiq::Tpiq{o:_, p:_, q:lambda_body} = lambda_piq {
-                                // walkを挟んでから返す
-                                let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
+                            let lambda_piq = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(p).clone()
+                            };
 
-                                Result::NewIndex(new_lambda_body)
+                            let arguments_piq = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(q).clone()
+                            };
 
+                            if let Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body} = lambda_piq {
+                                // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
+                                // まず環境を取得
+                                let env_piq = {
+                                    let borrowed_ast = self.ast.borrow();
+                                    borrowed_ast.get(lambda_env).clone()
+                                };
+
+                                if let Epiq::Tpiq{o:ref otag, p:_, q:symbol_table} = env_piq {
+                                    if otag == "%" {
+                                        // pは無視
+                                        // qはシンボルのリストになる
+                                        let parameters_piq = {
+                                            let borrowed_ast = self.ast.borrow();
+                                            borrowed_ast.get(symbol_table).clone()
+                                        };
+
+                                        // 新しい環境フレームを作る
+                                        self.symbol_table.extend();
+
+                                        // 束縛を追加する
+                                        self.assign_arguments(parameters_piq, arguments_piq);
+
+
+                                        // 2. p.q(関数本体)をそのまま返却する
+                                        // walkを挟んでから返す
+                                        let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
+
+                                        // 環境フレームを削除する
+                                        self.symbol_table.pop();
+
+                                        Result::NewIndex(new_lambda_body)
+                                    } else {
+                                        println!("{:?}", 1);
+                                        Result::MakeEpiq(None)
+                                    }
+                                } else {
+                                    println!("{:?}", 2);
+                                    Result::MakeEpiq(None)
+                                }
                             } else {
+                                println!("{:?}", 3);
                                 Result::MakeEpiq(None)
                             }
                         },
@@ -224,7 +290,7 @@ impl<'a> Evaluator<'a> {
                             };
                             if let Epiq::Name(ref n) = p_name {
                                 match self.symbol_table.resolve(n) {
-                                    Some(&Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
+                                    Some(Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
                                     _ => Result::MakeEpiq(None),
                                 }
                             } else {
@@ -320,6 +386,70 @@ impl<'a> Evaluator<'a> {
             res_index
         } else {
             index
+        }
+    }
+
+    fn assign_arguments(&mut self, parameters_piq: Epiq, arguments_piq: Epiq) {
+        // arguments_piqはリストのはずなので、一つ一つ回して定義していく
+        match arguments_piq {
+            Epiq::Tpiq{o: ref colon, p: content, q: next_args} => {
+                if colon == ":" {
+                    let next_args_piq = {
+                        let borrowed_ast = self.ast.borrow();
+                        borrowed_ast.get(next_args).clone()
+                    };
+
+                    let content_piq = {
+                        let borrowed_ast = self.ast.borrow();
+                        borrowed_ast.get(content).clone()
+                    };
+
+                    { println!("assign: {:?}", content_piq); }
+
+                    match parameters_piq {
+                        Epiq::Tpiq{o: ref colon, p: param, q: next_params} => {
+                            if colon == ":" {
+                                let next_params_piq = {
+                                    let borrowed_ast = self.ast.borrow();
+                                    borrowed_ast.get(next_params).clone()
+                                };
+
+                                let param_piq = {
+                                    let borrowed_ast = self.ast.borrow();
+                                    borrowed_ast.get(param).clone()
+                                };
+                                if let Epiq::Name(ref s) = param_piq {
+                                    self.symbol_table.define(s, content_piq);
+
+                                    // paramsとargs、両方のリストを回していくが、
+                                    // ループの基準となるのはargs。
+                                    // paramsが途中でなくなっても知らん。
+                                    if next_args_piq == Epiq::Unit {
+                                        // 最後なので終了
+                                        println!("assign終わりです");
+                                    } else {
+                                        // 次にいく
+                                        self.assign_arguments(next_params_piq, next_args_piq);
+                                    }
+                                } else {
+                                    // 文字列じゃない場合は初期値があるとか、
+                                    // 他の可能性があるけど今は実装しない
+                                }
+                            } else {
+                                println!("assign parameters_piqがおかしい :じゃないTpiq");
+                            }
+                        },
+                        _ => {
+                            /* 普通は通らない */
+                            println!("assign parameters_piqがおかしい Tpiqじゃない: {:?}", parameters_piq);
+                        },
+                    }
+                }
+            },
+            _ => {
+                /* 普通は通らない */
+                println!("assign parameters_piqがおかしい");
+            },
         }
     }
 }
