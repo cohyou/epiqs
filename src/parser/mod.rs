@@ -1,7 +1,10 @@
 macro_rules! push {
     ($s:ident, $t:expr) => {{
+        Ok($s.ast.alloc($t))
+        /*
         $s.ast.borrow_mut().push_and_entry($t);
         Ok($s.ast.borrow().max_index.get())
+        */
     }}
 }
 
@@ -12,9 +15,9 @@ use core::*;
 use lexer::*;
 use self::error::Error;
 
-pub struct Parser<'a, 'b> {
+pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
-    ast: &'b RefCell<AbstractSyntaxTree>,
+    ast: /*&'b RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
     // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
@@ -27,8 +30,8 @@ enum CurrentToken {
     EOT, // End Of Tokens
 }
 
-impl<'a, 'b> Parser<'a, 'b> {
-    pub fn new(lexer: Lexer<'a, 'a>, ast: &'b RefCell<AbstractSyntaxTree>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(lexer: Lexer<'a, 'a>, ast: NodeArena<Epiq>) -> Self {
         Parser {
             lexer: lexer,
             ast: ast/*RefCell::new(AbstractSyntaxTree::new())*/,
@@ -38,7 +41,7 @@ impl<'a, 'b> Parser<'a, 'b> {
         }
     }
 
-    pub fn parse(&mut self) -> &'b RefCell<AbstractSyntaxTree> {
+    pub fn parse(&mut self) -> NodeArena<Epiq> {
         self.consume_token();
 
         self.parse_aexp();
@@ -63,7 +66,7 @@ impl<'a, 'b> Parser<'a, 'b> {
         }
     }
 
-    fn parse_aexp(&mut self) -> Result<u32, Error> {
+    fn parse_aexp(&mut self) -> Result<usize, Error> {
         let res = self.current_token.borrow().clone();
 
         match res {
@@ -88,7 +91,7 @@ impl<'a, 'b> Parser<'a, 'b> {
     }
 
     // Pipe QTag Pval QVal
-    fn parse_otag(&mut self, tokn: Tokn) -> Result<u32, Error> {
+    fn parse_otag(&mut self, tokn: Tokn) -> Result<usize, Error> {
         let current_token = self.current_token.borrow().clone();
         match current_token {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
@@ -115,8 +118,8 @@ impl<'a, 'b> Parser<'a, 'b> {
         }
     }
 
-    fn parse_list(&mut self) -> Result<u32, Error> {
-        let mut current_token = self.current_token.borrow().clone();
+    fn parse_list(&mut self) -> Result<usize, Error> {
+        let current_token = self.current_token.borrow().clone();
         // 閉じbracketが出るまで再帰呼出
         match current_token {
             CurrentToken::Has(Tokn::Rbkt) => {
@@ -131,7 +134,7 @@ impl<'a, 'b> Parser<'a, 'b> {
         }
     }
 
-    fn parse_literal(&mut self) -> Result<u32, Error> {
+    fn parse_literal(&mut self) -> Result<usize, Error> {
         let current_token = self.current_token.borrow().clone();
         match current_token {
             CurrentToken::Has(Tokn::Chvc(ref s)) => {

@@ -1,14 +1,14 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
+// use std::cell::RefCell;
+// use std::collections::HashMap;
 use core::*;
 
-struct SymbolTable {
-    table: Vec<Vec<(String, Option<Epiq>)>>,
+struct SymbolTable<'a> {
+    table: Vec<Vec<(String, Option<&'a Epiq>)>>,
     current_index: usize,
 }
 
-impl SymbolTable {
-    fn define(&mut self, name: &str, value: Epiq) {
+impl<'a> SymbolTable<'a> {
+    fn define(&mut self, name: &str, value: &'a Epiq) {
         if {
             if let Some(&(_, ref r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
                 // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
@@ -22,9 +22,9 @@ impl SymbolTable {
         }
     }
 
-    fn resolve(&self, name: &str) -> Option<Option<Epiq>> {
-        if let Some(&(_, ref r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
-            Some(r.clone())
+    fn resolve(&self, name: &str) -> Option<Option<&Epiq>> {
+        if let Some(&( _, Some(ref r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+            Some(Some(r))
         } else {
             None
         }
@@ -34,6 +34,7 @@ impl SymbolTable {
         let new_frame = vec![];
         self.table.push(new_frame);
         self.current_index = self.table.len() - 1;
+
     }
 
     fn pop(&mut self) {
@@ -42,59 +43,56 @@ impl SymbolTable {
     }
 }
 
-pub struct Evaluator<'a> {
-    ast :&'a RefCell<AbstractSyntaxTree>,
-    symbol_table: SymbolTable,
+pub struct Walker<'a> {
+    ast : /*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
+    symbol_table: SymbolTable<'a>,
 }
 
 enum Result {
     MakeEpiq(Option<Epiq>),
-    NewIndex(u32),
+    NewIndex(NodeId),
 }
 
-impl<'a> Evaluator<'a> {
-    pub fn new(ast :&'a RefCell<AbstractSyntaxTree>) -> Evaluator {
-        Evaluator {
+impl<'a> Walker<'a> {
+    pub fn new(ast :/*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>) -> Walker<'a> {
+        Walker {
             ast: ast,
             symbol_table: SymbolTable {
-                table: vec![vec![("decr".to_string(), Some(Epiq::Prim("decr".to_string())))]],
+                table: vec![vec![("decr".to_string(), Some(&Epiq::Prim("decr".to_string())))]],
                 current_index: Default::default(),
             }
         }
     }
 
-    pub fn walk(&mut self) -> Option<&RefCell<AbstractSyntaxTree>> {
+    pub fn walk(&mut self) -> Option</*&RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>> {
         println!("\n");
-        let index;
-        {
-            let borrowed_ast = self.ast.borrow();
-            index = borrowed_ast.entrypoint.unwrap();
+        if let Some(index) = self.ast.entry() {
+            let result = self.walk_internal(index, 0);
+            // println!("max: {:?} index: {:?}", result, index);
+            if result != index {
+                // なんらかの変化があったので反映する必要がある
+                // ここだと、entrypointを変更する
+                self.ast.set_entry(result);
+                /*
+                let mut ast = self.ast.borrow_mut();
+                (*ast).entrypoint = Some(result);
+                */
+            }
+            Some(self.ast)
+        } else {
+            None
         }
-        let result = self.walk_internal(index, 0);
-        // println!("max: {:?} index: {:?}", result, index);
-        if result != index {
-            // なんらかの変化があったので反映する必要がある
-            // ここだと、entrypointを変更する
-            let mut ast = self.ast.borrow_mut();
-            (*ast).entrypoint = Some(result);
-        }
-
-        Some(self.ast)
     }
 
-    fn walk_internal(&mut self, index: u32, nest_level: u32) -> u32 {
+    fn walk_internal(&mut self, index: NodeId, nest_level: u32) -> NodeId {
         let lvl = (nest_level * 2) as usize;
 
-        // self.eval_internal(index)
         let res = {
-            let piq = {
-                let borrowed_ast = self.ast.borrow();
-                borrowed_ast.get(index).clone()
-            };
+            let &Node(_, ref piq) = self.ast.get(index);
             println!("{}walk ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                Epiq::Tpiq{ref o, p, q} => {
+                &Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         ">" => {
                             // ひとまずpは無視
@@ -102,8 +100,8 @@ impl<'a> Evaluator<'a> {
                             if new_q == q {
                                 Result::MakeEpiq(None)
                             } else {
-                                let borrowed_ast = self.ast.borrow();
-                                Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
+                                let &Node(_, ref new_q_piq) = self.ast.get(new_q);
+                                Result::MakeEpiq(Some(new_q_piq.clone()))
                             }
                         },
 
@@ -112,9 +110,9 @@ impl<'a> Evaluator<'a> {
                             // その他のTpiqの場合は、pとq両方をwalkしてみて、
                             // 結果が両方とも変わらなければそのまま返す、
                             // そうでなければ新しくTpiqを作ってそのindexを返す
-                            println!("{}walk >以外 pに入ります", " ".repeat(lvl));
+                            // println!("{}walk >以外 pに入ります", " ".repeat(lvl));
                             let new_p = self.walk_internal(p, nest_level+1);
-                            println!("{}walk >以外 qに入ります", " ".repeat(lvl));
+                            // println!("{}walk >以外 qに入ります", " ".repeat(lvl));
                             let new_q = self.walk_internal(q, nest_level+1);
                             if new_p == p && new_q == q {
                                 // println!("{}pもqも同じなので変化なし", " ".repeat(lvl));
@@ -135,42 +133,40 @@ impl<'a> Evaluator<'a> {
             Result::MakeEpiq(Some(new_epiq)) => {
                 // まずpushだけ
                 println!("{}walk 生み出す: {:?}", " ".repeat(lvl), new_epiq);
-                self.ast.borrow_mut().push(new_epiq);
-                self.ast.borrow().max_index.get()
+                self.ast.alloc(new_epiq)
             },
             Result::MakeEpiq(None) => {
                 // 変化なし
-                let borrowed_ast = self.ast.borrow();
-                let piq = borrowed_ast.get(index);
+                let &Node(_, ref piq) = self.ast.get(index);
                 println!("{}walk 変化なし: {:?}", " ".repeat(lvl), piq);
                 index
             },
             Result::NewIndex(i) => {
-                let borrowed_ast = self.ast.borrow();
-                let piq1 = borrowed_ast.get(index);
-                let piq2 = borrowed_ast.get(i);
+                // let borrowed_ast = self.ast.borrow();
+                let &Node(_, ref piq1) = self.ast.get(index);
+                let &Node(_, ref piq2) = self.ast.get(i);
                 println!("{}walk 付け替え: {:?} から {:?}", " ".repeat(lvl), piq1, piq2);
                 i
             },
         }
     }
 
-    fn eval_internal(&mut self, index: u32, nest_level: u32) -> u32 {
+    fn eval_internal(&mut self, index: NodeId, nest_level: u32) -> NodeId {
         let lvl = (nest_level * 2) as usize;
 
         let res = {
-            let piq = {
-                let borrowed_ast = self.ast.borrow();
-                borrowed_ast.get(index).clone()
-            };
+            let &Node(_, ref piq) = self.ast.get(index);
             println!("{}eval ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                Epiq::Unit | Epiq::Tval | Epiq::Fval |
-                Epiq::Uit8(_) | Epiq::Name(_) => Result::MakeEpiq(None),
+                &Epiq::Unit |
+                &Epiq::Tval |
+                &Epiq::Fval |
+                &Epiq::Uit8(_) |
+                &Epiq::Name(_) => Result::MakeEpiq(None),
 
                 // primitive function
-                Epiq::Prim(_) => {
+                &Epiq::Prim(_) => {
                     /*
                     println!("primitive");
 
@@ -183,19 +179,13 @@ impl<'a> Evaluator<'a> {
                     Result::MakeEpiq(None)
                 },
 
-                Epiq::Tpiq{ref o, p, q} => {
+                &Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
                         // bind
                         "#" => {
-                            let p_name = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(p).clone()
-                            };
-                            if let Epiq::Name(ref n) = p_name {
-                                let q_val = {
-                                    let borrowed_ast = self.ast.borrow();
-                                    borrowed_ast.get(q).clone()
-                                };
+                            let p_name = self.ast.get(p);
+                            if let &Node(_, Epiq::Name(ref n)) = p_name {
+                                let &Node(_, ref q_val) = self.ast.get(q);
                                 self.symbol_table.define(n, q_val);
 
                                 Result::MakeEpiq(Some(Epiq::Unit))
@@ -222,42 +212,26 @@ impl<'a> Evaluator<'a> {
                         "!" => {
                             // p: lambda q:arguments
 
-                            let lambda_piq = {
-                                let borrowed_ast = self.ast.borrow();
-                                // let new_p_index = { self.walk_internal(p, nest_level+1) };
-                                borrowed_ast.get(p).clone()
-                            };
-
-                            let arguments_piq = {
-                                let borrowed_ast = self.ast.borrow();
-                                // let new_q_index = self.walk_internal(p, nest_level+1);
-                                borrowed_ast.get(q).clone()
-                            };
+                            let lambda_piq = self.ast.get(p);
+                            let &Node(_, ref args) = self.ast.get(q);
 
                             match lambda_piq {
-                                Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body} => {
+                                &Node(_, Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body}) => {
                                     // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
                                     // まず環境を取得
-                                    let env_piq = {
-                                        let borrowed_ast = self.ast.borrow();
-                                        borrowed_ast.get(lambda_env).clone()
-                                    };
+                                    let env_piq = self.ast.get(lambda_env);
 
-                                    if let Epiq::Tpiq{o:ref otag, p:_, q:symbol_table} = env_piq {
+                                    if let &Node(_, Epiq::Tpiq{o:ref otag, p:_, q:symbol_table}) = env_piq {
                                         if otag == "%" {
                                             // pは無視
                                             // qはシンボルのリストになる
-                                            let parameters_piq = {
-                                                let borrowed_ast = self.ast.borrow();
-                                                borrowed_ast.get(symbol_table).clone()
-                                            };
+                                            let &Node(_, ref params) = self.ast.get(symbol_table);
 
                                             // 新しい環境フレームを作る
                                             self.symbol_table.extend();
 
                                             // 束縛を追加する
-                                            self.assign_arguments(parameters_piq, arguments_piq);
-
+                                            self.assign_arguments(params, args);
 
                                             // 2. p.q(関数本体)をそのまま返却する
                                             // walkを挟んでから返す
@@ -277,7 +251,7 @@ impl<'a> Evaluator<'a> {
                                     }
                                 },
 
-                                Epiq::Prim(ref n) => {
+                                &Node(_, Epiq::Prim(ref n)) => {
                                     match n.as_ref() {
                                         "decr" => {
                                             // 面倒なので 1- を実装
@@ -314,8 +288,8 @@ impl<'a> Evaluator<'a> {
                             if new_q == q {
                                 Result::MakeEpiq(None)
                             } else {
-                                let borrowed_ast = self.ast.borrow();
-                                Result::MakeEpiq(Some(borrowed_ast.get(new_q).clone()))
+                                let &Node(_, ref new_q_piq) = self.ast.get(new_q);
+                                Result::MakeEpiq(Some(new_q_piq.clone()))
                             }
                         },
 
@@ -323,13 +297,11 @@ impl<'a> Evaluator<'a> {
                         "@" => {
                             // p: 用途未定。ひとまず無視
                             // q: シンボルというか名前
-                            let q_name = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(q).clone()
-                            };
-                            if let Epiq::Name(ref n) = q_name {
+                            let &Node(_, ref q_name) = self.ast.get(q);
+
+                            if let &Epiq::Name(ref n) = q_name {
                                 match self.symbol_table.resolve(n) {
-                                    Some(Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
+                                    Some(Some(ref res)) => Result::MakeEpiq(Some(res)),
                                     _ => {
                                         println!("resolve時に指定されたキーが見つからない: {:?}", n);
                                         Result::MakeEpiq(None)
@@ -346,24 +318,17 @@ impl<'a> Evaluator<'a> {
                             println!("access");
                             // p: レシーバ
                             // q: アクセッサ
-                            let p_reciever = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(p).clone()
-                            };
-
-                            let q_accessor = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(q).clone()
-                            };
+                            let &Node(_, ref p_reciever) = self.ast.get(p);
+                            let &Node(_, ref q_accessor) = self.ast.get(q);
 
                             // レシーバの種類によってできることが変わる
                             match p_reciever {
-                                Epiq::Tpiq{ref o, p, q} => {
+                                &Epiq::Tpiq{ref o, p, q} => {
                                     match o.as_ref() {
                                         ":" => {
                                             // Lpiqならば、pとqが使える、それ以外は無理
                                             match q_accessor {
-                                                Epiq::Name(ref n) => {
+                                                &Epiq::Name(ref n) => {
                                                     match n.as_ref() {
                                                         "p" => Result::NewIndex(p),
                                                         "q" => Result::NewIndex(q),
@@ -402,15 +367,8 @@ impl<'a> Evaluator<'a> {
                             println!("condition");
                             // p: ^T or ^F(他の値の評価はひとまず考えない)
                             // q: Lpiq、^Tならpを返し、^Fならqを返す
-                            let p_condition = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(p).clone()
-                            };
-
-                            let q_result = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(q).clone()
-                            };
+                            let &Node(_, p_condition) = self.ast.get(p);
+                            let &Node(_, q_result) = self.ast.get(q);
 
                             match p_condition {
                                 Epiq::Tval | Epiq::Fval => {
@@ -449,7 +407,7 @@ impl<'a> Evaluator<'a> {
                     }
                 },
 
-                Epiq::Mpiq{ref o, p, q} => {
+                &Epiq::Mpiq{ref o, p, q} => {
                     match o.as_ref() {
                         ">" => {
                             // ^> リストのeval
@@ -458,11 +416,11 @@ impl<'a> Evaluator<'a> {
                             // Result::MakeEpiq(None)
                             let res = self.eval_list(q, nest_level+1);
                             // 戻り値のindexがすでに存在するなら何もしない
-                            if res <= self.ast.borrow().max_index.get() {
+                            if res <= self.ast.max_id().unwrap() {
                                 Result::NewIndex(res)
                             } else {
-                                let borrowed_ast = self.ast.borrow();
-                                Result::MakeEpiq(Some(borrowed_ast.get(res).clone()))
+                                let &Node(_, res_piq) = self.ast.get(res);
+                                Result::MakeEpiq(Some(res_piq))
                             }
                         },
 
@@ -481,44 +439,35 @@ impl<'a> Evaluator<'a> {
             Result::MakeEpiq(Some(new_epiq)) => {
                 // まずpushだけ
                 println!("{}eval 生み出す: {:?}", " ".repeat(lvl), new_epiq);
-                self.ast.borrow_mut().push(new_epiq);
-                self.ast.borrow().max_index.get()
+                self.ast.alloc(new_epiq)
             },
             Result::MakeEpiq(None) => {
                 // 変化なし
-                let borrowed_ast = self.ast.borrow();
-                let piq = borrowed_ast.get(index);
+                let piq = self.ast.get(index);
                 println!("{}eval 変化なし: {:?}", " ".repeat(lvl), piq);
                 index
             },
             Result::NewIndex(i) => {
-                let borrowed_ast = self.ast.borrow();
-                let piq1 = borrowed_ast.get(index);
-                let piq2 = borrowed_ast.get(i);
+                let &Node(_, piq1) = self.ast.get(index);
+                let &Node(_, piq2) = self.ast.get(i);
                 println!("{}eval 付け替え: {:?} から {:?}", " ".repeat(lvl), piq1, piq2);
                 i
             },
         }
     }
 
-    fn eval_list(&mut self, index: u32, nest_level: u32) -> u32 {
+    fn eval_list(&mut self, index: NodeId, nest_level: u32) -> NodeId {
         let lvl = (nest_level * 2) as usize;
 
         if let Some(res_index) = {
-            let piq = {
-                let borrowed_ast = self.ast.borrow();
-                borrowed_ast.get(index).clone()
-            };
+            let &Node(_, piq) = self.ast.get(index);
             println!("{}eval_list ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
                 Epiq::Tpiq{ref o,p,q} => {
                     match o.as_ref() {
                         ":" => {
-                            let q_piq = {
-                                let borrowed_ast = self.ast.borrow();
-                                borrowed_ast.get(q).clone()
-                            };
+                            let &Node(_, q_piq) = self.ast.get(q);
 
                             if q_piq == Epiq::Unit {
                                 // リストの最後なので評価の結果を返す
@@ -542,42 +491,29 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn assign_arguments(&mut self, parameters_piq: Epiq, arguments_piq: Epiq) {
+    fn assign_arguments(&mut self, parameters_piq: &Epiq, arguments_piq: &Epiq) {
         // arguments_piqはリストのはずなので、一つ一つ回して定義していく
         match arguments_piq {
-            Epiq::Tpiq{o: ref colon, p: content, q: next_args} => {
+            &Epiq::Tpiq{o: ref colon, p: content, q: next_args} => {
                 if colon == ":" {
-                    let next_args_piq = {
-                        let borrowed_ast = self.ast.borrow();
-                        borrowed_ast.get(next_args).clone()
-                    };
+                    let &Node(_, ref next_args_piq) = self.ast.get(next_args.clone());
+                    let &Node(_, ref content_piq) = self.ast.get(content.clone());
 
-                    let content_piq = {
-                        let borrowed_ast = self.ast.borrow();
-                        borrowed_ast.get(content).clone()
-                    };
-
-                    { println!("assign: {:?}", content_piq); }
+                    println!("assign: {:?}", content_piq);
 
                     match parameters_piq {
-                        Epiq::Tpiq{o: ref colon, p: param, q: next_params} => {
+                        &Epiq::Tpiq{o: ref colon, p: param, q: next_params} => {
                             if colon == ":" {
-                                let next_params_piq = {
-                                    let borrowed_ast = self.ast.borrow();
-                                    borrowed_ast.get(next_params).clone()
-                                };
+                                let &Node(_, ref next_params_piq) = self.ast.get(next_params);
+                                let &Node(_, ref param_piq) = self.ast.get(param);
 
-                                let param_piq = {
-                                    let borrowed_ast = self.ast.borrow();
-                                    borrowed_ast.get(param).clone()
-                                };
-                                if let Epiq::Name(ref s) = param_piq {
+                                if let &Epiq::Name(ref s) = param_piq {
                                     self.symbol_table.define(s, content_piq);
 
                                     // paramsとargs、両方のリストを回していくが、
                                     // ループの基準となるのはargs。
                                     // paramsが途中でなくなっても知らん。
-                                    if next_args_piq == Epiq::Unit {
+                                    if next_args_piq == &Epiq::Unit {
                                         // 最後なので終了
                                         println!("assign終わりです");
                                     } else {

@@ -1,41 +1,40 @@
-use std::cell::RefCell;
+// use std::cell::RefCell;
 // use std::ops::Deref;
 use core::*;
 use lexer::*;
 use parser::*;
 use walker::*;
 
-struct Printer<'a> {
-    ast: &'a RefCell<AbstractSyntaxTree>,
+struct Printer {
+    ast: /*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
 }
 
-impl<'a> Printer<'a> {
-    pub fn new(ast: &'a RefCell<AbstractSyntaxTree>) -> Self {
+impl Printer {
+    pub fn new(ast: /*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>) -> Self {
         Printer{ ast: ast }
     }
 
     pub fn print(&self) -> String {
-        if let Some(entrypoint) = self.ast.borrow().entrypoint {
+        if let Some(entrypoint) = self.ast.entry() {
             self.print_aexp(entrypoint, 0)
         } else {
             "".to_string()
         }
     }
 
-    fn print_aexp(&self, i: u32, nest_level: u32) -> String {
-        let ast = self.ast.borrow();
-        let epiq = ast.get(i);
-        match *epiq {
-            Epiq::Unit => ";".to_string(),
-            Epiq::Tval => "^T".to_string(),
-            Epiq::Fval => "^F".to_string(),
-            Epiq::Name(ref n) => n.to_string(),
-            Epiq::Uit8(ref n) => format!("{}", n),
-            Epiq::Prim(ref n) => format!("Prim({})", n),
-            Epiq::Tpiq { ref o, p, q } => {
+    fn print_aexp(&self, i: NodeId, nest_level: u32) -> String {
+        let &Node(_, ref epiq) = self.ast.get(i);
+        match epiq {
+            &Epiq::Unit => ";".to_string(),
+            &Epiq::Tval => "^T".to_string(),
+            &Epiq::Fval => "^F".to_string(),
+            &Epiq::Name(ref n) => n.to_string(),
+            &Epiq::Uit8(ref n) => format!("{}", n),
+            &Epiq::Prim(ref n) => format!("Prim({})", n),
+            &Epiq::Tpiq { ref o, p, q } => {
                 format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             },
-            Epiq::Mpiq { ref o, p, q } => {
+            &Epiq::Mpiq { ref o, p, q } => {
                 format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             },
             // _ => "".to_string(),
@@ -174,7 +173,7 @@ pub fn print_str(left: &str, right: &str) {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/NodeArena::new();
     let mut parser = Parser::new(lexer, empty_ast);
     let parsed_ast = parser.parse();
 
@@ -188,14 +187,14 @@ fn print_evaled_str(left: &str, right: &str) {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/NodeArena::new();
     let mut parser = Parser::new(lexer, empty_ast);
     let parsed_ast = parser.parse();
 
-    let mut evaluator = Evaluator::new(parsed_ast);
-    let evaled_ast = evaluator.walk().unwrap();
+    let mut walker = Walker::new(parsed_ast);
+    let walked_ast = walker.walk().unwrap();
 
-    let printer = Printer::new(evaled_ast);
+    let printer = Printer::new(walked_ast);
 
     assert_eq!(printer.print(), right);
 }

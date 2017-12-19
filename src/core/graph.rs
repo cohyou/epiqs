@@ -1,21 +1,20 @@
-type NodeId = usize;
+pub type NodeId = usize;
 
-pub struct Node<T> {
-    id: NodeId,
-    pub value : T,
-}
+#[derive(Debug)]
+pub struct Node<T>(pub NodeId, pub T);
 
-pub struct NodeArena<T> (Vec<Node<T>>);
+pub struct NodeArena<T> (Vec<Node<T>>, Option<usize>);
 
 impl<T> NodeArena<T> {
     pub fn new() -> NodeArena<T> {
-        NodeArena::<T>(Default::default())
+        NodeArena::<T>(Default::default(), Default::default())
     }
 
     pub fn alloc(&mut self, value: T) -> NodeId {
         let id = self.0.len();
-        let node = Node{id, value};
+        let node = Node(id, value);
         self.0.push(node);
+        self.1 = Some(id);
         id
     }
 
@@ -25,6 +24,19 @@ impl<T> NodeArena<T> {
 
     pub fn get_mut(&mut self, id: NodeId) -> &mut Node<T> {
         &mut self.0[id]
+    }
+
+    pub fn entry(&self) -> Option<NodeId> {
+        self.1
+    }
+
+    pub fn set_entry(&mut self, id: NodeId) {
+        self.1 = Some(id);
+    }
+
+    pub fn max_id(&self) -> Option<NodeId> {
+        let id = self.0.len();
+        if id == 0 { None } else { Some(id - 1) }
     }
 }
 

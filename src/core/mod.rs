@@ -1,6 +1,8 @@
 mod graph;
 
 use std::cell::Cell;
+pub use self::graph::NodeId;
+pub use self::graph::Node;
 pub use self::graph::NodeArena;
 
 /// E(lemantal) piq
@@ -13,8 +15,8 @@ pub enum Epiq {
     Uit8(i64),
     Prim(String), // primitive function
 
-    Tpiq { o: String, p: u32, q: u32}, // tagged piq
-    Mpiq { o: String, p: u32, q: u32}, // metadata piq
+    Tpiq { o: String, p: NodeId, q: NodeId}, // tagged piq
+    Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
     // Apiq { p: u32, q: u32 }, // application piq
 
     // Text(String),
