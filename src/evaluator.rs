@@ -3,7 +3,18 @@ use std::collections::HashMap;
 use core::*;
 
 struct SymbolTable {
-    pub table: HashMap<String, Option<Epiq>>,
+    table: Vec<HashMap<String, Option<Epiq>>>,
+    current_index: usize,
+}
+
+impl SymbolTable {
+    fn define(&mut self, name: &str, value: Epiq) {
+        self.table[self.current_index].insert(name.to_string(), Some(value));
+    }
+
+    fn resolve(&self, name: &str) -> Option<&Option<Epiq>> {
+        self.table[self.current_index].get(name)
+    }
 }
 
 pub struct Evaluator<'a> {
@@ -18,7 +29,13 @@ enum Result {
 
 impl<'a> Evaluator<'a> {
     pub fn new(ast :&'a RefCell<AbstractSyntaxTree>) -> Evaluator {
-        Evaluator{ ast: ast, symbol_table: SymbolTable{ table: HashMap::new() } }
+        Evaluator {
+            ast: ast,
+            symbol_table: SymbolTable {
+                table: vec![HashMap::new()],
+                current_index: Default::default(),
+            }
+        }
     }
 
     pub fn walk(&mut self) -> Option<&RefCell<AbstractSyntaxTree>> {
@@ -138,7 +155,7 @@ impl<'a> Evaluator<'a> {
                                     let borrowed_ast = self.ast.borrow();
                                     borrowed_ast.get(q).clone()
                                 };
-                                self.symbol_table.table.insert(n.to_string(), Some(q_val));
+                                self.symbol_table.define(n, q_val);
 
                                 Result::MakeEpiq(Some(Epiq::Unit))
                             } else {
@@ -165,28 +182,13 @@ impl<'a> Evaluator<'a> {
                             // p: lambda q:arguments
                             // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
 
-                            // TODO: とりあえず引数なしとして処理する
-
                             // 2. p.q(関数本体)をそのまま返却する
                             let borrowed_ast = self.ast.borrow();
                             let lambda_piq = borrowed_ast.get(p);
                             if let &Epiq::Tpiq{o:_, p:_, q:lambda_body} = lambda_piq {
-                                // 本来は一応walkを挟むべきかもしれない
+                                // walkを挟んでから返す
                                 let new_lambda_body = self.walk_internal(lambda_body, nest_level+1);
-                                /*
-                                if new_lambda_body == lambda_body {
-                                    // walk_internalの結果でも変化はないし、Noneを返す
-                                    Result::MakeEpiq(None)
-                                } else {
-                                    // walk_internalの結果、変化があったんだけど、
-                                    // それってもうepiqとしては作られているので、
-                                    // そのままNoneを返せばいい？
-                                    // でもそうなると、新しいnew_lambda_bodyが返せない
 
-                                    // Some(borrowed_ast.get(new_lambda_body).clone())
-                                    Result::NewIndex(new_lambda_body)
-                                }
-                                */
                                 Result::NewIndex(new_lambda_body)
 
                             } else {
@@ -221,7 +223,7 @@ impl<'a> Evaluator<'a> {
                                 borrowed_ast.get(q).clone()
                             };
                             if let Epiq::Name(ref n) = p_name {
-                                match self.symbol_table.table.get(n) {
+                                match self.symbol_table.resolve(n) {
                                     Some(&Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
                                     _ => Result::MakeEpiq(None),
                                 }
@@ -249,7 +251,6 @@ impl<'a> Evaluator<'a> {
                                 let borrowed_ast = self.ast.borrow();
                                 Result::MakeEpiq(Some(borrowed_ast.get(res).clone()))
                             }
-
                         },
                         _ => Result::MakeEpiq(None),
                     }
