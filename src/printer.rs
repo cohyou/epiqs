@@ -127,11 +127,11 @@ fn test_print_evaled_list() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn test_print_evaled_defining_list() {
-    print_evaled_str(r"|> ; |# abc 123", r"3");
-    // print_evaled_str(r"|> ; ^> -1 [|# abc 123]", r"3");
-    // print_evaled_str(r"|> ; ^> -1 [|# abc 123 |@ ; abc]", r"3");
+    // print_evaled_str(r"|> ; |# abc 123", r";");
+    // print_evaled_str(r"|> ; |@ ; abc", r";");
+    print_evaled_str(r"|> ; ^> -1 [|# abc 123 |@ ; abc]", r"123");
 }
 
 pub fn print_str(left: &str, right: &str) {

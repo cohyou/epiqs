@@ -206,7 +206,10 @@ impl<'a> Evaluator<'a> {
                         "@" => {
                             // p: 用途未定。ひとまず無視
                             // q: シンボルというか名前
-                            Result::MakeEpiq(Some(Epiq::Uit8(666)))
+                            match self.symbol_table.table.get("abc") {
+                                Some(&Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
+                                _ => Result::MakeEpiq(Some(Epiq::Uit8(888))),
+                            }
                         }
 
                         _ => Result::MakeEpiq(None),
@@ -264,16 +267,22 @@ impl<'a> Evaluator<'a> {
         let lvl = (nest_level * 2) as usize;
 
         if let Some(res_index) = {
-            let borrowed_ast = self.ast.borrow();
-            let piq = borrowed_ast.get(index);
+            let piq = {
+                let borrowed_ast = self.ast.borrow();
+                borrowed_ast.get(index).clone()
+            };
             println!("{}eval_list ＿開始＿: {:?}", " ".repeat(lvl), piq);
 
             match piq {
-                &Epiq::Tpiq{ref o,p,q} => {
+                Epiq::Tpiq{ref o,p,q} => {
                     match o.as_ref() {
                         ":" => {
-                            let q_piq = borrowed_ast.get(q);
-                            if *q_piq == Epiq::Unit {
+                            let q_piq = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(q).clone()
+                            };
+
+                            if q_piq == Epiq::Unit {
                                 // リストの最後なので評価の結果を返す
                                 Some(self.eval_internal(p, nest_level+1))
                             } else {
