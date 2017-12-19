@@ -127,13 +127,23 @@ impl<'a> Evaluator<'a> {
                 Epiq::Unit | Epiq::Uit8(_) | Epiq::Name(_) => Result::MakeEpiq(None),
                 Epiq::Tpiq{ref o, p, q} => {
                     match o.as_ref() {
+                        // bind
                         "#" => {
-                            // bind
-                            // TODO: 実際のbindではなく、適当に固定値をbindしている
-                            self.symbol_table.table.insert("abc".to_string(), Some(Epiq::Uit8(123)));
+                            let p_name = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(p).clone()
+                            };
+                            if let Epiq::Name(ref n) = p_name {
+                                let q_val = {
+                                    let borrowed_ast = self.ast.borrow();
+                                    borrowed_ast.get(q).clone()
+                                };
+                                self.symbol_table.table.insert(n.to_string(), Some(q_val));
 
-                            // Result::MakeEpiq(Some(Epiq::Unit))
-                            Result::MakeEpiq(Some(Epiq::Unit))
+                                Result::MakeEpiq(Some(Epiq::Unit))
+                            } else {
+                                Result::MakeEpiq(None)
+                            }
                         },
 
                         // environment
@@ -206,9 +216,17 @@ impl<'a> Evaluator<'a> {
                         "@" => {
                             // p: 用途未定。ひとまず無視
                             // q: シンボルというか名前
-                            match self.symbol_table.table.get("abc") {
-                                Some(&Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
-                                _ => Result::MakeEpiq(Some(Epiq::Uit8(888))),
+                            let p_name = {
+                                let borrowed_ast = self.ast.borrow();
+                                borrowed_ast.get(q).clone()
+                            };
+                            if let Epiq::Name(ref n) = p_name {
+                                match self.symbol_table.table.get(n) {
+                                    Some(&Some(ref res)) => Result::MakeEpiq(Some(res.clone())),
+                                    _ => Result::MakeEpiq(None),
+                                }
+                            } else {
+                                Result::MakeEpiq(None)
                             }
                         }
 
