@@ -59,21 +59,22 @@ impl Scanner for IntegerScanner {
 
 #[test]
 #[ignore]
-fn test_zero() {
+fn zero() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("0", "Nmbr<0>", scanners);
 }
 
 #[test]
 #[ignore]
-fn test_one_digit_integer() {
+fn one_digit_integer() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("1", "Nmbr<1>", scanners);
 }
 
 #[test]
 #[ignore]
-fn test_multiple_digits_integer() {
+fn
+multiple_digits_integer() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&ZeroScanner, &IntegerScanner];
     lex_from_str("12", "Nmbr<12>", scanners);
 }

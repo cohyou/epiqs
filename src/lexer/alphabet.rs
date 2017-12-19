@@ -56,14 +56,14 @@ impl Scanner for AlphabetScanner {
 
 #[test]
 #[ignore]
-fn test_otag() {
+fn otag() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&AlphabetScanner];
     lex_from_str("Abc", "Otag<Abc>", scanners);
 }
 
 #[test]
 #[ignore]
-fn test_character_vector() {
+fn character_vector() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&AlphabetScanner];
     lex_from_str("abc", "Chvc<abc>", scanners);
 }

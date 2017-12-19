@@ -1,3 +1,5 @@
+mod graph;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use core::*;
@@ -609,7 +611,7 @@ impl<'a> Evaluator<'a> {
 
 #[test]
 #[ignore]
-fn test() {
+fn new() {
     let ast = &RefCell::new(AbstractSyntaxTree::new());
     let mut evaluator = Evaluator::new(ast);
     evaluator.walk();

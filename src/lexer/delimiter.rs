@@ -40,13 +40,13 @@ impl Scanner for DelimiterScanner {
 
 #[test]
 #[ignore]
-fn test_pipe() {
+fn pipe() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
     lex_from_str("|", "Pipe", scanners);
 }
 
 #[test]
-fn test_semicolon() {
+fn semicolon() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
     lex_from_str(";", "Smcl", scanners);
 }

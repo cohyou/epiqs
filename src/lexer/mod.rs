@@ -225,7 +225,7 @@ impl<'a, 'b> Lexer<'a, 'b> {
 
 #[test]
 #[ignore]
-fn test_lexer_one_piq() {
+fn one_piq() {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &DelimiterScanner,
         &AlphabetScanner,
@@ -238,28 +238,28 @@ fn test_lexer_one_piq() {
 
 #[test]
 #[ignore]
-fn test_lexer_bind_piq() {
+fn bind_piq() {
     lex_from_str_with_all_scanners("|# abc 123", "Pipe Otag<#> Chvc<abc> Nmbr<123>");
 }
 
 #[test]
-fn test_bracket_list() {
+fn bracket_list() {
     lex_from_str_with_all_scanners("[dog 256 cat 512]", "Lbkt Chvc<dog> Nmbr<256> Chvc<cat> Nmbr<512> Rbkt");
 }
 
 #[test]
-fn test_lexer_mpiq() {
+fn mpiq() {
     // lex_from_str_with_all_scanners("^> 246", "Crrt Otag<>> Nmbr<246>");
     lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
 #[test]
-fn test_lexer_tval() {
+fn tval() {
     lex_from_str_with_all_scanners("^T", "Crrt Otag<T>");
 }
 
 #[test]
-fn test_lexer_primitive_function() {
+fn primitive_function() {
     lex_from_str_with_all_scanners("decr", "Chvc<decr>");
 }
 

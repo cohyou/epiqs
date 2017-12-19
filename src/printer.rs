@@ -45,50 +45,50 @@ impl<'a> Printer<'a> {
 
 #[test]
 #[ignore]
-fn test_print_symbol() {
+fn symbol() {
     print_str("abc", "abc");
 }
 
 #[test]
 #[ignore]
-fn test_print_number() {
+fn number() {
     print_str("123", "123");
 }
 
 #[test]
-fn test_print_unit() {
+fn unit() {
     print_str(";", ";");
 }
 
 #[test]
 #[ignore]
-fn test_print_tpiq() {
+fn tpiq() {
     // print_str("|: abc 123", ":< abc 123 >");
     print_str("|# abc 123", "#< abc 123 >");
 }
 
 #[test]
-fn test_print_nested_tpiq() {
+fn nested_tpiq() {
     print_str("|: |: cde |: abc 123 456", ":(:(cde :(abc 123)) 456)");
 }
 
 #[test]
-fn test_print_list() {
+fn list() {
     print_str("[abc 123]", ":(abc :(123 ;))");
 }
 
 #[test]
-fn test_print_empty_env() {
+fn empty_env() {
     print_str("|% ; -1", "%(; -1)");
 }
 
 #[test]
-fn test_print_resolve_piq() {
+fn resolve_piq() {
     print_str("|@ abc ;", "@(abc ;)");
 }
 
 #[test]
-fn test_print_block() {
+fn block() {
     print_str(
         r"|> ; |! |\ |% ; ; ^> -1 [|# abc 123 |@ ; abc] ;",
         r">(; !(\(%(; ;) >(-1 :(#(abc 123) :(@(; abc) ;)))) ;))"
@@ -97,7 +97,7 @@ fn test_print_block() {
 
 #[test]
 #[ignore]
-fn test_print_evaled_empty_ast() {
+fn evaled_empty_ast() {
     let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
     let mut evaluator = Evaluator::new(empty_ast);
     let evaled_ast = evaluator.walk().unwrap();
@@ -106,56 +106,56 @@ fn test_print_evaled_empty_ast() {
 }
 
 #[test]
-fn test_print_evaled_symbol_ast() {
+fn evaled_symbol_ast() {
     print_evaled_str("abc", "abc");
 }
 
 #[test]
-fn test_print_evaled_number_ast() {
+fn evaled_number_ast() {
     print_evaled_str("123", "123");
 }
 
 #[test]
 // #[ignore]
-fn test_print_evaled_define_ast() {
+fn evaled_define_ast() {
     // define symbol is number
     print_evaled_str("|> ; |# abc 123", ";");
 }
 
 #[test]
-fn test_print_evaled_apply() {
+fn evaled_apply() {
     print_evaled_str(r"|> ; |! |\ |% ; ; 0 ;", r"0");
 }
 
 #[test]
-fn test_print_evaled_list() {
+fn evaled_list() {
     print_evaled_str(r"|> ; ^> -1 [1 2 3]", r"3");
 }
 
 #[test]
 // #[ignore]
-fn test_print_evaled_defining_list() {
+fn evaled_defining_list() {
     // print_evaled_str(r"|> ; |# abc 123", r";");
     // print_evaled_str(r"|> ; |@ ; abc", r";");
     print_evaled_str(r"|> ; ^> -1 [|# abc 1234 |@ ; abc]", r"1234");
 }
 
 #[test]
-fn test_exec_func() {
+fn exec_func() {
     // print_str(r"|% ; ;", ";a")
     // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
     print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
 }
 
 #[test]
-fn test_access() {
+fn access() {
     // print_str("|. a p", ".(a p)");
     // print_evaled_str("|> ; |. |: 1 3 p", "p")
     print_evaled_str("|> ; |. |: 1 3 q", "3")
 }
 
 #[test]
-fn test_condition() {
+fn condition() {
     // print_str("|? abc 123", "?(abc 123)");
     // print_str("^T", "^T");
     // print_str("^F", "^F");
@@ -164,7 +164,7 @@ fn test_condition() {
 }
 
 #[test]
-fn test_primitive_function() {
+fn primitive_function() {
     print_evaled_str("|> ; |@ ; decr", "Prim(decr)")
     // print_evaled_str("|> ; |! |> ; |@ ; decr [4]", ";")
 }
