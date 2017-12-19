@@ -12,7 +12,8 @@ impl AlphabetScanner {
     }
 
     fn is_otag_sign(&self, c: u8) -> bool {
-        c == b':' || c == b'#' || c == b'%' || c == b'\\' || c == b'@' || c == b'~' || c == b'>' || c == b'!'
+        c == b':' || c == b'#' || c == b'%' || c == b'\\' ||
+        c == b'@' || c == b'~' || c == b'>' || c == b'!' || c == b'.'
     }
 
     fn is_first_name_letter(&self, c: u8) -> bool {

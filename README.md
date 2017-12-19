@@ -170,13 +170,10 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 記号|説明|単独
 :-:|-|-
 `\`|block|ナシ
+`>`|eval|ナシ
 `!`|apply|中置記法でapply<br>（pとの間にWSは許されない
 `$`|symbol|ナシ
 `?`|condition|ナシ(中置記法は微妙)
-`^{` ~ `}`|現在は`^!{` ~ `}`と同じ|ナシ
-`^[` ~ `]`|現在は`^.[` ~ `]`と同じ|ナシ
-`^!{` ~ `}`|中身を深さ優先で再帰的に評価|ナシ
-`^.[` ~ `]`|quasiquote 実行を止める|ナシ
 
 
 #### タグ(マッチング)
@@ -211,6 +208,16 @@ de bruijn index|`.[0-9]*` `.`の後に数値が続くと、de bruijn indexとみ
 `!<`|dispatch
 
 
+#### タグ(一旦廃止、実行は|>でやる,quoteも必要なくなった)
+
+記号|説明
+:-:|-
+`^{` ~ `}`|現在は`^!{` ~ `}`と同じ|ナシ
+`^[` ~ `]`|現在は`^.[` ~ `]`と同じ|ナシ
+`^!{` ~ `}`|中身を深さ優先で再帰的に評価|ナシ
+`^.[` ~ `]`|quasiquote 実行を止める|ナシ
+
+
 #### マクロかも(複数文字でのidiom)
 
 記号|説明
@@ -235,7 +242,7 @@ Slsh, // / slash
 
 Bkqt, // ` back quote
 Less, // < less than
-Grtr, // > greater than
+(使用済みになりました) Grtr, // > greater than
 ```
 
 
@@ -342,7 +349,7 @@ Grtr, // > greater than
 |Defn sum:[a b], (+ .a .b)
 |-> (+ .0 .1)
 ```
-### epiq一覧
+### epiq一覧(literalなど)
 
 表記|対応する表現|説明
 -|-|-
@@ -352,20 +359,29 @@ Grtr, // > greater than
 `Fval`|`F`|false
 `Int8(i64)`|`21` `745`|8byte integer
 `Text(String)`|`"wowow"`|string
-`Smbl(String)`|`map` `index`|symbol
+`Name(String)`|`map` `index`|symbol
+`Plhd`|`_`|placeholder patternで使う
+
+### epiq一覧(piq, 主に両方の引数を埋めるもの)
+
+表記|対応する表現|説明
+-|-|-
 `Tpiq{_tag, pval, qval}`|`(_tag pval qval)`|tag assignable cons
 `Lpiq{pval, qval}`|`(:a b)` '&#x7C;: a b' `': a` `a:b`|linked-list(normal cons cell)
-`Meta{mtag, trgt}`|`^{}` `^[]`|metadata
-`Envn{prms, optn}`|`(% [i j] ^{})`|environment
 `Bind{smbl, valu}`|`(# one 1)`|bind
-`Rslv{smbl, _}`|`'@ sym` `@func`|resolve symbol
 `Accs{trgt, kynm}`|`(. piq q)` `obj.attr`|access
 `Lmbd{envn, body}`|`'\ .0` `(\ '% [i] @incl!, .i)`|function piq block
-`Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
-`Eval{qexp, _}`|`^{ @go-a-head! }`|exec eval
-`Quot{qexp, _}`|`^[ a b c ]`|quote
 `Same{val1, val2}`|`(= money happiness)`|equal
-`Plhd`|`_`|placeholder patternで使う
+`Meta{mtag, trgt}`|`^{}` `^[]`|metadata
+`Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
+
+
+### epiq一覧(piq, 主に2つ目の引数を埋めるもの)
+表記|対応する表現|説明
+-|-|-
+`Envn{_, prms}`|`(% [i j] ^{})`|environment
+`Rslv{_, smbl}`|`'@ sym` `@func`|resolve symbol
+`Eval{_, qexp}`|`^{ @go-a-head! }`|exec eval
 
 
 #### 廃止（tupleとenumはmetadataとしてのみ表現）
@@ -374,3 +390,32 @@ Grtr, // > greater than
 -|-|-
 `Tupl{lpiq, rest}`|`(& a '&b)` `{a:1 b:2}`|tuple
 `Enum{data, _}`|`(~ LIVE '~DIE) ^~{N E W S}`|enum
+
+
+#### 廃止（defaultがQuoteになったので）
+
+表記|対応する表現|説明
+-|-|-
+`Quot{qexp, _}`|`^[ a b c ]`|quote
+
+
+## TODO
+
+### その1 簡単そう
+- Accs（とはいえ最初はpとqだけ）
+- Same（これもまずは数値だけ）
+- 文字列
+- dispatcherの追加（'と&#x7C;だが、どちらがどちらかは迷っている）
+- 中置記法(Lpiq, Accs, Rslv, Appl) 優先順位も決める必要がある
+- N, T, F(ただ、すぐできるし、使い道が出た時で良いかも)
+- プリミティブな数値の演算（加減乗除/ビット演算 shift, rotate）
+- マクロをキックする（定義はできるようになったが、それをキックするタイミングを決めていない）
+
+
+### その2 難しそう/大変そう
+- パターンマッチ（これは難しそう）
+- Tupl, Enum（仕様がよくわかっていない）
+- Vector(Rustのarrayを使うことになる)
+- エラー処理
+- 配列というかイテレータ的な処理はなるべくタグで組み込みたいけれど、どうするのか
+- 文字列関数
