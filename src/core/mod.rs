@@ -1,4 +1,7 @@
+mod graph;
+
 use std::cell::Cell;
+pub use self::graph::NodeArena;
 
 /// E(lemantal) piq
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -9,7 +12,7 @@ pub enum Epiq {
     Name(String),
     Uit8(i64),
     Prim(String), // primitive function
-    
+
     Tpiq { o: String, p: u32, q: u32}, // tagged piq
     Mpiq { o: String, p: u32, q: u32}, // metadata piq
     // Apiq { p: u32, q: u32 }, // application piq
@@ -177,4 +180,15 @@ impl fmt::Debug for Tokn {
             // _ => write!(f, "????"),
         }
     }
+}
+
+#[test]
+fn epiq_arena_get() {
+    let mut arena = NodeArena::<Epiq>::new();
+    let node_id = arena.alloc(Epiq::Unit);
+    {
+        let mut node = arena.get_mut(node_id);
+        node.value = Epiq::Name("wowow".to_string());
+    }
+    assert_eq!(arena.get(node_id).value, Epiq::Name("wowow".to_string()));
 }
