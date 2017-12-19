@@ -5,12 +5,12 @@ use lexer::*;
 use parser::*;
 use walker::*;
 
-struct Printer {
-    ast: /*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
+struct Printer<'a> {
+    ast: &'a /*RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>,
 }
 
-impl Printer {
-    pub fn new(ast: /*&'a RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>) -> Self {
+impl<'a> Printer<'a> {
+    pub fn new(ast: &'a /*RefCell<AbstractSyntaxTree>*/NodeArena<Epiq>) -> Self {
         Printer{ ast: ast }
     }
 
@@ -173,11 +173,11 @@ pub fn print_str(left: &str, right: &str) {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/NodeArena::new();
+    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/&NodeArena::new();
     let mut parser = Parser::new(lexer, empty_ast);
     let parsed_ast = parser.parse();
 
-    let printer = Printer::new(parsed_ast);
+    let printer = Printer::new(&parsed_ast);
 
     assert_eq!(printer.print(), right);
 }
@@ -187,11 +187,11 @@ fn print_evaled_str(left: &str, right: &str) {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/NodeArena::new();
+    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/&NodeArena::new();
     let mut parser = Parser::new(lexer, empty_ast);
     let parsed_ast = parser.parse();
 
-    let mut walker = Walker::new(parsed_ast);
+    let mut walker = Walker::new(&parsed_ast);
     let walked_ast = walker.walk().unwrap();
 
     let printer = Printer::new(walked_ast);

@@ -1,6 +1,6 @@
 pub type NodeId = usize;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node<T>(pub NodeId, pub T);
 
 pub struct NodeArena<T> (Vec<Node<T>>, Option<usize>);

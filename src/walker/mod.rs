@@ -10,7 +10,7 @@ struct SymbolTable<'a> {
 impl<'a> SymbolTable<'a> {
     fn define(&mut self, name: &str, value: &'a Node<Epiq>) {
         if {
-            if let Some(&(_, ref r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+            if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
                 // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
                 // *r = Some(value);
                 false
@@ -44,7 +44,7 @@ impl<'a> SymbolTable<'a> {
 }
 
 pub struct Walker<'a> {
-    ast: NodeArena<Epiq>,
+    ast: &'a NodeArena<Epiq>,
     symbol_table: SymbolTable<'a>,
 }
 
@@ -54,7 +54,7 @@ enum Result {
 }
 
 impl<'a> Walker<'a> {
-    pub fn new(ast: NodeArena<Epiq>) -> Walker<'a> {
+    pub fn new(ast: &'a NodeArena<Epiq>) -> Walker<'a> {
         let new_index = ast.alloc(Epiq::Prim("decr".to_string()));
 
         Walker {
@@ -68,7 +68,7 @@ impl<'a> Walker<'a> {
         }
     }
 
-    pub fn walk(&mut self) -> Option<NodeArena<Epiq>> {
+    pub fn walk(&mut self) -> Option<&'a NodeArena<Epiq>> {
         println!("\n");
 
         if let Some(entry) = self.ast.entry() {
@@ -204,8 +204,8 @@ impl<'a> Walker<'a> {
                             let walked_p_val = self.walk_internal(p_val, nest_level + 1);
                             if let &Node(_, Epiq::Name(ref n)) = walked_p_val {
                                 let q_val = self.ast.get(q);
-                                let walked_q_val = self.walk_internal(q_val, nest_level + 1);
-                                self.symbol_table.define(n, walked_q_val);
+                                // let walked_q_val = self.walk_internal(q_val, nest_level + 1);
+                                self.symbol_table.define(n, q_val);
 
                                 let new_index = self.ast.alloc(Epiq::Unit);
                                 self.ast.get(new_index)
@@ -458,7 +458,7 @@ impl<'a> Walker<'a> {
                     }
                 },
 
-                &Epiq::Mpiq{ref o, p, q} => {
+                &Epiq::Mpiq{ref o, p: _p, q} => {
                     match o.as_ref() {
                         ">" => {
                             // ^> リストのeval
@@ -575,7 +575,7 @@ impl<'a> Walker<'a> {
                         &Epiq::Tpiq{o: ref colon, p: param, q: next_params} => {
                             if colon == ":" {
                                 let next_params_node = self.ast.get(next_params);
-                                let &Node(_, ref next_params_piq) = next_params_node;
+                                let &Node(_, ref _next_params_piq) = next_params_node;
                                 let &Node(_, ref param_piq) = self.ast.get(param);
 
                                 if let &Epiq::Name(ref s) = param_piq {

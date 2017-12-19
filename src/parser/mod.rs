@@ -17,7 +17,7 @@ use self::error::Error;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
-    ast: NodeArena<Epiq>,
+    ast: &'a NodeArena<Epiq>,
     // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
@@ -31,7 +31,7 @@ enum CurrentToken {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a, 'a>, ast: NodeArena<Epiq>) -> Self {
+    pub fn new(lexer: Lexer<'a, 'a>, ast: &'a NodeArena<Epiq>) -> Self {
         Parser {
             lexer: lexer,
             ast: ast,
@@ -41,12 +41,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> NodeArena<Epiq> {
+    pub fn parse(&mut self) -> &'a NodeArena<Epiq> {
         self.consume_token();
 
         self.parse_aexp();
 
-        self.ast
+        &self.ast
     }
 
     fn consume_token(&mut self) {
