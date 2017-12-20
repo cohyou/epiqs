@@ -1,6 +1,6 @@
 mod graph;
 
-use std::cell::Cell;
+// use std::cell::Cell;
 pub use self::graph::NodeId;
 pub use self::graph::Node;
 pub use self::graph::NodeArena;
@@ -31,10 +31,80 @@ pub enum Epiq {
     // Dbri(usize), // de bruijn index
 }
 
-pub struct Heliqs {
-    pub vctr: Vec<Epiq>,
+pub struct SymbolTable<'a> {
+    table: Vec<Vec<(String, Option<&'a Node<Epiq>>)>>,
+    current_index: usize,
 }
 
+impl<'a> SymbolTable<'a> {
+    pub fn new(initial_table: Vec<(String, Option<&'a Node<Epiq>>)>) -> SymbolTable<'a> {
+        SymbolTable {
+            table: vec![],
+            current_index: Default::default(),
+        }
+    }
+
+    pub fn define(&mut self, name: &str, value: &'a Node<Epiq>) {
+        if {
+            if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+                // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
+                // *r = Some(value);
+                false
+            } else {
+                true
+            }
+        } {
+            self.table[self.current_index].push( (name.to_string(), Some(value)) );
+        }
+    }
+
+    pub fn resolve(&self, name: &str) -> Option<Option<&Node<Epiq>>> {
+        if let Some(&( _, Some(ref r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+            Some(Some(r))
+        } else {
+            None
+        }
+    }
+
+    pub fn extend(&mut self) {
+        let new_frame = vec![];
+        self.table.push(new_frame);
+        self.current_index = self.table.len() - 1;
+
+    }
+
+    pub fn pop(&mut self) {
+        let _ = self.table.pop();
+        self.current_index = self.table.len() - 1;
+    }
+}
+
+pub struct Heliqs<'a> {
+    ast: NodeArena<Epiq>,
+    symbol_table: SymbolTable<'a>,
+}
+
+impl<'a> Heliqs<'a> {
+    pub fn new() -> Heliqs<'a> {
+        Heliqs {
+            ast: NodeArena::new(),
+            symbol_table: SymbolTable::new(vec![]),
+        }
+    }
+
+    pub fn alloc(&mut self, value: Epiq) -> NodeId {
+        self.ast.alloc(value)
+    }
+
+    pub fn entry(&self) -> Option<NodeId> {
+        self.ast.entry()
+    }
+
+    pub fn get_epiq(&self, id: NodeId) -> &Node<Epiq> {
+        self.ast.get(id)
+    }
+}
+/*
 pub struct AbstractSyntaxTree {
     pub entrypoint: Option<u32>,
     tree: Vec<Epiq>,
@@ -60,7 +130,7 @@ impl AbstractSyntaxTree {
         self.entrypoint = Some(self.max_index.get());
     }
 }
-
+*/
 use std::fmt;
 
 #[derive(Eq, PartialEq, Clone)]
@@ -193,4 +263,11 @@ fn epiq_arena_get() {
         node.value = Epiq::Name("wowow".to_string());
     }
     assert_eq!(arena.get(node_id).value, Epiq::Name("wowow".to_string()));
+}
+
+#[test]
+fn symbol_table() {
+    let prim = Node(0, Epiq::Prim("decr"));
+    let prims = vec![("decr".to_string(), Some(&prim)),];
+    let table = SymbolTable::new(prims);
 }

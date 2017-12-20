@@ -1,6 +1,6 @@
 macro_rules! push {
     ($s:ident, $t:expr) => {{
-        Ok($s.ast.alloc($t))
+        Ok($s.vm.borrow_mut().alloc($t))
         /*
         $s.ast.borrow_mut().push_and_entry($t);
         Ok($s.ast.borrow().max_index.get())
@@ -10,6 +10,7 @@ macro_rules! push {
 
 mod error;
 
+use std::rc::Rc;
 use std::cell::RefCell;
 use core::*;
 use lexer::*;
@@ -17,7 +18,8 @@ use self::error::Error;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
-    ast: &'a NodeArena<Epiq>,
+    // ast: &'a NodeArena<Epiq>,
+    vm: Rc<RefCell<Heliqs<'a>>>,
     // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
@@ -31,22 +33,23 @@ enum CurrentToken {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a, 'a>, ast: &'a NodeArena<Epiq>) -> Self {
+    pub fn new(lexer: Lexer<'a, 'a>, vm: Rc<RefCell<Heliqs<'a>>>) -> Self {
         Parser {
             lexer: lexer,
-            ast: ast,
+            // ast: ast,
+            vm: vm,
             // state: State::Aexp,
             current_token: RefCell::new(/*None*/CurrentToken::SOT),
             // aexp_tokens: vec![vec![]],
         }
     }
 
-    pub fn parse(&mut self) -> &'a NodeArena<Epiq> {
+    pub fn parse(&mut self) {
         self.consume_token();
 
         self.parse_aexp();
 
-        &self.ast
+        // &self.ast
     }
 
     fn consume_token(&mut self) {
@@ -80,6 +83,7 @@ impl<'a> Parser<'a> {
             },
             CurrentToken::Has(Tokn::Smcl) => {
                 self.consume_token();
+                // Ok(self.vm.borrow_mut().alloc(Epiq::Unit))
                 push!(self, Epiq::Unit)
             }
             CurrentToken::Has(Tokn::Lbkt) => {

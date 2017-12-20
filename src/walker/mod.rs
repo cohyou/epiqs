@@ -1,51 +1,15 @@
 // use std::cell::RefCell;
 // use std::collections::HashMap;
+
+/*
 use core::*;
 
-struct SymbolTable<'a> {
-    table: Vec<Vec<(String, Option<&'a Node<Epiq>>)>>,
-    current_index: usize,
-}
-
-impl<'a> SymbolTable<'a> {
-    fn define(&mut self, name: &str, value: &'a Node<Epiq>) {
-        if {
-            if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
-                // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
-                // *r = Some(value);
-                false
-            } else {
-                true
-            }
-        } {
-            self.table[self.current_index].push( (name.to_string(), Some(value)) );
-        }
-    }
-
-    fn resolve(&self, name: &str) -> Option<Option<&Node<Epiq>>> {
-        if let Some(&( _, Some(ref r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
-            Some(Some(r))
-        } else {
-            None
-        }
-    }
-
-    fn extend(&mut self) {
-        let new_frame = vec![];
-        self.table.push(new_frame);
-        self.current_index = self.table.len() - 1;
-
-    }
-
-    fn pop(&mut self) {
-        let _ = self.table.pop();
-        self.current_index = self.table.len() - 1;
-    }
-}
-
 pub struct Walker<'a> {
+    vm: Rc<RefCell<Heliqs<'a>>>,
+    /*
     ast: &'a NodeArena<Epiq>,
     symbol_table: SymbolTable<'a>,
+    */
 }
 
 enum Result {
@@ -59,12 +23,7 @@ impl<'a> Walker<'a> {
 
         Walker {
             ast: ast,
-            symbol_table: SymbolTable {
-                table: vec![vec![
-                    ("decr".to_string(), Some(ast.get(new_index)))
-                ]],
-                current_index: Default::default(),
-            }
+            symbol_table: SymbolTable::new(),
         }
     }
 
@@ -621,3 +580,4 @@ fn new() {
     let mut walker = Walker::new(ast);
     walker.walk();
 }
+*/
