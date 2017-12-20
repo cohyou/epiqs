@@ -260,14 +260,14 @@ fn epiq_arena_get() {
     let node_id = arena.alloc(Epiq::Unit);
     {
         let mut node = arena.get_mut(node_id);
-        node.value = Epiq::Name("wowow".to_string());
+        node.1 = Epiq::Name("wowow".to_string());
     }
-    assert_eq!(arena.get(node_id).value, Epiq::Name("wowow".to_string()));
+    assert_eq!(arena.get(node_id).1, Epiq::Name("wowow".to_string()));
 }
 
 #[test]
 fn symbol_table() {
-    let prim = Node(0, Epiq::Prim("decr"));
+    let prim = Node(0, Epiq::Prim("decr".to_string()));
     let prims = vec![("decr".to_string(), Some(&prim)),];
     let table = SymbolTable::new(prims);
 }

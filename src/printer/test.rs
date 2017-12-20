@@ -1,3 +1,5 @@
+use super::*;
+
 #[test]
 #[ignore]
 fn symbol() {
@@ -56,13 +58,15 @@ fn block() {
     );
 }
 
+/*
 #[test]
 #[ignore]
 fn evaled_empty_ast() {
-    let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
-    let mut evaluator = Evaluator::new(empty_ast);
-    let evaled_ast = evaluator.walk().unwrap();
-    let printer = Printer::new(evaled_ast);
+    // let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
+    // let mut evaluator = Evaluator::new(empty_ast);
+    // let evaled_ast = evaluator.walk().unwrap();
+    let vm = craete_vm();// Rc::new(RefCell::new(Heliqs::new()));
+    let printer = Printer::new(vm);
     assert_eq!(printer.print(), "");
 }
 
@@ -137,3 +141,4 @@ fn primitive_function() {
     print_evaled_str("|> ; |@ ; decr", "Prim(decr)")
     // print_evaled_str("|> ; |! |> ; |@ ; decr [4]", ";")
 }
+*/

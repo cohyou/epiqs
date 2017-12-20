@@ -82,8 +82,7 @@ impl<'a> Parser<'a> {
                 self.parse_otag(Tokn::Crrt)
             },
             CurrentToken::Has(Tokn::Smcl) => {
-                self.consume_token();
-                // Ok(self.vm.borrow_mut().alloc(Epiq::Unit))
+                self.consume_token();                
                 push!(self, Epiq::Unit)
             }
             CurrentToken::Has(Tokn::Lbkt) => {

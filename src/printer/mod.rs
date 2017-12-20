@@ -80,3 +80,7 @@ fn print_evaled_str(left: &str, right: &str) {
     assert_eq!(printer.print(), right);
 }
 */
+
+fn craete_vm<'a>() -> Rc<RefCell<Heliqs<'a>>> {
+    Rc::new(RefCell::new(Heliqs::new()))
+}

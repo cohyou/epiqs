@@ -41,28 +41,28 @@ impl<T> NodeArena<T> {
 }
 
 #[test]
-fn make() { let arena = NodeArena::<u8>(vec![]); }
+fn make() { let arena = NodeArena::<u8>::new(); }
 
 #[test]
 fn alloc() {
-    let mut arena = NodeArena::<u8>(vec![]);
+    let mut arena = NodeArena::<u8>::new();
     assert_eq!(arena.alloc(46), 0);
 }
 
 #[test]
 fn get() {
-    let mut arena = NodeArena::<u8>(vec![]);
+    let mut arena = NodeArena::<u8>::new();
     let node_id = arena.alloc(46);
 
 }
 
 #[test]
 fn get_mut() {
-    let mut arena = NodeArena::<u8>(vec![]);
+    let mut arena = NodeArena::<u8>::new();
     let node_id = arena.alloc(46);
     {
         let mut node = arena.get_mut(node_id);
-        node.value = 87;
+        node.1 = 87;
     }
-    assert_eq!(arena.get(node_id).value, 87);
+    assert_eq!(arena.get(node_id).1, 87);
 }
