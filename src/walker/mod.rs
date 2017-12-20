@@ -86,13 +86,22 @@ impl Walker {
                             // 結果が両方とも変わらなければそのまま返す、
                             // そうでなければ新しくTpiqを作ってそのindexを返す
                             // println!("{}walk >以外 pに入ります", " ".repeat(lvl));
-                            let borrowed_vm = self.vm.borrow();
-                            let p_node = borrowed_vm.get_epiq(p);
-                            let q_node = borrowed_vm.get_epiq(q);
-                            let p_result = self.walk_internal(p_node, nest_level + 1);
+
+                            let p_node = {
+                                let borrowed_vm = self.vm.borrow();
+                                borrowed_vm.get_epiq(p).clone()
+                            };
+                            let q_node = {
+                                let borrowed_vm = self.vm.borrow();
+                                borrowed_vm.get_epiq(q).clone()
+                            };
+
+                            let p_result = self.walk_internal(&p_node, nest_level + 1);
                             let new_p = p_result.0;
+
                             // println!("{}walk >以外 qに入ります", " ".repeat(lvl));
-                            let q_result = self.walk_internal(q_node, nest_level + 1);
+
+                            let q_result = self.walk_internal(&q_node, nest_level + 1);
                             let new_q = q_result.0;
 
                             if new_p != p || new_q != q {

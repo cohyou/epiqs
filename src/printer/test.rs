@@ -88,7 +88,7 @@ fn evaled_number_ast() {
 // #[ignore]
 fn evaled_define_ast() {
     // define symbol is number
-    print_evaled_str("|> ; |# abc 123", ";;");
+    print_evaled_str("|> ; |# abc 123", ";");
 }
 
 /*
@@ -136,7 +136,7 @@ fn condition() {
 fn exec_func() {
     // print_str(r"|% ; ;", ";a")
     // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
-    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; a] [6667 6668 6669]", "6668")
+    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
 }
 
 /*
