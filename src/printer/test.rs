@@ -88,7 +88,7 @@ fn evaled_number_ast() {
 // #[ignore]
 fn evaled_define_ast() {
     // define symbol is number
-    print_evaled_str("|> ; |# abc 123", ";");
+    print_evaled_str("|> ; |# abc 123", ";;");
 }
 
 /*
@@ -97,16 +97,16 @@ fn evaled_define_ast() {
 fn evaled_apply() {
     print_evaled_str(r"|> ; |! |\ |% ; ; 0 ;", r"0");
 }
-
+*/
 
 #[test]
-#[ignore]
+// #[ignore]
 fn evaled_list() {
     print_evaled_str(r"|> ; ^> -1 [1 2 3]", r"3");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn evaled_defining_list() {
     // print_evaled_str(r"|> ; |# abc 123", r";");
     // print_evaled_str(r"|> ; |@ ; abc", r";");
@@ -114,15 +114,7 @@ fn evaled_defining_list() {
 }
 
 #[test]
-#[ignore]
-fn exec_func() {
-    // print_str(r"|% ; ;", ";a")
-    // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
-    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
-}
-
-#[test]
-#[ignore]
+// #[ignore]
 fn access() {
     // print_str("|. a p", ".(a p)");
     // print_evaled_str("|> ; |. |: 1 3 p", "p")
@@ -130,7 +122,7 @@ fn access() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn condition() {
     // print_str("|? abc 123", "?(abc 123)");
     // print_str("^T", "^T");
@@ -139,6 +131,15 @@ fn condition() {
     print_evaled_str("|> ; |? ^F |: 1 0", "0");
 }
 
+#[test]
+// #[ignore]
+fn exec_func() {
+    // print_str(r"|% ; ;", ";a")
+    // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
+    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; a] [6667 6668 6669]", "6668")
+}
+
+/*
 #[test]
 #[ignore]
 fn primitive_function() {

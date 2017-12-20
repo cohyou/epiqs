@@ -19,6 +19,7 @@ impl SymbolTable {
     }
 
     pub fn define(&mut self, name: &str, value: NodeId) {
+        println!("symbol_table: {:?}", "define");
         if {
             if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
                 // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
@@ -29,6 +30,7 @@ impl SymbolTable {
             }
         } {
             self.table[self.current_index].push( (name.to_string(), Some(value)) );
+            println!("symbol_table: {:?}", self.table);
         }
     }
 

@@ -401,6 +401,7 @@ Less, // < less than
 ## TODO
 
 ### その1 簡単そう
+- walkを通していない部分をチェック
 - READMEにcond抜けてる
 - Same（これもまずは数値だけ、ただしこれはotagではなく関数では？）
 - 文字列
