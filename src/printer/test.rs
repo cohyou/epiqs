@@ -139,11 +139,42 @@ fn exec_func() {
     print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
 }
 
-/*
+
 #[test]
-#[ignore]
 fn primitive_function() {
-    print_evaled_str("|> ; |@ ; decr", "Prim(decr)")
-    // print_evaled_str("|> ; |! |> ; |@ ; decr [4]", ";")
+    // print_evaled_str("|> ; |@ ; decr", "Prim(decr)");
+    // print_evaled_str("|> ; |@ ; ltoreq", "Prim(ltoreq)");
+    print_evaled_str("|> ; |! |> ; |@ ; decr [5]", "4");
+    print_evaled_str("|> ; |! |> ; |@ ; ltoreq [5 4]", "^F"); // 5 <= 4
 }
-*/
+
+#[test]
+fn tarai() {
+    //   (defun tak (x y z)
+    //     (if (<= x y)
+    //         y
+    //         (tak (tak (1- x) y z)
+    //              (tak (1- y) z x)
+    //              (tak (1- z) x y))))
+
+    // (tak 12 6 0)
+
+    print_evaled_str(
+        r"|> ; |! |\ |% ; [a] |> ; ^> -1
+        [
+            |# tak |\ |% ; [x y z]
+                      ^> -1 [
+                         |? |> ; |! |> ; |@ ; ltoreq [|> ; |@ ; x |> ; |@ ; y]
+                            |: |> ; |@ ; y
+                               |> ; |! |@ ; tak [
+                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; x] |> ; |@ ; y |> ; |@ ; z]
+                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; y] |> ; |@ ; z |> ; |@ ; x]
+                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; z] |> ; |@ ; x |> ; |@ ; y]
+                               ]
+                      ]
+
+            |! |> ; |@ ; tak [12 6 0]
+        ] [1];",
+        r";",
+    );
+}

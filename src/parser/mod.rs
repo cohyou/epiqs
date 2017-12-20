@@ -1,6 +1,6 @@
 macro_rules! push {
     ($s:ident, $t:expr) => {{
-        println!("parser push: {:?}", $t);
+        // println!("parser push: {:?}", $t);
         Ok($s.vm.borrow_mut().alloc($t))
     }}
 }
@@ -42,11 +42,16 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) {
+        // Prim追加
+        let prim1 = self.vm.borrow_mut().alloc(Epiq::Prim("decr".to_string())); // 0
+        self.vm.borrow_mut().define("decr", prim1);
+        let prim2 = self.vm.borrow_mut().alloc(Epiq::Prim("ltoreq".to_string())); // 1
+        self.vm.borrow_mut().define("ltoreq", prim2);
+
+
         self.consume_token();
 
         self.parse_aexp();
-
-        // &self.ast
     }
 
     fn consume_token(&mut self) {

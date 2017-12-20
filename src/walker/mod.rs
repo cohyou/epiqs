@@ -277,25 +277,78 @@ impl Walker {
                                 }
                             },
 
-                            // &Epiq::Prim(ref n) => {
-                            //     match n.as_ref() {
-                            //         "decr" => {
-                            //             // 面倒なので 1- を実装
-                            //             let new_index = self.vm.borrow_mut().alloc(Epiq::Uit8(3));
-                            //             Box::new(borrowed_vm.get_epiq(new_index).clone())
-                            //         },
-                            //
-                            //         "ltoreq" => {
-                            //             // <=を実装
-                            //             Box::new(input.clone())
-                            //         },
-                            //
-                            //         _ => {
-                            //             println!("Primitive関数名が想定外なのでエラー");
-                            //             Box::new(input.clone())
-                            //         }
-                            //     }
-                            // },
+                            &Epiq::Prim(ref n) => {
+                                println!("{:?}", "primitive");
+
+                                match n.as_ref() {
+                                    "decr" => {
+                                        // 面倒なので 1- を実装
+                                        // 引数取得
+                                        if let Some(Node(_, Epiq::Uit8(n))) = {
+                                            let piq = args.1;
+                                            if let Epiq::Tpiq{o,p,q} = piq {
+                                                Some(self.vm.borrow().get_epiq(p).clone())
+                                            } else {
+                                                None
+                                            }
+                                        } {
+                                            // 1を引く
+                                            let new_index = self.vm.borrow_mut().alloc(Epiq::Uit8(n - 1));
+                                            Box::new(self.vm.borrow().get_epiq(new_index).clone())
+                                        } else {
+                                            // 引数がリストじゃなかった
+                                            // 中身が数値じゃなかった
+                                            Box::new(input.clone())
+                                        }
+                                    },
+
+                                    "ltoreq" => {
+                                        // <=を実装
+                                        // 一つ目の引数
+                                        if let Some( (Node(_, Epiq::Uit8(n1)), q) ) = {
+                                            let piq = args.1;
+                                            if let Epiq::Tpiq{o,p,q} = piq {
+                                                Some( (self.vm.borrow().get_epiq(p).clone(), q) )
+                                            } else {
+                                                None
+                                            }
+                                        } {
+                                            // 二つ目の引数
+                                            if let Some(Node(_, Epiq::Uit8(n2))) = {
+                                                let node = self.vm.borrow().get_epiq(q).clone();
+                                                let piq = node.1;
+                                                if let Epiq::Tpiq{o:o2,p:p2,q:q2} = piq {
+                                                    Some(self.vm.borrow().get_epiq(p2).clone())
+                                                } else {
+                                                    None
+                                                }
+                                            } {
+                                                let new_index;
+                                                if n1 <= n2 {
+                                                    new_index = self.vm.borrow_mut().alloc(Epiq::Tval);
+                                                } else {
+                                                    new_index = self.vm.borrow_mut().alloc(Epiq::Fval);
+                                                }
+                                                Box::new(self.vm.borrow().get_epiq(new_index).clone())
+                                            } else {
+                                                // 引数がリストじゃなかった
+                                                // 中身が数値じゃなかった
+                                                Box::new(input.clone())
+                                            }
+                                        } else {
+                                            // 引数がリストじゃなかった
+                                            // 中身が数値じゃなかった
+                                            Box::new(input.clone())
+                                        }
+                                    },
+
+                                    _ => {
+                                        println!("Primitive関数名が想定外なのでエラー");
+                                        Box::new(input.clone())
+                                    },
+                                }
+                                // Box::new(input.clone())
+                            },
 
                             _ => {
                                 println!("関数部分がlambdaでもprimでもないのでエラー");
