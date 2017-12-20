@@ -85,6 +85,7 @@ impl Walker {
                             // その他のTpiqの場合は、pとq両方をwalkしてみて、
                             // 結果が両方とも変わらなければそのまま返す、
                             // そうでなければ新しくTpiqを作ってそのindexを返す
+                            
                             // println!("{}walk >以外 pに入ります", " ".repeat(lvl));
 
                             let p_node = {
@@ -157,14 +158,19 @@ impl Walker {
                         let result;
                         if let Some((n, walked_q_val)) = {
 
-                            let p_val = {let borrowed_vm = self.vm.borrow();
-                            borrowed_vm.get_epiq(p).clone()};
+                            let p_val = {
+                                let borrowed_vm = self.vm.borrow();
+                                borrowed_vm.get_epiq(p).clone()
+                            };
 
                             let walked_p_val = self.walk_internal(&p_val, nest_level + 1);
                             if let Epiq::Name(ref n) = walked_p_val.1 {
 
-                                let q_val = {let borrowed_vm = self.vm.borrow();
-                                    borrowed_vm.get_epiq(q).clone()};
+                                let q_val = {
+                                    let borrowed_vm = self.vm.borrow();
+                                    borrowed_vm.get_epiq(q).clone()
+                                };
+
                                 let result = self.walk_internal(&q_val, nest_level + 1);
                                 let walked_q_val = result.0;
                                 Some((n.clone(), walked_q_val.clone()))
@@ -209,14 +215,18 @@ impl Walker {
                     "!" => {
                         // p: lambda q:arguments
                         println!("apply: {:?}", "start!!");
+
                         let lambda_node = {
                             let borrowed_vm = self.vm.borrow();
                             borrowed_vm.get_epiq(p).clone()
                         };
+
                         println!("apply: lambda_node: {:?}", lambda_node);
+
+
                         let walked_lambda_box = self.walk_internal(&lambda_node, nest_level + 1);
                         let ref walked_lambda_piq = walked_lambda_box.1;
-// println!("apply: walked_lambda_piq: {:?}", walked_lambda_piq);
+
                         let args_node = {
                             let borrowed_vm = self.vm.borrow();
                             borrowed_vm.get_epiq(q).clone()
@@ -479,7 +489,7 @@ impl Walker {
                         println!("condition");
                         // p: ^T or ^F(他の値の評価はひとまず考えない)
                         // q: Lpiq、^Tならpを返し、^Fならqを返す
-                        let Node(_, ref p_condition) = {
+                        let p_condition = {
                             let vm = self.vm.borrow();
                             vm.get_epiq(p).clone()
                         };
@@ -489,12 +499,16 @@ impl Walker {
                             vm.get_epiq(q).clone()
                         };
 
-                        match p_condition {
-                            &Epiq::Tval | &Epiq::Fval => {
+                        // 条件節をwalk
+                        let walked_condition_node = self.walk_internal(&p_condition, nest_level + 1);
+                        let ref walked_condition_piq = walked_condition_node.1;
+
+                        match walked_condition_piq {
+                            v @ &Epiq::Tval | v @ &Epiq::Fval => {
                                 match q_result {
                                     &Epiq::Tpiq{ref o, p, q} => {
                                         if o == ":" {
-                                            match p_condition {
+                                            match v {
                                                 &Epiq::Tval => {
                                                     let p_node = {
                                                         let vm = self.vm.borrow();

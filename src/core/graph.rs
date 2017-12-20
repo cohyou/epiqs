@@ -35,10 +35,31 @@ impl SymbolTable {
     }
 
     pub fn resolve(&self, name: &str) -> Option<Option<NodeId>> {
+        self.resolve_internal(name, self.current_index)
+        /*
         if let Some(&( _, Some(r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
             Some(Some(r))
         } else {
+            // なかったら一つ上のframeを探す
+            resolve()
             None
+        }
+        */
+    }
+
+    fn resolve_internal(&self, name: &str, frame: usize) -> Option<Option<NodeId>> {
+        if let Some(&( _, Some(r) )) = self.table[frame].iter().find(|&&(ref n, _)| n == name) {
+            println!("resolve 見つかりました {:?} {:?} {:?}", name, frame, self.table);
+            Some(Some(r))
+        } else {
+            println!("resolve 見つかりませんでした {:?} {:?} {:?}", name, frame, self.table);
+            if frame == 0 {
+                // グローバル環境まで来たら終了
+                None
+            } else {
+                // なかったら一つ上のframeを探す
+                self.resolve_internal(name, frame - 1)
+            }
         }
     }
 
