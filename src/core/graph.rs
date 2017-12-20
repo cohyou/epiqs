@@ -1,13 +1,63 @@
+use core::*;
+
 pub type NodeId = usize;
 
 #[derive(Debug, Clone)]
 pub struct Node<T>(pub NodeId, pub T);
 
-pub struct NodeArena<T> (Vec<Node<T>>, Option<usize>);
+pub struct SymbolTable {
+    table: Vec<Vec<(String, Option<NodeId>)>>,
+    current_index: usize,
+}
+
+impl SymbolTable {
+    pub fn new(_initial_table: Vec<(String, Option<NodeId>)>) -> SymbolTable {
+        SymbolTable {
+            table: vec![vec![]],
+            current_index: Default::default(),
+        }
+    }
+
+    pub fn define(&mut self, name: &str, value: NodeId) {
+        if {
+            if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+                // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
+                // *r = Some(value);
+                false
+            } else {
+                true
+            }
+        } {
+            self.table[self.current_index].push( (name.to_string(), Some(value)) );
+        }
+    }
+
+    pub fn resolve(&self, name: &str) -> Option<Option<NodeId>> {
+        if let Some(&( _, Some(r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
+            Some(Some(r))
+        } else {
+            None
+        }
+    }
+
+    pub fn extend(&mut self) {
+        let new_frame = vec![];
+        self.table.push(new_frame);
+        self.current_index = self.table.len() - 1;
+
+    }
+
+    pub fn pop(&mut self) {
+        let _ = self.table.pop();
+        self.current_index = self.table.len() - 1;
+    }
+}
+
+pub struct NodeArena<T> (Vec<Node<T>>, Option<usize>, SymbolTable);
 
 impl<T> NodeArena<T> {
     pub fn new() -> NodeArena<T> {
-        NodeArena::<T>(Default::default(), Default::default())
+        NodeArena::<T>(Default::default(), Default::default(), SymbolTable::new(vec![]))
     }
 
     pub fn alloc(&mut self, value: T) -> NodeId {
@@ -38,10 +88,36 @@ impl<T> NodeArena<T> {
         let id = self.0.len();
         if id == 0 { None } else { Some(id - 1) }
     }
+
+    pub fn define(&mut self, name: &str, value: NodeId) {
+        self.2.define(name, value)
+    }
+
+    pub fn resolve(&self, name: &str) -> Option<Option<&Node<T>>> {
+        match self.2.resolve(name) {
+            Some(Some(n)) => {
+                Some(Some(&self.0[n]))
+            },
+            _ => {
+                // どちらかがNoneだが今は考えない
+                // とりあえずNone
+                None
+            }
+        }
+
+    }
+
+    pub fn extend(&mut self) {
+        self.2.extend()
+    }
+
+    pub fn pop(&mut self) {
+        self.2.pop()
+    }
 }
 
 #[test]
-fn make() { let arena = NodeArena::<u8>::new(); }
+fn make() { let _arena = NodeArena::<u8>::new(); }
 
 #[test]
 fn alloc() {
@@ -52,7 +128,7 @@ fn alloc() {
 #[test]
 fn get() {
     let mut arena = NodeArena::<u8>::new();
-    let node_id = arena.alloc(46);
+    let _node_id = arena.alloc(46);
 
 }
 

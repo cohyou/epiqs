@@ -1,19 +1,19 @@
 use super::*;
 
 #[test]
-#[ignore]
+// #[ignore]
 fn symbol() {
     print_str("abc", "abc");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn number() {
     print_str("123", "123");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn unit() {
     print_str(";", ";");
 }
@@ -26,31 +26,31 @@ fn tpiq() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn nested_tpiq() {
     print_str("|: |: cde |: abc 123 456", ":(:(cde :(abc 123)) 456)");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn list() {
     print_str("[abc 123]", ":(abc :(123 ;))");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn empty_env() {
     print_str("|% ; -1", "%(; -1)");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn resolve_piq() {
     print_str("|@ abc ;", "@(abc ;)");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn block() {
     print_str(
         r"|> ; |! |\ |% ; ; ^> -1 [|# abc 123 |@ ; abc] ;",
@@ -69,31 +69,35 @@ fn evaled_empty_ast() {
     let printer = Printer::new(vm);
     assert_eq!(printer.print(), "");
 }
+*/
 
 #[test]
-#[ignore]
+// #[ignore]
 fn evaled_symbol_ast() {
     print_evaled_str("abc", "abc");
 }
 
+
 #[test]
-#[ignore]
+// #[ignore]
 fn evaled_number_ast() {
     print_evaled_str("123", "123");
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn evaled_define_ast() {
     // define symbol is number
     print_evaled_str("|> ; |# abc 123", ";");
 }
 
+/*
 #[test]
 #[ignore]
 fn evaled_apply() {
     print_evaled_str(r"|> ; |! |\ |% ; ; 0 ;", r"0");
 }
+
 
 #[test]
 #[ignore]

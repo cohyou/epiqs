@@ -6,19 +6,19 @@ use std::cell::RefCell;
 use core::*;
 use lexer::*;
 use parser::*;
-// use walker::*;
+use walker::*;
 
-struct Printer<'a> {
-    vm: Rc<RefCell<Heliqs<'a>>>,
+struct Printer {
+    vm: Rc<RefCell<Heliqs>>,
 }
 
-impl<'a> Printer<'a> {
-    pub fn new(vm: Rc<RefCell<Heliqs<'a>>>) -> Self {
+impl Printer {
+    pub fn new(vm: Rc<RefCell<Heliqs>>) -> Self {
         Printer{ vm: vm }
     }
 
     pub fn print(&self) -> String {
-        if let Some(entrypoint) = self.vm.borrow_mut().entry() {
+        if let Some(entrypoint) = self.vm.borrow().entry() {
             self.print_aexp(entrypoint, 0)
         } else {
             "".to_string()
@@ -51,7 +51,6 @@ pub fn print_str(left: &str, right: &str) {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    // let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/&NodeArena::new();
     let vm = Rc::new(RefCell::new(Heliqs::new()));
     let vm2 = vm.clone();
     let mut parser = Parser::new(lexer, vm);
@@ -62,25 +61,26 @@ pub fn print_str(left: &str, right: &str) {
     assert_eq!(printer.print(), right);
 }
 
-/*
+
 fn print_evaled_str(left: &str, right: &str) {
     let mut iter = left.bytes();
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
-    let empty_ast = /*&RefCell::new(AbstractSyntaxTree::new())*/&NodeArena::new();
-    let mut parser = Parser::new(lexer, empty_ast);
+    let vm = Rc::new(RefCell::new(Heliqs::new()));
+    let vm2 = vm.clone();
+    let vm3 = vm.clone();
+    let mut parser = Parser::new(lexer, vm);
     let parsed_ast = parser.parse();
 
-    let mut walker = Walker::new(&parsed_ast);
-    let walked_ast = walker.walk().unwrap();
+    let mut walker = Walker::new(vm2);
+    let walked_ast = walker.walk();
 
-    let printer = Printer::new(walked_ast);
+    let printer = Printer::new(vm3);
 
     assert_eq!(printer.print(), right);
 }
-*/
 
-fn craete_vm<'a>() -> Rc<RefCell<Heliqs<'a>>> {
+fn craete_vm<'a>() -> Rc<RefCell<Heliqs>> {
     Rc::new(RefCell::new(Heliqs::new()))
 }

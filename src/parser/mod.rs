@@ -1,10 +1,7 @@
 macro_rules! push {
     ($s:ident, $t:expr) => {{
+        println!("parser push: {:?}", $t);
         Ok($s.vm.borrow_mut().alloc($t))
-        /*
-        $s.ast.borrow_mut().push_and_entry($t);
-        Ok($s.ast.borrow().max_index.get())
-        */
     }}
 }
 
@@ -19,7 +16,7 @@ use self::error::Error;
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     // ast: &'a NodeArena<Epiq>,
-    vm: Rc<RefCell<Heliqs<'a>>>,
+    vm: Rc<RefCell<Heliqs>>,
     // state: State,
     current_token: RefCell</*Option<Tokn>*/CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
@@ -33,7 +30,7 @@ enum CurrentToken {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a, 'a>, vm: Rc<RefCell<Heliqs<'a>>>) -> Self {
+    pub fn new(lexer: Lexer<'a, 'a>, vm: Rc<RefCell<Heliqs>>) -> Self {
         Parser {
             lexer: lexer,
             // ast: ast,
@@ -82,7 +79,7 @@ impl<'a> Parser<'a> {
                 self.parse_otag(Tokn::Crrt)
             },
             CurrentToken::Has(Tokn::Smcl) => {
-                self.consume_token();                
+                self.consume_token();
                 push!(self, Epiq::Unit)
             }
             CurrentToken::Has(Tokn::Lbkt) => {
