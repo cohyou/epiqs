@@ -25,7 +25,7 @@ impl SymbolTable {
     }
 
     pub fn define(&mut self, name: &str, value: NodeId) {
-        println!("symbol_table: {:?}", "define");
+        // println!("symbol_table: {:?}", "define");
         if {
             if let Some(&(_, ref _r)) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
                 // すでに含まれていたら上書きしたいが、方法がわからないので何もせずにおく
@@ -36,7 +36,7 @@ impl SymbolTable {
             }
         } {
             self.table[self.current_index].push( (name.to_string(), Some(value)) );
-            println!("symbol_table: {:?}", self.table);
+            // println!("symbol_table: {:?}", self.table);
         }
     }
 
@@ -55,16 +55,16 @@ impl SymbolTable {
 
     fn resolve_internal(&self, name: &str, frame: usize) -> Option<Option<NodeId>> {
         if let Some(&( _, Some(r) )) = self.table[frame].iter().find(|&&(ref n, _)| n == name) {
-            println!("resolve 見つかりました {:?} {:?}", name, self.table);
+            // println!("resolve 見つかりました {:?} {:?}", name, self.table);
             Some(Some(r))
         } else {
             if frame == 0 {
                 // グローバル環境まで来たら終了
-                println!("resolve 見つかりませんでした {:?} {:?}", name, self.table);
+                // println!("resolve 見つかりませんでした {:?} {:?}", name, self.table);
                 None
             } else {
                 // なかったら一つ上のframeを探す
-                println!("resolve 見つからないので親を探します {:?}", name);
+                // println!("resolve 見つからないので親を探します {:?}", name);
                 self.resolve_internal(name, frame - 1)
             }
         }
