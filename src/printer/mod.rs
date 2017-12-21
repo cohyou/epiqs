@@ -62,7 +62,7 @@ pub fn print_str(left: &str, right: &str) {
 }
 
 
-fn print_evaled_str(left: &str, right: &str) {
+pub fn print_evaled_str(left: &str, right: &str) {
     let mut iter = left.bytes();
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
