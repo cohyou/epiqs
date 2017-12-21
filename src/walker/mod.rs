@@ -39,7 +39,7 @@ impl Walker {
             if result != entry {
                 // なんらかの変化があったので反映する必要がある
                 // ここだと、entrypointを変更する
-                println!("borrow_mut: {:?}", 1);
+                // println!("borrow_mut: {:?}", 1);
                 self.vm.borrow_mut().set_entry(result);
             }
         }
@@ -48,86 +48,84 @@ impl Walker {
     fn walk_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
 
         let lvl = (nest_level * 2) as usize;
-        println!("{}walk ＿開始＿: {:?}", " ".repeat(lvl), input);
+        println!("{:?}{}walk ＿開始＿: ", input, " ".repeat(lvl));
 
+        let &Node(input_index, ref piq) = input;
 
-        /*let res = */{
-            let &Node(input_index, ref piq) = input;
-            match piq {
-                &Epiq::Tpiq{ref o, p, q} => {
-                    match o.as_ref() {
-                        ">" => {
-                            // ひとまずpは無視
+        match piq {
+            &Epiq::Tpiq{ref o, p, q} => {
+                match o.as_ref() {
+                    ">" => {
+                        // ひとまずpは無視
 
-                            // そのまま返すとNG
-                            let q_node = {
-                                let borrowed_vm = self.vm.borrow();
-                                borrowed_vm.get_epiq(q).clone()
-                            };
+                        // そのまま返すとNG
+                        let q_node = {
+                            let borrowed_vm = self.vm.borrow();
+                            borrowed_vm.get_epiq(q).clone()
+                        };
 
-                            let result = self.eval_internal(&q_node, nest_level + 1);
-                            println!("{}walk: origin: {:?} result: {:?}", " ".repeat(lvl), q, result);
+                        let result = self.eval_internal(&q_node, nest_level + 1);
+                        println!("{:?} => {:?}{}walk: eval完了", q_node, result, " ".repeat(lvl));
 
-                            // // TODO: これ以下はeval_internalと重複しているのでまとめたい
-                            // // let &Node(new_q, ref new_q_piq) = result;
-                            // let new_q = result.0;
-                            // let ref new_q_piq = result.1;
-                            // if new_q != q {
-                            //     let &Node(input_index, _) = input;
-                            //     let mut borrow_mut_vm = self.vm.borrow_mut();
-                            //     let mut node_mut = borrow_mut_vm.get_epiq_mut(input_index);
-                            //     node_mut.1 = new_q_piq.clone();
-                            // }
-                            result
-                        },
+                        // TODO: これ以下はeval_internalと重複しているのでまとめたい
+                        let new_q = result.0;
+                        if new_q != q {
+                            let ref new_piq = result.1;
+                            let mut vm = self.vm.borrow_mut();
+                            let mut node_mut = vm.get_epiq_mut(input_index);
+                            node_mut.1 = new_piq.clone();
+                            println!("{:?} -> ({} {:?}){}walk eval後付け替え", input, input_index, new_piq, " ".repeat(lvl));
+                        }
 
-                        _ => {
-                            // その他のTpiqの場合は、pとq両方をwalkしてみて、
-                            // 結果が両方とも変わらなければそのまま返す、
-                            // そうでなければ新しくTpiqを作ってそのindexを返す
-                            
-                            // println!("{}walk >以外 pに入ります", " ".repeat(lvl));
+                        result
+                    },
 
-                            let p_node = {
-                                let borrowed_vm = self.vm.borrow();
-                                borrowed_vm.get_epiq(p).clone()
-                            };
-                            let q_node = {
-                                let borrowed_vm = self.vm.borrow();
-                                borrowed_vm.get_epiq(q).clone()
-                            };
+                    _ => {
+                        // その他のTpiqの場合は、pとq両方をwalkしてみて、
+                        // 結果が両方とも変わらなければそのまま返す、
+                        // そうでなければ新しくTpiqを作ってそのindexを返す
 
-                            let p_result = self.walk_internal(&p_node, nest_level + 1);
-                            let new_p = p_result.0;
+                        // println!("{}walk >以外 pに入ります", " ".repeat(lvl));
 
-                            // println!("{}walk >以外 qに入ります", " ".repeat(lvl));
+                        let p_node = {
+                            let borrowed_vm = self.vm.borrow();
+                            borrowed_vm.get_epiq(p).clone()
+                        };
+                        let q_node = {
+                            let borrowed_vm = self.vm.borrow();
+                            borrowed_vm.get_epiq(q).clone()
+                        };
 
-                            let q_result = self.walk_internal(&q_node, nest_level + 1);
-                            let new_q = q_result.0;
+                        let p_result = self.walk_internal(&p_node, nest_level + 1);
+                        let new_p = p_result.0;
 
-                            if new_p != p || new_q != q {
-                                let &Node(input_index, _) = input;
-                                println!("borrow_mut: {:?}", 2);
-                                let mut borrow_mut_vm = self.vm.borrow_mut();
-                                println!("borrow_mut: {:?}", 20);
-                                let mut node_mut = borrow_mut_vm.get_epiq_mut(input_index);
-                                node_mut.1 = Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q};
-                            }
+                        // println!("{}walk >以外 qに入ります", " ".repeat(lvl));
 
-                            Box::new(input.clone())
-                        },
-                    }
-                },
+                        let q_result = self.walk_internal(&q_node, nest_level + 1);
+                        let new_q = q_result.0;
 
-                _ => Box::new(input.clone()),
-            }
+                        if new_p != p || new_q != q {
+                            let &Node(input_index, _) = input;
+                            // println!("borrow_mut: {:?}", 2);
+                            let mut borrow_mut_vm = self.vm.borrow_mut();
+                            // println!("borrow_mut: {:?}", 20);
+                            let mut node_mut = borrow_mut_vm.get_epiq_mut(input_index);
+                            node_mut.1 = Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q};
+                        }
+
+                        Box::new(input.clone())
+                    },
+                }
+            },
+
+            _ => Box::new(input.clone()),
         }
     }
 
     fn eval_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
 
         let lvl = (nest_level * 2) as usize;
-        println!("{}eval ＿開始＿: {:?}", " ".repeat(lvl), input);
+        println!("{:?}{}eval ＿開始＿: ", input, " ".repeat(lvl));
 
         let &Node(input_index, ref piq) = input;
 
@@ -181,9 +179,9 @@ impl Walker {
                         } {
                             println!("#.p is Name");
                             result = {
-                                println!("borrow_mut: {:?}", 3);
+                                // println!("borrow_mut: {:?}", 3);
                                 self.vm.borrow_mut().define(n.as_ref(), walked_q_val);
-                                println!("borrow_mut: {:?}", 4);
+                                // println!("borrow_mut: {:?}", 4);
                                 let new_index = self.vm.borrow_mut().alloc(Epiq::Unit);
                                 self.vm.borrow().get_epiq(new_index).clone()
                             };
@@ -256,33 +254,37 @@ impl Walker {
                                         };
 
                                         // 新しい環境フレームを作る
-                                        println!("borrow_mut: {:?}", 5);
+                                        // println!("borrow_mut: {:?}", 5);
                                         self.vm.borrow_mut().extend();
 
                                         // 束縛を追加する
                                         self.assign_arguments(&params, &args);
 
                                         // 2. p.q(関数本体)をそのまま返却する
-                                        // walkを挟んでから返す
                                         let lambda_body_node = {
                                             let borrowed_vm = self.vm.borrow();
                                             borrowed_vm.get_epiq(lambda_body).clone()
                                         };
 
-                                        let walked_lambda_body_box = self.walk_internal(&lambda_body_node, nest_level + 1);
+                                        // walkを挟んでから返す
+                                        // TODO: walkにするとLambdaをそのまま返してしまうので、マクロのような扱いになる
+                                        // 実行したければevalしてから返す、しかしできればマクロ展開・関数適用を両方ともこの中でやってしまいたい。。。
+                                        // 今のところはひとまず関数適用しておく（普通にevalを通す）
+                                        println!("apply: {:?}", "Lambdaの評価開始");
+                                        let walked_lambda_body_box = self.eval_internal(&lambda_body_node, nest_level + 1);
 
                                         // 環境フレームを削除する
-                                        println!("borrow_mut: {:?}", 6);
+                                        // println!("borrow_mut: {:?}", 6);
                                         self.vm.borrow_mut().pop();
 
-
+                                        println!("apply 正常終了, {:?}", walked_lambda_body_box);
                                         walked_lambda_body_box
                                     } else {
-                                        println!("env_piqが環境じゃないのでエラー");
+                                        println!("apply env_piqが環境じゃないのでエラー");
                                         Box::new(input.clone())
                                     }
                                 } else {
-                                    println!("env_piqがTpiqじゃないのでエラー");
+                                    println!("apply env_piqがTpiqじゃないのでエラー");
                                     Box::new(input.clone())
                                 }
                             },
@@ -320,6 +322,7 @@ impl Walker {
                                             if let Epiq::Tpiq{o,p,q} = piq {
                                                 Some( (self.vm.borrow().get_epiq(p).clone(), q) )
                                             } else {
+                                                println!("primitive ltoreq 1つ目の引数がリストじゃなかった");
                                                 None
                                             }
                                         } {
@@ -330,6 +333,7 @@ impl Walker {
                                                 if let Epiq::Tpiq{o:o2,p:p2,q:q2} = piq {
                                                     Some(self.vm.borrow().get_epiq(p2).clone())
                                                 } else {
+                                                    println!("primitive ltoreq 2つ目の引数がリストじゃなかった");
                                                     None
                                                 }
                                             } {
@@ -341,13 +345,11 @@ impl Walker {
                                                 }
                                                 Box::new(self.vm.borrow().get_epiq(new_index).clone())
                                             } else {
-                                                // 引数がリストじゃなかった
-                                                // 中身が数値じゃなかった
+                                                println!("primitive ltoreq 2つ目の引数がリストじゃなかった or 中身が数値じゃなかった");
                                                 Box::new(input.clone())
                                             }
                                         } else {
-                                            // 引数がリストじゃなかった
-                                            // 中身が数値じゃなかった
+                                            println!("primitive ltoreq 1つ目の引数がリストじゃなかった or 中身が数値じゃなかった");
                                             Box::new(input.clone())
                                         }
                                     },
@@ -380,16 +382,16 @@ impl Walker {
                         let result = self.eval_internal(&q_node, nest_level + 1);
                         println!("{}eval: origin: {:?} result: {:?}", " ".repeat(lvl), q, result);
 
-                        // // TODO: これ以下はeval_internalと重複しているのでまとめたい
-                        // // let &Node(new_q, ref new_q_piq) = result;
-                        // let new_q = result.0;
-                        // let ref new_q_piq = result.1;
-                        // if new_q != q {
-                        //     let &Node(input_index, _) = input;
-                        //     let mut borrow_mut_vm = self.vm.borrow_mut();
-                        //     let mut node_mut = borrow_mut_vm.get_epiq_mut(input_index);
-                        //     node_mut.1 = new_q_piq.clone();
-                        // }
+                        // TODO: これ以下はeval_internalと重複しているのでまとめたい
+                        let new_q = result.0;
+                        if new_q != q {
+                            let ref new_piq = result.1;
+                            let mut vm = self.vm.borrow_mut();
+                            let mut node_mut = vm.get_epiq_mut(input_index);
+                            node_mut.1 = new_piq.clone();
+                            println!("{:?} -> ({} {:?}){}eval eval後付け替え", input, input_index, new_piq, " ".repeat(lvl));
+                        }
+
                         result
                     },
 
@@ -500,6 +502,7 @@ impl Walker {
                         };
 
                         // 条件節をwalk
+                        println!("condition: {:?}", "条件節をwalk");
                         let walked_condition_node = self.walk_internal(&p_condition, nest_level + 1);
                         let ref walked_condition_piq = walked_condition_node.1;
 
@@ -524,7 +527,7 @@ impl Walker {
                                                     self.walk_internal(&q_node, nest_level + 1)
                                                 },
                                                 _ => {
-                                                    println!("condtion部分は^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
+                                                    println!("condtion ^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
                                                     Box::new(input.clone())
                                                 },
                                             }
@@ -542,7 +545,7 @@ impl Walker {
                             },
 
                             _ => {
-                                println!("condtion部分は^Tか^Fしか取れないようにしたいのでエラー");
+                                println!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_condition_piq);
                                 Box::new(input.clone())
                             },
                         }
@@ -569,7 +572,7 @@ impl Walker {
                     // true
                     "T" => {
                         println!("true {:?}", "start");
-                        println!("borrow_mut: {:?}", 7);
+                        // println!("borrow_mut: {:?}", 7);
                         let new_index = self.vm.borrow_mut().alloc(Epiq::Tval);
                         Box::new(self.vm.borrow().get_epiq(new_index).clone())
                     },
@@ -577,7 +580,7 @@ impl Walker {
                     // false
                     "F" => {
                         println!("false {:?}", "start");
-                        println!("borrow_mut: {:?}", 8);
+                        // println!("borrow_mut: {:?}", 8);
                         let new_index = self.vm.borrow_mut().alloc(Epiq::Fval);
                         Box::new(self.vm.borrow().get_epiq(new_index).clone())
                     },
@@ -592,7 +595,7 @@ impl Walker {
 
     fn eval_list(&self, input: &Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
         let lvl = (nest_level * 2) as usize;
-        println!("{}eval_list ＿開始＿: {:?}", " ".repeat(lvl), input);
+        println!("{:?}{}eval_list ＿開始＿: ", input, " ".repeat(lvl));
 
         let &Node(input_index, ref piq) = input;
 
@@ -712,7 +715,7 @@ impl Walker {
             }
 
             println!("assign_arguments: {:?}", "define!!");
-            println!("borrow_mut: {:?}", 9);
+            // println!("borrow_mut: {:?}", 9);
             self.vm.borrow_mut().define(symbol_string, content_node.0);
 
 

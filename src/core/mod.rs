@@ -4,7 +4,7 @@ mod graph;
 pub use self::graph::*;
 
 /// E(lemantal) piq
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum Epiq {
     Unit,
     Tval,
@@ -29,6 +29,20 @@ pub enum Epiq {
     // Dbri(usize), // de bruijn index
 }
 
+impl fmt::Debug for Epiq {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Epiq::Unit => write!(f, "Unit"),
+            Epiq::Tval => write!(f, "Tval"),
+            Epiq::Fval => write!(f, "Fval"),
+            Epiq::Name(ref n) => write!(f, "Name<{}>", n),
+            Epiq::Uit8(n) => write!(f, "Uit8<{}>", n),
+            Epiq::Prim(ref n) => write!(f, "Prim<{}>", n),
+            Epiq::Tpiq { o: ref o, p, q} => write!(f, "{}({} {})", o, p, q),
+            Epiq::Mpiq { o: ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
+        }
+    }
+}
 pub struct Heliqs {
     ast: NodeArena<Epiq>,
     // symbol_table: SymbolTable<'a>,

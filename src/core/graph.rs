@@ -2,8 +2,14 @@ use core::*;
 
 pub type NodeId = usize;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Node<T>(pub NodeId, pub T);
+
+impl fmt::Debug for Node<Epiq> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({} {:?})", self.0, self.1)
+    }
+}
 
 pub struct SymbolTable {
     table: Vec<Vec<(String, Option<NodeId>)>>,
@@ -49,15 +55,16 @@ impl SymbolTable {
 
     fn resolve_internal(&self, name: &str, frame: usize) -> Option<Option<NodeId>> {
         if let Some(&( _, Some(r) )) = self.table[frame].iter().find(|&&(ref n, _)| n == name) {
-            println!("resolve 見つかりました {:?} {:?} {:?}", name, frame, self.table);
+            println!("resolve 見つかりました {:?} {:?}", name, self.table);
             Some(Some(r))
         } else {
-            println!("resolve 見つかりませんでした {:?} {:?} {:?}", name, frame, self.table);
             if frame == 0 {
                 // グローバル環境まで来たら終了
+                println!("resolve 見つかりませんでした {:?} {:?}", name, self.table);
                 None
             } else {
                 // なかったら一つ上のframeを探す
+                println!("resolve 見つからないので親を探します {:?}", name);
                 self.resolve_internal(name, frame - 1)
             }
         }
