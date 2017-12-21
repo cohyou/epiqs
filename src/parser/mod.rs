@@ -41,13 +41,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) {
-        // Prim追加
-        let prim1 = self.vm.borrow_mut().alloc(Epiq::Prim("decr".to_string())); // 0
-        self.vm.borrow_mut().define("decr", prim1);
-        let prim2 = self.vm.borrow_mut().alloc(Epiq::Prim("ltoreq".to_string())); // 1
-        self.vm.borrow_mut().define("ltoreq", prim2);
+    fn add_prim(&mut self, name: &str) {
+        let prim = self.vm.borrow_mut().alloc(Epiq::Prim(name.to_string()));
+        self.vm.borrow_mut().define(name, prim);
+    }
 
+    pub fn parse(&mut self) {
+        self.add_prim("decr");
+        self.add_prim("ltoreq");
+        self.add_prim("eq");
+        self.add_prim("plus");
+        self.add_prim("minus");
 
         self.consume_token();
 

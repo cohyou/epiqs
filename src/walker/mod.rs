@@ -316,7 +316,10 @@ impl Walker {
                                         }
                                     },
 
-                                    "ltoreq" => {
+                                    prim_name @ "ltoreq" |
+                                    prim_name @ "eq" |
+                                    prim_name @ "plus" |
+                                    prim_name @ "minus" => {
                                         // <=を実装
                                         // 一つ目の引数
                                         if let Some( (Node(_, Epiq::Uit8(n1)), q) ) = {
@@ -340,11 +343,23 @@ impl Walker {
                                                 }
                                             } {
                                                 let new_index;
-                                                if n1 <= n2 {
-                                                    new_index = self.vm.borrow_mut().alloc(Epiq::Tval);
-                                                } else {
-                                                    new_index = self.vm.borrow_mut().alloc(Epiq::Fval);
-                                                }
+
+                                                let new_epiq = match prim_name {
+                                                    pred @ "ltoreq" | pred @ "eq" => {
+                                                        let boolean = match pred {
+                                                            "ltoreq" => n1 <= n2,
+                                                            "eq" => n1 == n2,
+                                                            _ => false,
+                                                        };
+                                                        if boolean { Epiq::Tval } else { Epiq::Fval }
+                                                    },
+
+                                                    "plus" => Epiq::Uit8(n1 + n2),
+                                                    "minus" => Epiq::Uit8(n1 - n2),
+                                                    _ => Epiq::Unit,
+                                                };
+
+                                                new_index = self.vm.borrow_mut().alloc(new_epiq);
                                                 Box::new(self.vm.borrow().get_epiq(new_index).clone())
                                             } else {
                                                 // println!("primitive ltoreq 2つ目の引数がリストじゃなかった or 中身が数値じゃなかった");
@@ -361,7 +376,6 @@ impl Walker {
                                         Box::new(input.clone())
                                     },
                                 }
-                                // Box::new(input.clone())
                             },
 
                             _ => {

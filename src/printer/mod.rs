@@ -81,6 +81,21 @@ pub fn print_evaled_str(left: &str, right: &str) {
     assert_eq!(printer.print(), right);
 }
 
+pub fn only_evaluate(s: &str) {
+    let mut iter = s.bytes();
+    let scanners: &Vec<&Scanner> = &all_scanners!();
+    let lexer = Lexer::new(&mut iter, scanners);
+
+    let vm = Rc::new(RefCell::new(Heliqs::new()));
+    let vm2 = vm.clone();
+
+    let mut parser = Parser::new(lexer, vm);
+    let parsed_ast = parser.parse();
+
+    let mut walker = Walker::new(vm2);
+    let walked_ast = walker.walk();
+}
+
 fn craete_vm<'a>() -> Rc<RefCell<Heliqs>> {
     Rc::new(RefCell::new(Heliqs::new()))
 }

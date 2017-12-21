@@ -4,8 +4,8 @@ use epiqs::printer::*;
 
 fn main() {
     env_logger::init().unwrap();
-
-    print_evaled_str(
+    /*
+    only_evaluate(
         r"|> ; ^> -1
         [
             |# tak |\ |% ; [x y z]
@@ -20,7 +20,25 @@ fn main() {
                       ]
 
             |! |> ; |@ ; tak [12 6 0]
+        ]"
+    );*/
+
+    print_evaled_str(
+        r"|> ; ^> -1
+        [
+            |# fib |\ |% ; [n]
+                      ^> -1 [
+                         |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 0]
+                            |: 0
+                               |> ; |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 1]
+                                       |: 1
+                                       |> ; |! |> ; |@ ; plus [
+                                          |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 2]]
+                                          |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 1]]
+                                       ]
+                      ]
+            |! |> ; |@ ; fib [30]
         ]",
-        r";",
+        r";"
     );
 }
