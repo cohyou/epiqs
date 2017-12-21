@@ -323,7 +323,7 @@ tarai関数(with syntax sugar1, 実装中)
 tarai関数(with syntax sugar2, 草案)
 ```
 ^>>>> [
-   |# tak |\ '% [x y z] [
+   |# tak |\ '% [x y z] ^>> [
           |? @ltoreq!, @x, @y
              |: @y
                 @tak! [
