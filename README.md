@@ -240,6 +240,7 @@ Hphn, // - hyphen-minus
 Star, // * asterisk
 Slsh, // / slash
 
+Tild, // ~ tilde
 Bkqt, // ` back quote
 Less, // < less than
 (使用済みになりました) Grtr, // > greater than
