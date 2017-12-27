@@ -478,6 +478,7 @@ fibonacci数(with syntax sugar2, 草案)
 `Lmbd{envn, body}`|`'\ .0` `(\ '% [i] @incl!, .i)`|function piq block
 `Same{val1, val2}`|`(= money happiness)`|equal
 `Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
+`Cond{cond, rslt}`|`(? ^T "true":"false")`|if or cond
 
 
 ### epiq一覧(piq, 主に2つ目の引数を埋めるもの)
