@@ -41,6 +41,9 @@ impl Printer {
             &Epiq::Mpiq { ref o, p, q } => {
                 format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
             },
+            &Epiq::Eval(p, q) => {
+                format!(">({} {})", self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
+            }
             // _ => "".to_string(),
         }
     }

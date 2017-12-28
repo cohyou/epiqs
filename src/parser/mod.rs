@@ -106,19 +106,26 @@ impl<'a> Parser<'a> {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
                 self.consume_token();
 
-                // ^Tと^Fは特別扱い
-                match otag.as_ref() {
-                    "T" => push!(self, Epiq::Tval),
-                    "F" => push!(self, Epiq::Fval),
-                    _ => {
+                match tokn {
+                    Tokn::Pipe => {
                         let pidx = (self.parse_aexp())?;
                         let qidx = (self.parse_aexp())?;
-                        match tokn {
-                            Tokn::Pipe => push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx}),
-                            Tokn::Crrt => push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx}),
-                            _ => Err(Error::UnknownError(255)),
+                        push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
+                    },
+                    Tokn::Crrt => {
+                        match otag.as_ref() {
+                            // ^Tと^Fは特別扱い
+                            "T" => push!(self, Epiq::Tval),
+                            "F" => push!(self, Epiq::Fval),
+                            _ =>  {
+                                // 現在は^Tか^Fしか認めていないが、将来のため
+                                let pidx = (self.parse_aexp())?;
+                                let qidx = (self.parse_aexp())?;
+                                push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx})
+                            },
                         }
-                    }
+                    },
+                    _ => Err(Error::UnknownError(255)),
                 }
             },
 

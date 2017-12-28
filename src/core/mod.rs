@@ -15,6 +15,8 @@ pub enum Epiq {
 
     Tpiq { o: String, p: NodeId, q: NodeId}, // tagged piq
     Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
+
+    Eval(NodeId, NodeId), // eval piq
     // Apiq { p: u32, q: u32 }, // application piq
 
     // Text(String),
@@ -40,6 +42,7 @@ impl fmt::Debug for Epiq {
             Epiq::Prim(ref n) => write!(f, "Prim<{}>", n),
             Epiq::Tpiq { ref o, p, q} => write!(f, "{}({} {})", o, p, q),
             Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
+            Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
         }
     }
 }
