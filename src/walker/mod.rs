@@ -69,16 +69,6 @@ impl Walker {
                         let result = self.eval_internal(&q_node, nest_level + 1);
                         // println!("{:?} => {:?}{}walk: eval完了", q_node, result, " ".repeat(lvl));
 
-                        // TODO: これ以下はeval_internalと重複しているのでまとめたい
-                        // let new_q = result.0;
-                        // if new_q != q {
-                        //     let ref new_piq = result.1;
-                        //     let mut vm = self.vm.borrow_mut();
-                        //     let mut node_mut = vm.get_epiq_mut(input_index);
-                        //     node_mut.1 = new_piq.clone();
-                        //     println!("{:?} -> ({} {:?}){}walk eval後付け替え", input, input_index, new_piq, " ".repeat(lvl));
-                        // }
-
                         result
                     },
 
