@@ -1,17 +1,9 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-
-use std::error::Error;
-
 use core::*;
 
 pub struct Walker {
     vm: Rc<RefCell<Heliqs>>,
-}
-
-enum Result {
-    MakeEpiq(Option<Epiq>),
-    NewIndex(NodeId),
 }
 
 impl Walker {
@@ -52,7 +44,7 @@ impl Walker {
 
     fn walk_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
 
-        let lvl = (nest_level * 2) as usize;
+        // let lvl = (nest_level * 2) as usize;
         // println!("{:?}{}walk ＿開始＿: ", input, " ".repeat(lvl));
 
         let &Node(input_index, ref piq) = input;
@@ -511,7 +503,7 @@ impl Walker {
         // 値がwalk後に変化していたら付け替える
         if walked_condition_node.0 == p_condition.0 {
             let mut vm = self.vm.borrow_mut();
-            let mut node_mut = vm.get_epiq_mut(input_index);
+            let node_mut = vm.get_epiq_mut(input_index);
             node_mut.1 = Epiq::Tpiq{o:o.to_string(), p:walked_condition_node.0, q:q};
             // println!("{:?} -> ({} {:?}){}condition eval後付け替え", input, input_index, walked_condition_node.1, " ".repeat(lvl));
         }

@@ -55,7 +55,7 @@ impl<'a> Parser<'a> {
 
         self.consume_token();
 
-        self.parse_aexp();
+        let _ = self.parse_aexp();
     }
 
     fn consume_token(&mut self) {

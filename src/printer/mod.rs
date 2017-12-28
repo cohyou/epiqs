@@ -71,10 +71,10 @@ pub fn print_evaled_str(left: &str, right: &str) {
     let vm2 = vm.clone();
     let vm3 = vm.clone();
     let mut parser = Parser::new(lexer, vm);
-    let parsed_ast = parser.parse();
+    parser.parse();
 
-    let mut walker = Walker::new(vm2);
-    let walked_ast = walker.walk();
+    let walker = Walker::new(vm2);
+    walker.walk();
 
     let printer = Printer::new(vm3);
 
@@ -90,10 +90,10 @@ pub fn only_evaluate(s: &str) {
     let vm2 = vm.clone();
 
     let mut parser = Parser::new(lexer, vm);
-    let parsed_ast = parser.parse();
+    parser.parse();
 
-    let mut walker = Walker::new(vm2);
-    let walked_ast = walker.walk();
+    let walker = Walker::new(vm2);
+    walker.walk();
 }
 
 fn craete_vm<'a>() -> Rc<RefCell<Heliqs>> {

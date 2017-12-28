@@ -38,8 +38,8 @@ impl fmt::Debug for Epiq {
             Epiq::Name(ref n) => write!(f, "Name<{}>", n),
             Epiq::Uit8(n) => write!(f, "Uit8<{}>", n),
             Epiq::Prim(ref n) => write!(f, "Prim<{}>", n),
-            Epiq::Tpiq { o: ref o, p, q} => write!(f, "{}({} {})", o, p, q),
-            Epiq::Mpiq { o: ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
+            Epiq::Tpiq { ref o, p, q} => write!(f, "{}({} {})", o, p, q),
+            Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
         }
     }
 }
