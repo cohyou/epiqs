@@ -110,7 +110,12 @@ impl<'a> Parser<'a> {
                     Tokn::Pipe => {
                         let pidx = (self.parse_aexp())?;
                         let qidx = (self.parse_aexp())?;
-                        push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
+                        match otag.as_ref() {
+                            ">" => push!(self, Epiq::Eval(pidx, qidx)),
+                            _ => {
+                                push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
+                            },
+                        }
                     },
                     Tokn::Crrt => {
                         match otag.as_ref() {

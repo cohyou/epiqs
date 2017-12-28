@@ -45,20 +45,20 @@ impl Walker {
         let &Node(input_index, ref piq) = input;
 
         match piq {
+            &Epiq::Eval(p, q) => {
+                // ひとまずpは無視
+
+                // そのまま返すとNG
+                let q_node = self.get_epiq(q);
+
+                let result = self.eval_internal(&q_node, nest_level + 1);
+                // println!("{:?} => {:?}{}walk: eval完了", q_node, result, " ".repeat(lvl));
+
+                result
+            },
+
             &Epiq::Tpiq{ref o, p, q} => {
-                match o.as_ref() {
-                    ">" => {
-                        // ひとまずpは無視
-
-                        // そのまま返すとNG
-                        let q_node = self.get_epiq(q);
-
-                        let result = self.eval_internal(&q_node, nest_level + 1);
-                        // println!("{:?} => {:?}{}walk: eval完了", q_node, result, " ".repeat(lvl));
-
-                        result
-                    },
-
+                match o.as_ref() as &str {
                     _ => {
                         // その他のTpiqの場合は、pとq両方をwalkしてみて、
                         // 結果が両方とも変わらなければそのまま返す、
@@ -107,6 +107,19 @@ impl Walker {
         match piq {
             &Epiq::Unit | &Epiq::Tval | &Epiq::Fval |
             &Epiq::Uit8(_) | &Epiq::Name(_) => Box::new(input.clone()),
+
+            // eval
+            &Epiq::Eval(p, q) => {
+                // ひとまずpは無視
+
+                // そのまま返すとNG
+                let q_node = self.get_epiq(q);
+
+                let result = self.eval_internal(&q_node, nest_level + 1);
+                // println!("{}eval: origin: {:?} result: {:?}", " ".repeat(lvl), q, result);
+
+                result
+            },
 
             // // primitive function
             // &Epiq::Prim(_) => {
@@ -207,19 +220,6 @@ impl Walker {
                                 Box::new(input.clone())
                             },
                         }
-                    },
-
-                    // eval
-                    ">" => {
-                        // ひとまずpは無視
-
-                        // そのまま返すとNG
-                        let q_node = self.get_epiq(q);
-
-                        let result = self.eval_internal(&q_node, nest_level + 1);
-                        // println!("{}eval: origin: {:?} result: {:?}", " ".repeat(lvl), q, result);
-
-                        result
                     },
 
                     // resolve
