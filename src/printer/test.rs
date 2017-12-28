@@ -203,6 +203,7 @@ fn tarai() {
     );
     */
 
+    /*
     print_evaled_str(
         r"|> ; ^> -1
         [
@@ -221,9 +222,11 @@ fn tarai() {
         ]",
         r"4"
     );
+    */
 }
 
 #[test]
+#[ignore]
 fn fib() {
     print_evaled_str(
         r"|> ; ^> -1
@@ -241,6 +244,6 @@ fn fib() {
                       ]
             |! |> ; |@ ; fib [30]
         ]",
-        r";"
+        r"832040"
     );
 }
