@@ -1,44 +1,22 @@
 extern crate env_logger;
 extern crate epiqs;
+use std::env;
+use std::fs::File;
+use std::io::prelude::*;
 use epiqs::printer::*;
 
 fn main() {
     env_logger::init().unwrap();
-    /*
-    only_evaluate(
-        r"|> ; ^> -1
-        [
-            |# tak |\ |% ; [x y z]
-                      ^> -1 [
-                         |? |> ; |! |> ; |@ ; ltoreq [|> ; |@ ; x |> ; |@ ; y]
-                            |: |> ; |@ ; y
-                               |> ; |! |> ; |@ ; tak [
-                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; x] |> ; |@ ; y |> ; |@ ; z]
-                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; y] |> ; |@ ; z |> ; |@ ; x]
-                                  |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; z] |> ; |@ ; x |> ; |@ ; y]
-                               ]
-                      ]
 
-            |! |> ; |@ ; tak [12 6 0]
-        ]"
-    );*/
+    let args: Vec<String> = env::args().collect();
 
-    print_evaled_str(
-        r"|> ; ^> -1
-        [
-            |# fib |\ |% ; [n]
-                      ^> -1 [
-                         |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 0]
-                            |: 0
-                               |> ; |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 1]
-                                       |: 1
-                                       |> ; |! |> ; |@ ; plus [
-                                          |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 2]]
-                                          |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 1]]
-                                       ]
-                      ]
-            |! |> ; |@ ; fib [30]
-        ]",
-        r";"
-    );
+    if args.len() >= 2 {
+        let file_name = &args[1];
+        let mut file = File::open(file_name).unwrap();
+        let mut s = String::new();
+        file.read_to_string(&mut s).unwrap();
+        println!("{}", evaled_str(&s));
+    } else {
+        println!("{}", "sorry, REPL is now developing, please wait a bit...");
+    }
 }

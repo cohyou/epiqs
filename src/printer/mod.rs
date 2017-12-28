@@ -61,8 +61,7 @@ pub fn print_str(left: &str, right: &str) {
     assert_eq!(printer.print(), right);
 }
 
-
-pub fn print_evaled_str(left: &str, right: &str) {
+pub fn evaled_str(left: &str) -> String {
     let mut iter = left.bytes();
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
@@ -77,8 +76,12 @@ pub fn print_evaled_str(left: &str, right: &str) {
     walker.walk();
 
     let printer = Printer::new(vm3);
+    printer.print().to_string()
+}
 
-    assert_eq!(printer.print(), right);
+pub fn print_evaled_str(left: &str, right: &str) {
+    let result = evaled_str(left);
+    assert_eq!(result, right);
 }
 
 pub fn only_evaluate(s: &str) {

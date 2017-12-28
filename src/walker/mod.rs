@@ -37,11 +37,6 @@ impl Walker {
         }
     }
 
-    fn get_epiq(&self, i: usize) -> Node<Epiq> {
-        let borrowed_vm = self.vm.borrow();
-        borrowed_vm.get_epiq(i).clone()
-    }
-
     fn walk_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
 
         // let lvl = (nest_level * 2) as usize;
@@ -667,4 +662,10 @@ impl Walker {
         self.assign_arguments(&next_params_node, &next_args_node);
     }
 
+    // walker内でEpiqを読み取り用で取得するためのヘルパー
+    // cloneしているのは多分しかたない
+    fn get_epiq(&self, i: usize) -> Node<Epiq> {
+        let borrowed_vm = self.vm.borrow();
+        borrowed_vm.get_epiq(i).clone()
+    }
 }
