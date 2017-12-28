@@ -109,6 +109,7 @@ impl Walker {
             &Epiq::Uit8(_) | &Epiq::Name(_) => Box::new(input.clone()),
 
             // eval
+            // もしかしてこっちはあまり通らないかもしれない
             &Epiq::Eval(p, q) => {
                 // ひとまずpは無視
 
@@ -120,6 +121,9 @@ impl Walker {
 
                 result
             },
+
+            // consは何もしない
+            &Epiq::Lpiq(p, q) => Box::new(input.clone()),
 
             // // primitive function
             // &Epiq::Prim(_) => {
@@ -440,42 +444,34 @@ impl Walker {
 
         // レシーバの種類によってできることが変わる
         match p_reciever {
-            &Epiq::Tpiq{ref o, p, q} => {
-                match o.as_ref() {
-                    ":" => {
-                        // Lpiqならば、pとqが使える、それ以外は無理
-                        match q_accessor {
-                            &Epiq::Name(ref n) => {
-                                match n.as_ref() {
-                                    "p" => {
-                                        let p_node = self.get_epiq(p);
-                                        self.walk_internal(&p_node, nest_level + 1)
-                                    },
-                                    "q" => {
-                                        let q_node = self.get_epiq(q);
-                                        self.walk_internal(&q_node, nest_level + 1)
-                                    },
-                                    _ => {
-                                        // println!("Lpiqならばpとq以外はエラー");
-                                        Box::new(input.clone())
-                                    },
-                                }
+            &Epiq::Lpiq(p, q) => {
+                // Lpiqならば、pとqが使える、それ以外は無理
+                match q_accessor {
+                    &Epiq::Name(ref n) => {
+                        match n.as_ref() {
+                            "p" => {
+                                let p_node = self.get_epiq(p);
+                                self.walk_internal(&p_node, nest_level + 1)
                             },
-
+                            "q" => {
+                                let q_node = self.get_epiq(q);
+                                self.walk_internal(&q_node, nest_level + 1)
+                            },
                             _ => {
-                                // println!("アクセッサがNameではないのでエラー");
+                                // println!("Lpiqならばpとq以外はエラー");
                                 Box::new(input.clone())
                             },
                         }
                     },
+
                     _ => {
-                        // println!("Lpiq以外はまだ定義されていないが、これから増える");
+                        // println!("アクセッサがNameではないのでエラー");
                         Box::new(input.clone())
                     },
                 }
             },
             _ => {
-                // println!("レシーバは今のところTpiq以外にも構造体とかが増えるはずだが、これから");
+                // println!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから");
                 Box::new(input.clone())
             },
         }
@@ -508,30 +504,25 @@ impl Walker {
         match walked_condition_piq {
             v @ &Epiq::Tval | v @ &Epiq::Fval => {
                 match q_result {
-                    &Epiq::Tpiq{ref o, p, q} => {
-                        if o == ":" {
-                            match v {
-                                &Epiq::Tval => {
-                                    let p_node = self.get_epiq(p);
-                                    self.walk_internal(&p_node, nest_level + 1)
-                                },
-                                &Epiq::Fval => {
-                                    let q_node = self.get_epiq(q);
-                                    self.walk_internal(&q_node, nest_level + 1)
-                                },
-                                _ => {
-                                    // println!("condtion ^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
-                                    Box::new(input.clone())
-                                },
-                            }
-                        } else {
-                            // println!("result部分がLpiqじゃないのでエラー");
-                            Box::new(input.clone())
+                    &Epiq::Lpiq(p, q) => {
+                        match v {
+                            &Epiq::Tval => {
+                                let p_node = self.get_epiq(p);
+                                self.walk_internal(&p_node, nest_level + 1)
+                            },
+                            &Epiq::Fval => {
+                                let q_node = self.get_epiq(q);
+                                self.walk_internal(&q_node, nest_level + 1)
+                            },
+                            _ => {
+                                // println!("condtion ^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
+                                Box::new(input.clone())
+                            },
                         }
                     },
 
                     _ => {
-                        // println!("result部分がTpiqじゃないのでエラー");
+                        // println!("result部分がLpiqじゃないのでエラー");
                         Box::new(input.clone())
                     },
                 }

@@ -17,18 +17,14 @@ pub enum Epiq {
     Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
 
     Eval(NodeId, NodeId), // eval piq
+    Lpiq(NodeId, NodeId), // (linked) list piq
+
     // Apiq { p: u32, q: u32 }, // application piq
 
     // Text(String),
 
-    // Lpiq { p: usize, q: usize }, // (linked) list piq
     // Vpiq { p: usize, q: usize }, // vector piq
     // Fpiq { p: usize, q: usize }, // function piq
-
-    // Aexp { a: usize, e: usize }, // A-Expression
-    // Prmt(usize), // anonymous parameter
-    // Pprn(usize), // priority parentheses
-    // Dbri(usize), // de bruijn index
 }
 
 impl fmt::Debug for Epiq {
@@ -43,6 +39,7 @@ impl fmt::Debug for Epiq {
             Epiq::Tpiq { ref o, p, q} => write!(f, "{}({} {})", o, p, q),
             Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
             Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
+            Epiq::Lpiq(p, q) => write!(f, ":({} {})", p, q),
         }
     }
 }

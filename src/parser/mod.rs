@@ -112,6 +112,7 @@ impl<'a> Parser<'a> {
                         let qidx = (self.parse_aexp())?;
                         match otag.as_ref() {
                             ">" => push!(self, Epiq::Eval(pidx, qidx)),
+                            ":" => push!(self, Epiq::Lpiq(pidx, qidx)),
                             _ => {
                                 push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
                             },
