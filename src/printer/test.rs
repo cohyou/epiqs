@@ -58,19 +58,6 @@ fn block() {
     );
 }
 
-/*
-#[test]
-#[ignore]
-fn evaled_empty_ast() {
-    // let empty_ast = &RefCell::new(AbstractSyntaxTree::new());
-    // let mut evaluator = Evaluator::new(empty_ast);
-    // let evaled_ast = evaluator.walk().unwrap();
-    let vm = craete_vm();// Rc::new(RefCell::new(Heliqs::new()));
-    let printer = Printer::new(vm);
-    assert_eq!(printer.print(), "");
-}
-*/
-
 #[test]
 // #[ignore]
 fn evaled_symbol_ast() {
@@ -243,5 +230,18 @@ fn fib() {
             |! |> ; |@ ; fib [30]
         ]",
         r"832040"
+    );
+}
+
+#[test]
+fn prim() {
+    print_evaled_str(
+        r"|> ; ^> -1
+        [
+            |# x 1
+            |# y 2
+            |! |> ; |@ ; ltoreq [|> ; |@ ; x |> ; |@ ; y]
+        ]",
+        r"^T"
     );
 }

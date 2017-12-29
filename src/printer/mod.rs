@@ -8,7 +8,7 @@ use lexer::*;
 use parser::*;
 use walker::*;
 
-struct Printer {
+pub struct Printer {
     vm: Rc<RefCell<Heliqs>>,
 }
 
@@ -25,7 +25,7 @@ impl Printer {
         }
     }
 
-    fn print_aexp(&self, i: NodeId, nest_level: u32) -> String {
+    pub fn print_aexp(&self, i: NodeId, nest_level: u32) -> String {
         let vm = self.vm.borrow();
         let &Node(_, ref epiq) = vm.get_epiq(i);
         match epiq {

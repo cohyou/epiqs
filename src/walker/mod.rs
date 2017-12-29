@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use core::*;
+use printer::*;
 
 pub struct Walker {
     vm: Rc<RefCell<Heliqs>>,
@@ -14,7 +15,7 @@ impl Walker {
     }
 
     pub fn walk(&self) {
-        // println!("\n");
+        println!("\n");
 
         if let Some((entry, eee)) = {
             let borrowed_vm = self.vm.borrow();
@@ -38,8 +39,6 @@ impl Walker {
     }
 
     fn walk_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
-
-        // let lvl = (nest_level * 2) as usize;
         // println!("{:?}{}walk ＿開始＿: ", input, " ".repeat(lvl));
 
         let &Node(input_index, ref piq) = input;
@@ -52,52 +51,57 @@ impl Walker {
                 let q_node = self.get_epiq(q);
 
                 let result = self.eval_internal(&q_node, nest_level + 1);
-                // println!("{:?} => {:?}{}walk: eval完了", q_node, result, " ".repeat(lvl));
+
+                self.log_piq(nest_level, "walk: eval完前", q);
+                self.log_piq(nest_level, "walk: eval完後", result.0);
 
                 result
             },
 
-            &Epiq::Tpiq{ref o, p, q} => {
-                match o.as_ref() as &str {
-                    _ => {
-                        // その他のTpiqの場合は、pとq両方をwalkしてみて、
-                        // 結果が両方とも変わらなければそのまま返す、
-                        // そうでなければ新しくTpiqを作って返す
-
-                        let p_node = self.get_epiq(p);
-                        let q_node = self.get_epiq(q);
-
-                        let p_result = self.walk_internal(&p_node, nest_level + 1);
-                        let new_p = p_result.0;
-
-                        let q_result = self.walk_internal(&q_node, nest_level + 1);
-                        let new_q = q_result.0;
-
-                        if new_p == p && new_q == q {
-                            Box::new(input.clone())
-                        } else {
-                            let new_epiq_index = {
-                                let new_epiq = Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q};
-                                let mut borrow_mut_vm = self.vm.borrow_mut();
-                                borrow_mut_vm.alloc(new_epiq)
-                            };
-                            let new_epiq_node = self.vm.borrow().get_epiq(new_epiq_index).clone();
-                            Box::new(new_epiq_node)
-                        }
-                    },
-                }
-            },
+            &Epiq::Tpiq{ref o, p, q} => self.walk_piq(input, o, p, q, nest_level),
+            &Epiq::Lpiq(p, q) => self.walk_piq(input, ":", p, q, nest_level),
 
             _ => Box::new(input.clone()),
         }
     }
 
+    fn walk_piq(&self, input: &Node<Epiq>, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Box<Node<Epiq>> {
+        // pとq両方をwalkしてみて、
+        // 結果が両方とも変わらなければそのまま返す、
+        // そうでなければ新しくpiqを作って返す
+
+        let p_node = self.get_epiq(p);
+        let q_node = self.get_epiq(q);
+
+        let p_result = self.walk_internal(&p_node, nest_level + 1);
+        let new_p = p_result.0;
+
+        let q_result = self.walk_internal(&q_node, nest_level + 1);
+        let new_q = q_result.0;
+
+        if new_p == p && new_q == q {
+            Box::new(input.clone())
+        } else {
+            let new_epiq_index = {
+                let new_epiq = match o {
+                    ":" => Epiq::Lpiq(new_p, new_q),
+                    _   => Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q},
+                };
+                let mut borrow_mut_vm = self.vm.borrow_mut();
+                borrow_mut_vm.alloc(new_epiq)
+            };
+            let new_epiq_node = self.vm.borrow().get_epiq(new_epiq_index).clone();
+            self.log_piq(nest_level, "new_epiq_node: ", new_epiq_index);
+            Box::new(new_epiq_node)
+        }
+    }
+
     fn eval_internal<'a>(&self, input: &'a Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
-        /*
-        if nest_level == 30 {
-            println!("{:?}", "evalがたくさん回ったのでstack overflow");
-            return Box::new(Node(0, Epiq::Unit));
-        }*/
+
+        // if nest_level == 30 {
+        //     println!("{:?}", "evalがたくさん回ったのでstack overflow");
+        //     return Box::new(Node(0, Epiq::Unit));
+        // }
 
         let lvl = (nest_level * 2) as usize;
         // println!("{:?}{}eval ＿開始＿: ", input, " ".repeat(lvl));
@@ -211,6 +215,8 @@ impl Walker {
                         let args_node = self.get_epiq(q);
 
                         let args = self.walk_internal(&args_node, nest_level + 1);
+
+                        self.log_piq(nest_level, "args: ", args.0);
 
                         match walked_lambda_piq {
                             &Epiq::Tpiq{o:_, p:lambda_env, q:lambda_body} => {
@@ -355,7 +361,7 @@ impl Walker {
                 // 引数取得
                 if let Some(Node(_, Epiq::Uit8(n))) = {
                     let piq = args.1;
-                    if let Epiq::Tpiq{o,p,q} = piq {
+                    if let Epiq::Lpiq(p,q) = piq {
                         Some(self.get_epiq(p))
                     } else {
                         None
@@ -379,8 +385,10 @@ impl Walker {
                 // 一つ目の引数
                 if let Some( (Node(_, Epiq::Uit8(n1)), q) ) = {
                     let piq = args.1;
-                    if let Epiq::Tpiq{o,p,q} = piq {
-                        Some( (self.get_epiq(p), q) )
+                    if let Epiq::Lpiq(p,q) = piq {
+                        let piq_p = self.get_epiq(p);
+                        self.log_piq(0, "piq_p: ", p);
+                        Some( (piq_p, q) )
                     } else {
                         // println!("primitive ltoreq 1つ目の引数がリストじゃなかった");
                         None
@@ -390,10 +398,11 @@ impl Walker {
                     if let Some(Node(_, Epiq::Uit8(n2))) = {
                         let node = self.get_epiq(q);
                         let piq = node.1;
-                        if let Epiq::Tpiq{o:o2,p:p2,q:q2} = piq {
-                            Some(self.get_epiq(p2))
+                        if let Epiq::Lpiq(p2,q2) = piq {
+                            let piq_p2 = self.get_epiq(p2);
+                            Some(piq_p2)
                         } else {
-                            // println!("primitive ltoreq 2つ目の引数がリストじゃなかった");
+                            println!("primitive ltoreq 2つ目の引数がリストじゃなかった");
                             None
                         }
                     } {
@@ -421,7 +430,7 @@ impl Walker {
                         Box::new(input.clone())
                     }
                 } else {
-                    // println!("primitive ltoreq 1つ目の引数がリストじゃなかった or 中身が数値じゃなかった");
+                    println!("primitive ltoreq 1つ目の引数がリストじゃなかった or 中身が数値じゃなかった");
                     Box::new(input.clone())
                 }
             },
@@ -480,7 +489,8 @@ impl Walker {
     fn eval_condition(&self, input: &Node<Epiq>, input_index: usize,
                              o: &str, p: usize, q: usize,
                              nest_level: u32) -> Box<Node<Epiq>> {
-        // println!("condition");
+        let lvl = (nest_level * 2) as usize;
+
         // p: ^T or ^F(他の値の評価はひとまず考えない)
         // q: Lpiq、^Tならpを返し、^Fならqを返す
         let p_condition = self.get_epiq(p);
@@ -496,7 +506,7 @@ impl Walker {
             let mut vm = self.vm.borrow_mut();
             let node_mut = vm.get_epiq_mut(input_index);
             node_mut.1 = Epiq::Tpiq{o:o.to_string(), p:walked_condition_node.0, q:q};
-            // println!("{:?} -> ({} {:?}){}condition eval後付け替え", input, input_index, walked_condition_node.1, " ".repeat(lvl));
+            println!("{:?} -> ({} {:?}){}condition eval後付け替え", input, input_index, walked_condition_node.1, " ".repeat(lvl));
         }
 
         let ref walked_condition_piq = walked_condition_node.1;
@@ -536,31 +546,30 @@ impl Walker {
     }
 
     fn eval_list(&self, input: &Node<Epiq>, nest_level: u32) -> Box<Node<Epiq>> {
-        let lvl = (nest_level * 2) as usize;
-        // println!("{:?}{}eval_list ＿開始＿: ", input, " ".repeat(lvl));
+        // println!("{}eval_list ＿開始＿ {:?}: ", " ".repeat(lvl), input);
 
         let &Node(input_index, ref piq) = input;
 
         match piq {
-            &Epiq::Tpiq{ref o, p, q} => {
-                match o.as_ref() {
-                    ":" => {
-                        let current_node = self.get_epiq(p);
+            &Epiq::Lpiq(p, q) => {
+                let current_node = self.get_epiq(p);
 
-                        let evaled_current_node = self.eval_internal(&current_node, nest_level + 1);
-                        let next = self.get_epiq(q);
-                        if let Node(_, Epiq::Unit) = next {
-                            // リストの最後なので評価の結果を返す
-                            evaled_current_node
-                        } else {
-                            // 次の項目へ
-                            let next_node = self.get_epiq(q);
-                            self.eval_list(&next_node, nest_level + 1)
-                        }
-                    },
-                    _ => Box::new(input.clone()),
+                let evaled_current_node = self.eval_internal(&current_node, nest_level + 1);
+
+                self.log_piq(nest_level, "elst ＿完了前: ", p);
+                self.log_piq(nest_level, "elst ＿完了後: ", evaled_current_node.0);
+
+                let next = self.get_epiq(q);
+                if let Node(_, Epiq::Unit) = next {
+                    // リストの最後なので評価の結果を返す
+                    evaled_current_node
+                } else {
+                    // 次の項目へ
+                    let next_node = self.get_epiq(q);
+                    self.eval_list(&next_node, nest_level + 1)
                 }
             },
+
             _ => Box::new(input.clone()),
         }
     }
@@ -568,7 +577,6 @@ impl Walker {
     fn assign_arguments(&self, parameters_node: &Node<Epiq>, arguments_node: &Node<Epiq>) {
         // arguments_piqはリストのはずなので、一つ一つ回して定義していく
         // println!("assign_arguments: {:?}", "start!!");
-
 
         let next_params_node;
         let next_args_node;
@@ -578,15 +586,10 @@ impl Walker {
             let &Node(_, ref args_piq) = arguments_node;
 
             let content;
-            if let Some((colon, cntt, next_args)) =
-            match args_piq {
-                &Epiq::Tpiq{o: ref colon, p: content, q: next_args} => {
-                    Some((colon, content, next_args))
-                },
+            if let Some((cntt, next_args)) = match args_piq {
+                &Epiq::Lpiq(p, q) => Some((p, q)),
                 _ => { None },
             } {
-                if colon != ":" { return; /* 普通は通らない */ }
-
                 next_args_node = self.get_epiq(next_args);
                 content = cntt;
             } else {
@@ -602,18 +605,7 @@ impl Walker {
 
             let next_params;
             let param;
-            if let Some((params_colon, p, q)) = match params_piq {
-                &Epiq::Tpiq{o: ref colon, p: param, q: next_params} => {
-                    Some((colon, param, next_params))
-                },
-                _ => { None },
-            } {
-                if params_colon != ":" {
-                    /* 普通は通らない */
-                    // println!("assign parameters_piqがおかしい :じゃないTpiq");
-                    return;
-                }
-
+            if let &Epiq::Lpiq(p, q) = params_piq {
                 next_params = q;
                 param = p;
             } else {
@@ -658,5 +650,16 @@ impl Walker {
     fn get_epiq(&self, i: usize) -> Node<Epiq> {
         let borrowed_vm = self.vm.borrow();
         borrowed_vm.get_epiq(i).clone()
+    }
+
+    fn log_piq(&self, lvl: u32, comment: &str, i: usize) {
+        if false {
+            println!("{}{} {:?}", " ".repeat((lvl * 2) as usize), comment, self.printer_printed(i));
+        }
+    }
+
+    fn printer_printed(&self, i: NodeId) -> String {
+        let printer = Printer::new(self.vm.clone());
+        printer.print_aexp(i, 0)
     }
 }

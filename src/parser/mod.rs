@@ -151,7 +151,7 @@ impl<'a> Parser<'a> {
             _ => {
                 let pidx = (self.parse_aexp())?;
                 let qidx = (self.parse_list())?;
-                push!(self, Epiq::Tpiq{o: ":".to_string(), p: pidx, q: qidx})
+                push!(self, Epiq::Lpiq(pidx, qidx))
             }
         }
     }
