@@ -35,20 +35,24 @@ impl Printer {
             &Epiq::Name(ref n) => n.to_string(),
             &Epiq::Uit8(ref n) => format!("{}", n),
             &Epiq::Prim(ref n) => format!("Prim({})", n),
-            &Epiq::Tpiq { ref o, p, q } => {
-                format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
-            },
-            &Epiq::Mpiq { ref o, p, q } => {
-                format!("{}({} {})", o, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
-            },
-            &Epiq::Eval(p, q) => {
-                format!(">({} {})", self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
-            }
-            &Epiq::Lpiq(p, q) => {
-                format!(":({} {})", self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
-            }
+            &Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
+            &Epiq::Mpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
+            &Epiq::Eval(p, q) => self.print_piq(">", p, q, nest_level),
+            &Epiq::Lpiq(p, q) => self.print_piq(":", p, q, nest_level),
+            &Epiq::Appl(p, q) => self.print_piq("!", p, q, nest_level),
+            &Epiq::Rslv(p, q) => self.print_piq("@", p, q, nest_level),
+            &Epiq::Cond(p, q) => self.print_piq("?", p, q, nest_level),
+            &Epiq::Envn(p, q) => self.print_piq("%", p, q, nest_level),
+            &Epiq::Bind(p, q) => self.print_piq("#", p, q, nest_level),
+            &Epiq::Accs(p, q) => self.print_piq(".", p, q, nest_level),
+            &Epiq::Lmbd(p, q) => self.print_piq(r"\", p, q, nest_level),
+
             // _ => "".to_string(),
         }
+    }
+
+    fn print_piq(&self, otag: &str, p: NodeId, q:NodeId, nest_level: u32) -> String {
+        format!("{}({} {})", otag, self.print_aexp(p, nest_level + 1), self.print_aexp(q, nest_level + 1))
     }
 }
 

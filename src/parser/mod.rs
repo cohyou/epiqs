@@ -113,6 +113,14 @@ impl<'a> Parser<'a> {
                         match otag.as_ref() {
                             ">" => push!(self, Epiq::Eval(pidx, qidx)),
                             ":" => push!(self, Epiq::Lpiq(pidx, qidx)),
+                            "!" => push!(self, Epiq::Appl(pidx, qidx)),
+                            "@" => push!(self, Epiq::Rslv(pidx, qidx)),
+                            "?" => push!(self, Epiq::Cond(pidx, qidx)),
+                            "%" => push!(self, Epiq::Envn(pidx, qidx)),
+                            "#" => push!(self, Epiq::Bind(pidx, qidx)),
+                            "." => push!(self, Epiq::Accs(pidx, qidx)),
+                            r"\" => push!(self, Epiq::Lmbd(pidx, qidx)),
+
                             _ => {
                                 push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
                             },

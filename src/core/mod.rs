@@ -18,13 +18,16 @@ pub enum Epiq {
 
     Eval(NodeId, NodeId), // eval piq
     Lpiq(NodeId, NodeId), // (linked) list piq
-
-    // Apiq { p: u32, q: u32 }, // application piq
+    Appl(NodeId, NodeId), // apply piq
+    Rslv(NodeId, NodeId), // resolve
+    Cond(NodeId, NodeId), // condition
+    Envn(NodeId, NodeId), // environment
+    Bind(NodeId, NodeId), // bind
+    Accs(NodeId, NodeId), // access
+    Lmbd(NodeId, NodeId), // function
 
     // Text(String),
-
     // Vpiq { p: usize, q: usize }, // vector piq
-    // Fpiq { p: usize, q: usize }, // function piq
 }
 
 impl fmt::Debug for Epiq {
@@ -40,6 +43,13 @@ impl fmt::Debug for Epiq {
             Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
             Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
             Epiq::Lpiq(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Appl(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Rslv(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Cond(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Envn(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Bind(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Accs(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Lmbd(p, q) => write!(f, ":({} {})", p, q),
         }
     }
 }
