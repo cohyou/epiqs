@@ -27,14 +27,7 @@ macro_rules! finish_into_mode {
 }
 
 macro_rules! finish {
-    () => { finish_into_mode!(Normal) /*{
-        let opts = vec![
-            ScanOption::ClearBytes,
-            ScanOption::ChangeState(State::Normal),
-            ScanOption::ConsumeChar,
-        ];
-        ScanResult::Finish(opts)
-    }*/}
+    () => { finish_into_mode!(Normal) }
 }
 
 macro_rules! go_ahead {
