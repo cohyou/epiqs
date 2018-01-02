@@ -15,10 +15,9 @@ use self::error::Error;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
-    // ast: &'a NodeArena<Epiq>,
     vm: Rc<RefCell<Heliqs>>,
     // state: State,
-    current_token: RefCell</*Option<Tokn>*/CurrentToken>,
+    current_token: RefCell<CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
 }
 
@@ -33,7 +32,6 @@ impl<'a> Parser<'a> {
     pub fn new(lexer: Lexer<'a, 'a>, vm: Rc<RefCell<Heliqs>>) -> Self {
         Parser {
             lexer: lexer,
-            // ast: ast,
             vm: vm,
             // state: State::Aexp,
             current_token: RefCell::new(/*None*/CurrentToken::SOT),
@@ -65,9 +63,7 @@ impl<'a> Parser<'a> {
                 let mut token = self.current_token.borrow_mut();
                 *token = CurrentToken::Has(t);
             },
-            TokenizeResult::Err(_e) => {
-                // self.state = State::Error(format!("{}", e));
-            }
+            TokenizeResult::Err(_e) => {},
             TokenizeResult::EOF => {
                 let mut token = self.current_token.borrow_mut();
                 *token = CurrentToken::EOT;
