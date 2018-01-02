@@ -17,7 +17,7 @@ impl Walker {
     }
 
     pub fn walk(&self) {
-        println!("\n");
+        self.log("\n");
 
         if let Some((entry, eee)) = {
             let borrowed_vm = self.vm.borrow();
