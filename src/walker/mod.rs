@@ -4,6 +4,7 @@ use core::*;
 use printer::*;
 
 const DEGUGGING_NOW: bool = false;
+const UNIT_INDX: usize = 5;
 
 pub struct Walker {
     vm: Rc<RefCell<Heliqs>>,
@@ -234,7 +235,7 @@ impl Walker {
                         // println!("borrow_mut: {:?}", 3);
                         self.vm.borrow_mut().define(n.as_ref(), walked_q_val);
                         // println!("borrow_mut: {:?}", 4);
-                        let new_index = self.vm.borrow_mut().alloc(Epiq::Unit);
+                        let new_index = UNIT_INDX; // self.vm.borrow_mut().alloc(Epiq::Unit);
                         self.get_epiq(new_index)
                     };
 
@@ -392,8 +393,13 @@ impl Walker {
                                     _ => Epiq::Unit,
                                 };
 
-                                new_index = self.vm.borrow_mut().alloc(new_epiq);
-                                self.get_epiq(new_index)
+                                // Unitだけ最適化
+                                if new_epiq == Epiq::Unit {
+                                    self.get_epiq(UNIT_INDX)
+                                } else {
+                                    new_index = self.vm.borrow_mut().alloc(new_epiq);
+                                    self.get_epiq(new_index)
+                                }
                             } else {
                                 println!("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
                                 input

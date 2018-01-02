@@ -83,7 +83,7 @@ impl<T> NodeArena<T> {
 
     pub fn alloc(&mut self, value: T) -> NodeId {
         let id = self.0.len();
-        let node = Node(id, value);
+        let node = Node(id, value);        
         self.0.push(node);
         self.1 = Some(id);
         id

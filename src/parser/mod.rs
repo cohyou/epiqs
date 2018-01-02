@@ -39,17 +39,25 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // Unitは常に1つにする(index=0)
+    fn add_unit(&mut self) {
+        let _unit = self.vm.borrow_mut().alloc(Epiq::Unit);
+    }
+
     fn add_prim(&mut self, name: &str) {
         let prim = self.vm.borrow_mut().alloc(Epiq::Prim(name.to_string()));
         self.vm.borrow_mut().define(name, prim);
     }
 
     pub fn parse(&mut self) {
+
         self.add_prim("decr");
         self.add_prim("ltoreq");
         self.add_prim("eq");
         self.add_prim("plus");
         self.add_prim("minus");
+
+        self.add_unit();
 
         self.consume_token();
 
@@ -85,7 +93,8 @@ impl<'a> Parser<'a> {
             },
             CurrentToken::Has(Tokn::Smcl) => {
                 self.consume_token();
-                push!(self, Epiq::Unit)
+                // push!(self, Epiq::Unit)
+                Ok(5)
             }
             CurrentToken::Has(Tokn::Lbkt) => {
                 self.consume_token();
