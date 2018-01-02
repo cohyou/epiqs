@@ -5,4 +5,7 @@
               '@ t
            ]
    |! '> '@ html ["sample title"]
+
+   |# list [10 20 30 40 50]
+   |. '> |. '> '@ list q p
 ]

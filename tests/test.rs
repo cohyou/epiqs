@@ -1,7 +1,21 @@
 extern crate epiqs;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 // use epiqs::lexer::*;
 // use epiqs::parser::*;
+use epiqs::printer::*;
+
+#[test]
+fn read_file() {
+    let file_name = "sample/text.iq";
+    let mut file = File::open(file_name).unwrap();
+    let mut s = String::new();
+    file.read_to_string(&mut s).unwrap();
+    print_evaled_str(&s, ":(20 :(30 :(40 :(50 ;))))");
+}
+
 /*
 #[test]
 fn lex_pipe() {

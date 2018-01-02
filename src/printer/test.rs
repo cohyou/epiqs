@@ -265,6 +265,11 @@ fn evaled_text_in_list() {
 }
 
 #[test]
+fn access_in_list() {
+    print_evaled_str("'> |. |: 0 1 p", "0");
+}
+
+#[test]
 fn single_quote() {
-    print_str("'> [a]", ";");
+    print_str("'> [a]", ">(; :(a ;))");
 }

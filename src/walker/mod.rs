@@ -431,8 +431,8 @@ impl Walker {
         // println!("access");
         // p: レシーバ
         // q: アクセッサ
-        let Node(_, p_reciever) = self.get_epiq(p);
-        let Node(_, q_accessor) = self.get_epiq(q);
+        let Node(_, p_reciever) = self.walk_internal(self.get_epiq(p), nest_level + 1);
+        let Node(_, q_accessor) = self.walk_internal(self.get_epiq(q), nest_level + 1);
 
         // レシーバの種類によってできることが変わる
         match *p_reciever {
@@ -450,20 +450,20 @@ impl Walker {
                                 self.walk_internal(q_node, nest_level + 1)
                             },
                             _ => {
-                                // println!("Lpiqならばpとq以外はエラー");
+                                self.log("Lpiqならばpとq以外はエラー");
                                 input
                             },
                         }
                     },
 
                     _ => {
-                        // println!("アクセッサがNameではないのでエラー");
+                        self.log("アクセッサがNameではないのでエラー");
                         input
                     },
                 }
             },
             _ => {
-                // println!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから");
+                self.log(&format!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever));
                 input
             },
         }
