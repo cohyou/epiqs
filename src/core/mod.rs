@@ -12,6 +12,7 @@ pub enum Epiq {
     Fval,
     Name(String),
     Uit8(i64),
+    // Text(String),
     Prim(String), // primitive function
 
     Tpiq { o: String, p: NodeId, q: NodeId}, // tagged piq
@@ -27,7 +28,7 @@ pub enum Epiq {
     Accs(NodeId, NodeId), // access
     Lmbd(NodeId, NodeId), // function
 
-    // Text(String),
+
     // Vpiq { p: usize, q: usize }, // vector piq
 }
 
@@ -152,13 +153,14 @@ pub enum Tokn {
     Lbkt, // [ left bracket
     Rbkt, // ] right bracket
 
+    Dbqt, // " double quotation
+
     /*
 
     Usnm(String), // under score and number (e.g. _0 _34)
 
     // asciiのうち、記号は32(スペースを除く、また7Fも対象外)
 
-    Dbqt, // " double quotation
 
     Lprn, // ( left parentheses
     Rprn, // ) right parentheses
@@ -216,6 +218,7 @@ impl fmt::Debug for Tokn {
             Tokn::Lbkt => write!(f, "Lbkt"),
             Tokn::Rbkt => write!(f, "Rbkt"),
 
+            Tokn::Dbqt => write!(f, "Dbqt"),
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*

@@ -1,3 +1,5 @@
+const LEXER_DEBUGGING: bool = true;
+
 macro_rules! push_into_mode {
     ($e:ident) => {{
         let opt = vec![
@@ -13,29 +15,44 @@ macro_rules! push {
     }}
 }
 
-macro_rules! finish {
-    () => {{
+macro_rules! finish_into_mode {
+    ($e:ident) => {{
         let opts = vec![
             ScanOption::ClearBytes,
-            ScanOption::ChangeState(State::Normal),
+            ScanOption::ChangeState(State::$e),
             ScanOption::ConsumeChar,
         ];
         ScanResult::Finish(opts)
     }}
 }
 
+macro_rules! finish {
+    () => { finish_into_mode!(Normal) /*{
+        let opts = vec![
+            ScanOption::ClearBytes,
+            ScanOption::ChangeState(State::Normal),
+            ScanOption::ConsumeChar,
+        ];
+        ScanResult::Finish(opts)
+    }*/}
+}
+
 macro_rules! go_ahead {
     () => { ScanResult::Continue(vec![]) }
 }
 
-macro_rules! delimite {
-    () => {{
+macro_rules! delimite_into_mode {
+    ($e:ident) => {{
         let opts = vec![
             ScanOption::ClearBytes,
-            ScanOption::ChangeState(State::Normal)
+            ScanOption::ChangeState(State::$e)
         ];
         ScanResult::Finish(opts)
     }}
+}
+
+macro_rules! delimite {
+    () => { delimite_into_mode!(Normal) }
 }
 
 macro_rules! next_char {
@@ -43,24 +60,26 @@ macro_rules! next_char {
 }
 
 macro_rules! print_lexer_info {
-    ($slf:ident, $e:ident) => {/*{
-        let s = $slf.state.get();
-        let c = $slf.current_char;
-        let debug_t = $slf.get_token_string();
-        let debub_c = $slf.get_char_string(c);
-        println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
-    }*/}
+    ($slf:ident, $e:ident) => {
+        if LEXER_DEBUGGING {
+            let s = $slf.state.get();
+            let c = $slf.current_char;
+            let debug_t = $slf.get_token_string();
+            let debub_c = $slf.get_char_string(c);
+            println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
+        }
+    }
 }
 
 macro_rules! print_continue {
     () => {
-        // println!("Continue");
+        if LEXER_DEBUGGING { println!("Continue"); }
     }
 }
 
 macro_rules! print_finished_token {
     ($r:ident) => {
-        // println!("Ok: {:?}", $r);
+        if LEXER_DEBUGGING { println!("Ok: {:?}", $r); }
     }
 }
 
@@ -70,6 +89,7 @@ mod eof;
 mod number;
 mod delimiter;
 mod alphabet;
+mod text;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -82,6 +102,7 @@ pub use self::alphabet::AlphabetScanner;
 pub use self::number::ZeroScanner;
 pub use self::number::IntegerScanner;
 pub use self::delimiter::DelimiterScanner;
+pub use self::text::TextScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -101,8 +122,8 @@ pub enum State {
     InnerNumber,
     Delimiter,
 
-    // InnerText,
-    // FinishText,
+    InnerText,
+    FinishText,
     // AfterUnderscore,
     // AfterDot,
     // InnerComment,

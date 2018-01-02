@@ -2,6 +2,7 @@ macro_rules! all_scanners {
     () => {
         vec![
             &DelimiterScanner,
+            &TextScanner,
             &AlphabetScanner,
             &ZeroScanner,
             &IntegerScanner,
