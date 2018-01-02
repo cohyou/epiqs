@@ -34,6 +34,7 @@ impl Printer {
             Epiq::Fval => "^F".to_string(),
             Epiq::Name(ref n) => n.to_string(),
             Epiq::Uit8(ref n) => format!("{}", n),
+            Epiq::Text(ref n) => format!("\"{}\"", n),
             Epiq::Prim(ref n) => format!("Prim({})", n),
             Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
             Epiq::Mpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),

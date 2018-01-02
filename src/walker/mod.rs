@@ -124,7 +124,7 @@ impl Walker {
 
         match *piq {
             Epiq::Unit | Epiq::Tval | Epiq::Fval |
-            Epiq::Uit8(_) | Epiq::Name(_) => input,
+            Epiq::Uit8(_) | Epiq::Name(_) | Epiq::Text(_) => input,
 
             // eval
             // もしかしてこっちはあまり通らないかもしれない

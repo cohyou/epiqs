@@ -99,7 +99,11 @@ impl<'a> Parser<'a> {
             CurrentToken::Has(Tokn::Lbkt) => {
                 self.consume_token();
                 self.parse_list()
-            }
+            },
+            CurrentToken::Has(Tokn::Dbqt) => {
+                self.consume_token();
+                self.parse_text()
+            },
             _ => self.parse_literal(),
         }
     }
@@ -166,6 +170,23 @@ impl<'a> Parser<'a> {
                 let qidx = (self.parse_list())?;
                 push!(self, Epiq::Lpiq(pidx, qidx))
             }
+        }
+    }
+
+    fn parse_text(&mut self) -> Result<usize, Error> {
+        let current_token1 = self.current_token.borrow().clone();
+        match current_token1 {
+            CurrentToken::Has(Tokn::Chvc(ref s)) => {
+                self.consume_token();
+                let current_token2 = self.current_token.borrow().clone();
+                match current_token2 {
+                    CurrentToken::Has(Tokn::Dbqt) => {
+                        push!(self, Epiq::Text(s.clone()))
+                    },
+                    _ => Err(Error::UnknownError(13)),
+                }
+            },
+            _ => Err(Error::UnknownError(12)),
         }
     }
 

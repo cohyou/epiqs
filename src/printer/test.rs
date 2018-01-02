@@ -245,3 +245,13 @@ fn prim() {
         r"^T"
     );
 }
+
+#[test]
+fn text() {
+    print_str("\"o58nkry drtse\"", "\"o58nkry drtse\"");
+}
+
+#[test]
+fn evaled_text() {
+    print_evaled_str("\"o58nkry drtse\"", "\"o58nkry drtse\"");
+}
