@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
             lexer: lexer,
             vm: vm,
             // state: State::Aexp,
-            current_token: RefCell::new(/*None*/CurrentToken::SOT),
+            current_token: RefCell::new(CurrentToken::SOT),
             // aexp_tokens: vec![vec![]],
         }
     }
