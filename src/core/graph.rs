@@ -42,15 +42,6 @@ impl SymbolTable {
 
     pub fn resolve(&self, name: &str) -> Option<Option<NodeId>> {
         self.resolve_internal(name, self.current_index)
-        /*
-        if let Some(&( _, Some(r) )) = self.table[self.current_index].iter().find(|&&(ref n, _)| n == name) {
-            Some(Some(r))
-        } else {
-            // なかったら一つ上のframeを探す
-            resolve()
-            None
-        }
-        */
     }
 
     fn resolve_internal(&self, name: &str, frame: usize) -> Option<Option<NodeId>> {
