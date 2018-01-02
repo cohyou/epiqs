@@ -13,6 +13,8 @@ use core::*;
 use lexer::*;
 use self::error::Error;
 
+const UNIT_INDX: usize = 5;
+
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     vm: Rc<RefCell<Heliqs>>,
@@ -83,6 +85,10 @@ impl<'a> Parser<'a> {
         let res = self.current_token.borrow().clone();
 
         match res {
+            CurrentToken::Has(Tokn::Sgqt) => {
+                self.consume_token();
+                self.parse_otag(Tokn::Sgqt)
+            },
             CurrentToken::Has(Tokn::Pipe) => {
                 self.consume_token();
                 self.parse_otag(Tokn::Pipe)
@@ -119,21 +125,7 @@ impl<'a> Parser<'a> {
                     Tokn::Pipe => {
                         let pidx = (self.parse_aexp())?;
                         let qidx = (self.parse_aexp())?;
-                        match otag.as_ref() {
-                            ">" => push!(self, Epiq::Eval(pidx, qidx)),
-                            ":" => push!(self, Epiq::Lpiq(pidx, qidx)),
-                            "!" => push!(self, Epiq::Appl(pidx, qidx)),
-                            "@" => push!(self, Epiq::Rslv(pidx, qidx)),
-                            "?" => push!(self, Epiq::Cond(pidx, qidx)),
-                            "%" => push!(self, Epiq::Envn(pidx, qidx)),
-                            "#" => push!(self, Epiq::Bind(pidx, qidx)),
-                            "." => push!(self, Epiq::Accs(pidx, qidx)),
-                            r"\" => push!(self, Epiq::Lmbd(pidx, qidx)),
-
-                            _ => {
-                                push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx})
-                            },
-                        }
+                        self.match_otag(pidx, qidx, otag)
                     },
                     Tokn::Crrt => {
                         match otag.as_ref() {
@@ -148,12 +140,35 @@ impl<'a> Parser<'a> {
                             },
                         }
                     },
+                    Tokn::Sgqt => {
+                        // 引数は一つ、それをqとみなす
+                        let qidx = (self.parse_aexp())?;
+                        self.match_otag(UNIT_INDX, qidx, otag)
+                    },
                     _ => Err(Error::UnknownError(255)),
                 }
             },
 
             CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),
             _ => Err(Error::UnknownError(1)),
+        }
+    }
+
+    fn match_otag(&mut self, pidx: NodeId, qidx: NodeId, otag: &str) -> Result<usize, Error> {
+        match otag {
+            ">" => push!(self, Epiq::Eval(pidx, qidx)),
+            ":" => push!(self, Epiq::Lpiq(pidx, qidx)),
+            "!" => push!(self, Epiq::Appl(pidx, qidx)),
+            "@" => push!(self, Epiq::Rslv(pidx, qidx)),
+            "?" => push!(self, Epiq::Cond(pidx, qidx)),
+            "%" => push!(self, Epiq::Envn(pidx, qidx)),
+            "#" => push!(self, Epiq::Bind(pidx, qidx)),
+            "." => push!(self, Epiq::Accs(pidx, qidx)),
+            r"\" => push!(self, Epiq::Lmbd(pidx, qidx)),
+
+            _ => {
+                push!(self, Epiq::Tpiq{o: otag.to_string(), p: pidx, q: qidx})
+            },
         }
     }
 

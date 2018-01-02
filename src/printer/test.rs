@@ -263,3 +263,8 @@ fn evaled_text() {
 fn evaled_text_in_list() {
     print_str("[\"bbb\" 0 \"aaa\"]", ":(\"bbb\" :(0 :(\"aaa\" ;)))");
 }
+
+#[test]
+fn single_quote() {
+    print_str("'> [a]", ";");
+}

@@ -139,6 +139,7 @@ pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar
     Crrt, // ^ carret
+    Sgqt, // ' single quotation
 
     // Coln, // : colon
 
@@ -190,8 +191,6 @@ pub enum Tokn {
     /*
     Slsh, // / slash
 
-    Sgqt, // ' single quotation
-
     Hphn, // - hyphen-minus
     Less, // < less than
     Grtr, // > greater than
@@ -208,6 +207,7 @@ impl fmt::Debug for Tokn {
         match *self {
             Tokn::Pipe => write!(f, "Pipe"),
             Tokn::Crrt => write!(f, "Crrt"),
+            Tokn::Sgqt => write!(f, "Sgqt"),
 
             Tokn::Otag(ref s) => write!(f, "Otag<{}>", s),
 

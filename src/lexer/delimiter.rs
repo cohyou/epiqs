@@ -9,8 +9,8 @@ impl Scanner for DelimiterScanner {
         match state {
             State::Normal => {
                 match c {
-                    b'|' | b'^' | b';' |
-                    b'[' | b']' => push_into_mode!(Delimiter),
+                    b'|' | b'^' | b'\'' |
+                    b';' | b'[' | b']' => push_into_mode!(Delimiter),
                     _    => go_ahead!(),
                 }
             },
@@ -28,9 +28,9 @@ impl Scanner for DelimiterScanner {
     fn return_token(&self, _state: State, token_string: String) -> Option<Tokn> {
         match token_string.as_ref() {
             "|" => Some(Tokn::Pipe),
-            ";" => Some(Tokn::Smcl),
             "^" => Some(Tokn::Crrt),
-
+            "'" => Some(Tokn::Sgqt),
+            ";" => Some(Tokn::Smcl),
             "[" => Some(Tokn::Lbkt),
             "]" => Some(Tokn::Rbkt),
             _ => None,
@@ -49,4 +49,10 @@ fn pipe() {
 fn semicolon() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
     lex_from_str(";", "Smcl", scanners);
+}
+
+#[test]
+fn single_quote() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
+    lex_from_str("'", "Sgqt", scanners);
 }

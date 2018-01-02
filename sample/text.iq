@@ -1,1 +1,8 @@
-["0"]
+|> ; ^> -1 [
+   |# html |\ '% [t]
+           ^> -1 [
+              "<html><head><title></title></head><body></body></html>"
+              '@ t
+           ]
+   |! '> '@ html ["sample title"]
+]
