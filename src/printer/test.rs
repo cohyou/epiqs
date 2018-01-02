@@ -128,6 +128,7 @@ fn exec_func() {
 
 
 #[test]
+#[ignore]
 fn primitive_function() {
     // print_evaled_str("|> ; |@ ; decr", "Prim(decr)");
     // print_evaled_str("|> ; |@ ; ltoreq", "Prim(ltoreq)");
@@ -138,7 +139,7 @@ fn primitive_function() {
 }
 
 #[test]
-// #[ignore]
+#[ignore]
 fn tarai() {
     /*
     print_evaled_str(
@@ -234,6 +235,7 @@ fn fib() {
 }
 
 #[test]
+#[ignore]
 fn prim() {
     print_evaled_str(
         r"|> ; ^> -1
@@ -272,4 +274,9 @@ fn access_in_list() {
 #[test]
 fn single_quote() {
     print_str("'> [a]", ">(; :(a ;))");
+}
+
+#[test]
+fn resolve_syntax_sugar() {
+    print_str("@abc", "@(; abc)");
 }

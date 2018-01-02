@@ -85,10 +85,17 @@ impl<'a> Parser<'a> {
         let res = self.current_token.borrow().clone();
 
         match res {
+            CurrentToken::Has(Tokn::Atsm) => {
+                self.consume_token();
+                self.parse_resolve()
+            },
+
             CurrentToken::Has(Tokn::Sgqt) => {
                 self.consume_token();
                 self.parse_otag(Tokn::Sgqt)
             },
+
+
             CurrentToken::Has(Tokn::Pipe) => {
                 self.consume_token();
                 self.parse_otag(Tokn::Pipe)
@@ -112,6 +119,12 @@ impl<'a> Parser<'a> {
             },
             _ => self.parse_literal(),
         }
+    }
+
+    fn parse_resolve(&mut self) -> Result<usize, Error> {
+        // let pidx = (self.parse_aexp())?;
+        let qidx = (self.parse_aexp())?;
+        push!(self, Epiq::Rslv(UNIT_INDX, qidx))
     }
 
     // Pipe QTag Pval QVal

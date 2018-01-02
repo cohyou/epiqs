@@ -156,6 +156,7 @@ pub enum Tokn {
     Rbkt, // ] right bracket
 
     Dbqt, // " double quotation
+    Atsm, // @ at symbol
 
     /*
 
@@ -182,7 +183,6 @@ pub enum Tokn {
     Pcnt, // % percent
     Qstn, // ? question mark
     Amps, // & ampersand
-    Atsm, // @ at symbol
     Hash, // # hash
 
     Comm, // , comma
@@ -220,6 +220,7 @@ impl fmt::Debug for Tokn {
             Tokn::Rbkt => write!(f, "Rbkt"),
 
             Tokn::Dbqt => write!(f, "Dbqt"),
+            Tokn::Atsm => write!(f, "Atsm"),
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*

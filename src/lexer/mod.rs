@@ -66,7 +66,7 @@ macro_rules! print_lexer_info {
 
 macro_rules! print_continue {
     () => {
-        if LEXER_DEBUGGING { println!("Continue"); }
+        if LEXER_DEBUGGING { /*println!("Continue");*/ }
     }
 }
 
@@ -83,6 +83,8 @@ mod number;
 mod delimiter;
 mod alphabet;
 mod text;
+mod atmark;
+mod otag;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -96,6 +98,8 @@ pub use self::number::ZeroScanner;
 pub use self::number::IntegerScanner;
 pub use self::delimiter::DelimiterScanner;
 pub use self::text::TextScanner;
+pub use self::atmark::AtmarkScanner;
+pub use self::otag::OtagScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -117,7 +121,9 @@ pub enum State {
 
     InnerText,
     FinishText,
-    // AfterUnderscore,
+
+    Dispatcher,
+    AfterDispatcher,
     // AfterDot,
     // InnerComment,
 }
@@ -262,12 +268,14 @@ fn bracket_list() {
 }
 
 #[test]
+// #[ignore]
 fn mpiq() {
     // lex_from_str_with_all_scanners("^> 246", "Crrt Otag<>> Nmbr<246>");
     lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
 #[test]
+// #[ignore]
 fn tval() {
     lex_from_str_with_all_scanners("^T", "Crrt Otag<T>");
 }
@@ -281,6 +289,11 @@ fn primitive_function() {
 // #[ignore]
 fn texts() {
     lex_from_str_with_all_scanners("[0 \"b\"]", "Lbkt Nmbr<0> Dbqt Chvc<b> Dbqt Rbkt")
+}
+
+#[test]
+fn atmark_and_symbol() {
+    lex_from_str_with_all_scanners("@abc", "Atsm Chvc<abc>");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
@@ -312,6 +325,8 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
 
 fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
+        &AtmarkScanner,
+        &OtagScanner,
         &DelimiterScanner,
         &TextScanner,
         &AlphabetScanner,

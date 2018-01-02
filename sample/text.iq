@@ -2,10 +2,10 @@
    |# html |\ '% [t]
            ^> -1 [
               "<html><head><title></title></head><body></body></html>"
-              '@ t
+              @t
            ]
-   |! '> '@ html ["sample title"]
+   |! '> @html ["sample title"]
 
    |# list [10 20 30 40 50]
-   |. '> |. '> '@ list q p
+   |. '> |. '> @list q p
 ]
