@@ -262,7 +262,7 @@ fn epiq_arena_get() {
     let mut arena = NodeArena::<Epiq>::new();
     let node_id = arena.alloc(Epiq::Unit);
     {
-        let mut node = arena.get_mut(node_id);
+        let node = arena.get_mut(node_id);
         node.1 = Epiq::Name("wowow".to_string());
     }
     assert_eq!(arena.get(node_id).1, Epiq::Name("wowow".to_string()));

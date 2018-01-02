@@ -83,7 +83,7 @@ impl<T> NodeArena<T> {
 
     pub fn alloc(&mut self, value: T) -> NodeId {
         let id = self.0.len();
-        let node = Node(id, value);        
+        let node = Node(id, value);
         self.0.push(node);
         self.1 = Some(id);
         id
@@ -158,7 +158,7 @@ fn get_mut() {
     let mut arena = NodeArena::<u8>::new();
     let node_id = arena.alloc(46);
     {
-        let mut node = arena.get_mut(node_id);
+        let node = arena.get_mut(node_id);
         node.1 = 87;
     }
     assert_eq!(arena.get(node_id).1, 87);

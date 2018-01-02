@@ -44,10 +44,10 @@ impl Walker {
     fn walk_internal<'a>(&self, input: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
         // println!("{:?}{}walk ＿開始＿: ", input, " ".repeat(lvl));
 
-        let Node(input_index, piq) = input.clone();
+        let Node(_, piq) = input.clone();
 
         match *piq {
-            Epiq::Eval(p, q) => {
+            Epiq::Eval(_, q) => {
                 // ひとまずpは無視
 
                 // そのまま返すとNG
@@ -128,7 +128,7 @@ impl Walker {
 
             // eval
             // もしかしてこっちはあまり通らないかもしれない
-            Epiq::Eval(p, q) => {
+            Epiq::Eval(_, q) => {
                 // ひとまずpは無視
 
                 // そのまま返すとNG
@@ -141,7 +141,7 @@ impl Walker {
             },
 
             // consは何もしない
-            Epiq::Lpiq(p, q) => input,
+            Epiq::Lpiq(_, _) => input,
 
             // apply
             Epiq::Appl(p, q) => {
@@ -177,7 +177,7 @@ impl Walker {
             },
 
             // resolve
-            Epiq::Rslv(p, q) => {
+            Epiq::Rslv(_, q) => {
                 // p: 用途未定。ひとまず無視
                 // q: シンボルというか名前
                 let node = self.get_epiq(q);
@@ -204,7 +204,7 @@ impl Walker {
             Epiq::Cond(p, q) => self.eval_condition(input, input_index, "?", p, q, nest_level),
 
             // environment
-            Epiq::Envn(p, q) => {
+            Epiq::Envn(_, _) => {
                 // ひとまずNoneを返しておく
                 // 本来は中身もwalkしてから返すべき？
                 input
@@ -251,7 +251,7 @@ impl Walker {
             Epiq::Accs(p, q) => self.eval_access(input, p, q, nest_level),
 
             // block
-            Epiq::Lmbd(p, q) => {
+            Epiq::Lmbd(_, _) => {
                 // TODO: 一つ目の環境の中身はひとまず無視する
                 // qのリストだけを逐次実行して、勝手に最後の値をwalkしてから返却するようにする
                 // ただ、そもそも、blockをevalしても、何も変化はないはず。
@@ -273,7 +273,7 @@ impl Walker {
             //     input
             // },
 
-            Epiq::Tpiq{ref o, p, q} => {
+            Epiq::Tpiq{ref o, p:_, q:_} => {
                 match o.as_ref() as &str {
                     _ => input,
                 }
@@ -352,7 +352,7 @@ impl Walker {
             "decr" => {
                 // 面倒なので 1- を実装
                 // 引数取得
-                if let Epiq::Lpiq(p, q) = *args.1 {
+                if let Epiq::Lpiq(p, _) = *args.1 {
                     if let Epiq::Uit8(n) = *self.get_epiq(p).1 {
                         // 1を引く
                         let new_index = self.vm.borrow_mut().alloc(Epiq::Uit8(n - 1));
@@ -374,7 +374,7 @@ impl Walker {
                 if let Epiq::Lpiq(p1, q1) = *args.1 {
                     if let Epiq::Uit8(n1) = *self.get_epiq(p1).1 {
                         // 二つ目の引数
-                        if let Epiq::Lpiq(p2, q2) = *self.get_epiq(q1).1 {
+                        if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
                             if let Epiq::Uit8(n2) = *self.get_epiq(p2).1 {
                                 let new_index;
 
@@ -532,7 +532,7 @@ impl Walker {
     fn eval_list(&self, input: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
         // println!("{}eval_list ＿開始＿ {:?}: ", " ".repeat(lvl), input);
 
-        let Node(input_index, piq) = input.clone();
+        let Node(_, piq) = input.clone();
 
         match *piq {
             Epiq::Lpiq(p, q) => {
