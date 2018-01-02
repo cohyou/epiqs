@@ -124,7 +124,8 @@ impl<'a> Parser<'a> {
     fn parse_resolve(&mut self) -> Result<usize, Error> {
         // let pidx = (self.parse_aexp())?;
         let qidx = (self.parse_aexp())?;
-        push!(self, Epiq::Rslv(UNIT_INDX, qidx))
+        let id = self.vm.borrow_mut().alloc(Epiq::Rslv(UNIT_INDX, qidx));
+        push!(self, Epiq::Eval(UNIT_INDX, id))
     }
 
     // Pipe QTag Pval QVal

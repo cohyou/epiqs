@@ -278,5 +278,5 @@ fn single_quote() {
 
 #[test]
 fn resolve_syntax_sugar() {
-    print_str("@abc", "@(; abc)");
+    print_str("@abc", ">(; @(; abc))");
 }

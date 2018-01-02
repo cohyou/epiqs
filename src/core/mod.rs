@@ -157,6 +157,8 @@ pub enum Tokn {
 
     Dbqt, // " double quotation
     Atsm, // @ at symbol
+    Bang, // ! exclamation
+
 
     /*
 
@@ -171,8 +173,6 @@ pub enum Tokn {
     Rcrl, // } right curly brace
 
     Dllr, // $ dollar
-
-    Bang, // ! exclamation
 
     // 残りの記号も列挙
     Plus, // + plus
@@ -221,6 +221,7 @@ impl fmt::Debug for Tokn {
 
             Tokn::Dbqt => write!(f, "Dbqt"),
             Tokn::Atsm => write!(f, "Atsm"),
+            Tokn::Bang => write!(f, "Bang"),
             // &Tokn::Coln => write!(f, "Coln"),
 
             /*

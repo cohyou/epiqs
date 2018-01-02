@@ -1,4 +1,4 @@
-const LEXER_DEBUGGING: bool = false;
+const LEXER_DEBUGGING: bool = true;
 
 macro_rules! push_into_mode {
     ($e:ident) => {{
@@ -85,6 +85,7 @@ mod alphabet;
 mod text;
 mod atmark;
 mod otag;
+mod bang;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -100,6 +101,7 @@ pub use self::delimiter::DelimiterScanner;
 pub use self::text::TextScanner;
 pub use self::atmark::AtmarkScanner;
 pub use self::otag::OtagScanner;
+pub use self::bang::BangScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -124,6 +126,9 @@ pub enum State {
 
     Dispatcher,
     AfterDispatcher,
+
+    InnerBang,
+    AfterBang,
     // AfterDot,
     // InnerComment,
 }
@@ -296,6 +301,11 @@ fn atmark_and_symbol() {
     lex_from_str_with_all_scanners("@abc", "Atsm Chvc<abc>");
 }
 
+#[test]
+fn symbol_and_bang() {
+    lex_from_str_with_all_scanners("ab!", "Chvc<ab> Bang");
+}
+
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);
@@ -325,6 +335,7 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
 
 fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
+        &BangScanner,
         &AtmarkScanner,
         &OtagScanner,
         &DelimiterScanner,
