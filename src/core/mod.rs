@@ -1,6 +1,7 @@
 mod graph;
 
-// use std::cell::Cell;
+use std::rc::Rc;
+
 pub use self::graph::*;
 
 /// E(lemantal) piq
@@ -54,7 +55,7 @@ impl fmt::Debug for Epiq {
     }
 }
 pub struct Heliqs {
-    ast: NodeArena<Epiq>,
+    ast: NodeArena<Rc<Epiq>>,
     // symbol_table: SymbolTable<'a>,
 }
 
@@ -67,7 +68,7 @@ impl Heliqs {
     }
 
     pub fn alloc(&mut self, value: Epiq) -> NodeId {
-        self.ast.alloc(value)
+        self.ast.alloc(Rc::new(value))
     }
 
     pub fn entry(&self) -> Option<NodeId> {
@@ -78,11 +79,11 @@ impl Heliqs {
         self.ast.set_entry(id)
     }
 
-    pub fn get_epiq(&self, id: NodeId) -> &Node<Epiq> {
+    pub fn get_epiq(&self, id: NodeId) -> &Node<Rc<Epiq>> {
         self.ast.get(id)
     }
 
-    pub fn get_epiq_mut(&mut self, id: NodeId) -> &mut Node<Epiq> {
+    pub fn get_epiq_mut(&mut self, id: NodeId) -> &mut Node<Rc<Epiq>> {
         self.ast.get_mut(id)
     }
 
@@ -90,7 +91,7 @@ impl Heliqs {
         self.ast.define(name, value)
     }
 
-    pub fn resolve(&self, name: &str) -> Option<Option<&Node<Epiq>>> {
+    pub fn resolve(&self, name: &str) -> Option<Option<&Node<Rc<Epiq>>>> {
         self.ast.resolve(name)
     }
 

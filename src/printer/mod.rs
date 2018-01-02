@@ -28,24 +28,24 @@ impl Printer {
     pub fn print_aexp(&self, i: NodeId, nest_level: u32) -> String {
         let vm = self.vm.borrow();
         let &Node(_, ref epiq) = vm.get_epiq(i);
-        match epiq {
-            &Epiq::Unit => ";".to_string(),
-            &Epiq::Tval => "^T".to_string(),
-            &Epiq::Fval => "^F".to_string(),
-            &Epiq::Name(ref n) => n.to_string(),
-            &Epiq::Uit8(ref n) => format!("{}", n),
-            &Epiq::Prim(ref n) => format!("Prim({})", n),
-            &Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
-            &Epiq::Mpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
-            &Epiq::Eval(p, q) => self.print_piq(">", p, q, nest_level),
-            &Epiq::Lpiq(p, q) => self.print_piq(":", p, q, nest_level),
-            &Epiq::Appl(p, q) => self.print_piq("!", p, q, nest_level),
-            &Epiq::Rslv(p, q) => self.print_piq("@", p, q, nest_level),
-            &Epiq::Cond(p, q) => self.print_piq("?", p, q, nest_level),
-            &Epiq::Envn(p, q) => self.print_piq("%", p, q, nest_level),
-            &Epiq::Bind(p, q) => self.print_piq("#", p, q, nest_level),
-            &Epiq::Accs(p, q) => self.print_piq(".", p, q, nest_level),
-            &Epiq::Lmbd(p, q) => self.print_piq(r"\", p, q, nest_level),
+        match **epiq {
+            Epiq::Unit => ";".to_string(),
+            Epiq::Tval => "^T".to_string(),
+            Epiq::Fval => "^F".to_string(),
+            Epiq::Name(ref n) => n.to_string(),
+            Epiq::Uit8(ref n) => format!("{}", n),
+            Epiq::Prim(ref n) => format!("Prim({})", n),
+            Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
+            Epiq::Mpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
+            Epiq::Eval(p, q) => self.print_piq(">", p, q, nest_level),
+            Epiq::Lpiq(p, q) => self.print_piq(":", p, q, nest_level),
+            Epiq::Appl(p, q) => self.print_piq("!", p, q, nest_level),
+            Epiq::Rslv(p, q) => self.print_piq("@", p, q, nest_level),
+            Epiq::Cond(p, q) => self.print_piq("?", p, q, nest_level),
+            Epiq::Envn(p, q) => self.print_piq("%", p, q, nest_level),
+            Epiq::Bind(p, q) => self.print_piq("#", p, q, nest_level),
+            Epiq::Accs(p, q) => self.print_piq(".", p, q, nest_level),
+            Epiq::Lmbd(p, q) => self.print_piq(r"\", p, q, nest_level),
 
             // _ => "".to_string(),
         }
