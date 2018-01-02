@@ -284,6 +284,12 @@ fn primitive_function() {
     lex_from_str_with_all_scanners("decr", "Chvc<decr>");
 }
 
+#[test]
+// #[ignore]
+fn texts() {
+    lex_from_str_with_all_scanners("[0 \"b\"]", "Lbkt Nmbr<0> Dbqt Chvc<b> Dbqt Rbkt")
+}
+
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);
@@ -314,6 +320,7 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
 fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &DelimiterScanner,
+        &TextScanner,
         &AlphabetScanner,
         &ZeroScanner,
         &IntegerScanner,

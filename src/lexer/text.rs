@@ -28,7 +28,7 @@ impl Scanner for TextScanner {
                     b'"' => finish!(),
                     _ => ScanResult::Error,
                 }
-            }
+            },
             _ => go_ahead!(),
         }
     }
@@ -43,7 +43,7 @@ impl Scanner for TextScanner {
 }
 
 #[test]
-// #[ignore]
+#[ignore]
 fn text() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&TextScanner];
     lex_from_str("\"Abc@ | q5djp4m3 def\"", "Dbqt Chvc<Abc@ | q5djp4m3 def> Dbqt", scanners);

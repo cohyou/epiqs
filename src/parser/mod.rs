@@ -181,6 +181,7 @@ impl<'a> Parser<'a> {
                 let current_token2 = self.current_token.borrow().clone();
                 match current_token2 {
                     CurrentToken::Has(Tokn::Dbqt) => {
+                        self.consume_token();
                         push!(self, Epiq::Text(s.clone()))
                     },
                     _ => Err(Error::UnknownError(13)),
