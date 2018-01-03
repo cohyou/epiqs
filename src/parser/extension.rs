@@ -47,17 +47,6 @@ fn parse_aexp_excluding_cons(&mut self) -> Result<usize, Error> {
     }
 }
 
-fn parse_affx(&mut self) -> Result<usize, Error> {
-    self.vm.vctr.push(Epiq::Unit);
-    Ok(self.vm.vctr.len() - 1)
-    /*
-    match self.parse_ctgr() {
-        Ok(i) => Ok(i),
-        Err(Error::Next(_)) => {},
-        _ => Err(Error::NotAffxError),
-    }
-    */
-}
 
 fn parse_epiq(&mut self) -> Result<usize, Error> {
     match self.parse_ctgr() {
@@ -127,43 +116,6 @@ fn parse_ctgr(&mut self) -> Result<usize, Error> {
     }
 }
 
-fn parse_list(&mut self) -> Result<usize, Error> {
-    // println!("{:?}", ("parse_list", &self.tokens));
-    match self.get_target_token() {
-        Some(Tokn::Lbkt) => {
-            self.consume_token();
-            self.parse_list_internal()
-        },
-
-        _ => Err(Error::Next("DontStartWithLBKT".to_string())),
-    }
-}
-
-fn parse_list_internal(&mut self) -> Result<usize, Error> {
-    match self.get_target_token() {
-        Some(Tokn::Rbkt) => {
-            self.consume_token();
-            self.vm.vctr.push(Epiq::Unit);
-            Ok(self.vm.vctr.len() - 1)
-        },
-
-        _ => {
-            match self.parse_aexp() {
-                Ok(i1) => {
-                    match self.parse_list_internal() {
-                        Ok(i2) => {
-                            let l = Epiq::Lpiq { p: i1, q: i2 };
-                            self.vm.vctr.push(l);
-                            Ok(self.vm.vctr.len() - 1)
-                        },
-                        Err(e) => Err(e),
-                    }
-                },
-                Err(e) => Err(e),
-            }
-        },
-    }
-}
 
 fn speculate_cpiq(&mut self) -> bool {
     let res;
@@ -277,15 +229,6 @@ fn parse_pexp(&mut self) -> Result<usize, Error> {
     }
 }
 
-fn parse_unit(&mut self) -> Result<usize, Error> {
-    if self.get_target_token() == Some(Tokn::Smcl) {
-        self.consume_token();
-        self.vm.vctr.push(Epiq::Unit);
-        return Ok(self.vm.vctr.len() - 1);
-    } else {
-        Err(Error::Next("DontUNIT".to_string()))
-    }
-}
 
 // これは優先順位表現用のカッコのparseなので、中に入れられる要素は一つだけ
 fn parse_primary_parentheses(&mut self) -> Result<usize, Error> {
@@ -312,51 +255,7 @@ fn parse_primary_parentheses(&mut self) -> Result<usize, Error> {
     }
 }
 
-fn parse_text(&mut self) -> Result<usize, Error> {
-    // println!("parse_text self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
-    match self.get_target_token() {
-        Some(Tokn::Dbqt) => {
-            self.consume_token();
-            self.sync_tokens(2);
-            // println!("parse_text self.tokens: {:?} self.p: {:?}", self.tokens, self.p);
-            let mut res;
-            match &self.tokens[self.p..] {
-                &[Tokn::Chvc(ref s), Tokn::Dbqt, ..] => {
-                    if !self.is_speculating() {
-                        self.vm.vctr.push(Epiq::Text(s.to_string()));
-                    }
-                    res = Ok(self.vm.vctr.len() - 1);
-                },
-                _ => { res = Err(Error::TextError); },
-            }
-            if res.is_ok() {
-                self.consume_token();
-                self.consume_token();
-            }
-            res
-        },
-        _ => Err(Error::Next("DontStartWithDBQT".to_string())),
-    }
-}
 
-fn parse_number(&mut self) -> Result<usize, Error> {
-    // println!("parse_number self.tokens: {:?}", &self.tokens[self.p..]);
-    match self.get_target_token() {
-        Some(Tokn::Nmbr(ref s)) => {
-            self.consume_token();
-            if let Ok(n) = i64::from_str_radix(s, 10) {
-                // self.push_token(Epiq::Int8(n));
-                if !self.is_speculating() {
-                    self.vm.vctr.push(Epiq::Int8(n));
-                }
-                Ok(self.vm.vctr.len() - 1)
-            } else {
-                Err(Error::Int8CastError)
-            }
-        },
-        _ => Err(Error::Next("DontNMBR".to_string())),
-    }
-}
 
 fn parse_de_bruijn_index(&mut self) -> Result<usize, Error> {
     match self.get_target_token() {
