@@ -275,16 +275,6 @@ fn parse_de_bruijn_index(&mut self) -> Result<usize, Error> {
 }
 
 /*
-fn push_token(&self, e: Epiq) {
-if !self.is_speculating() {
-self.vm.vctr.push(e);
-}
-}
-*/
-*/
-
-
-/*
 
 これらは中置記法用に必要なbasic functions
 

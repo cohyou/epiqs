@@ -27,9 +27,6 @@ pub enum Epiq {
     Bind(NodeId, NodeId), // bind
     Accs(NodeId, NodeId), // access
     Lmbd(NodeId, NodeId), // function
-
-
-    // Vpiq { p: usize, q: usize }, // vector piq
 }
 
 impl fmt::Debug for Epiq {
@@ -58,15 +55,11 @@ impl fmt::Debug for Epiq {
 }
 pub struct Heliqs {
     ast: NodeArena<Rc<Epiq>>,
-    // symbol_table: SymbolTable<'a>,
 }
 
 impl Heliqs {
     pub fn new() -> Heliqs {
-        Heliqs {
-            ast: NodeArena::new(),
-            // symbol_table: SymbolTable::new(vec![]),
-        }
+        Heliqs { ast: NodeArena::new(), }
     }
 
     pub fn alloc(&mut self, value: Epiq) -> NodeId {
@@ -105,33 +98,7 @@ impl Heliqs {
         self.ast.pop()
     }
 }
-/*
-pub struct AbstractSyntaxTree {
-    pub entrypoint: Option<u32>,
-    tree: Vec<Epiq>,
-    pub max_index: Cell<u32>,
-}
 
-impl AbstractSyntaxTree {
-    pub fn new() -> Self {
-        AbstractSyntaxTree{ entrypoint: None, tree: vec![], max_index: Cell::new(0) }
-    }
-
-    pub fn get(&self, index: u32) -> &Epiq {
-        &(self.tree[index as usize])
-    }
-
-    pub fn push(&mut self, epiq: Epiq) {
-        self.tree.push(epiq);
-        self.max_index.set((self.tree.len() - 1) as u32);
-    }
-
-    pub fn push_and_entry(&mut self, epiq: Epiq) {
-        self.push(epiq);
-        self.entrypoint = Some(self.max_index.get());
-    }
-}
-*/
 use std::fmt;
 
 #[derive(Eq, PartialEq, Clone)]
@@ -142,9 +109,9 @@ pub enum Tokn {
     Sgqt, // ' single quotation
 
 
-
     /* otag */
     Otag(String), // Otag
+
 
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
@@ -269,12 +236,3 @@ fn epiq_arena_get() {
     }
     assert_eq!(arena.get(node_id).1, Epiq::Name("wowow".to_string()));
 }
-
-/*
-#[test]
-fn symbol_table() {
-    let prim = Node(0, Epiq::Prim("decr".to_string()));
-    let prims = vec![("decr".to_string(), Some(&prim)),];
-    let _table = SymbolTable::new(prims);
-}
-*/
