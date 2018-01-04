@@ -300,3 +300,13 @@ fn lpiq() {
 fn nested_lpiq() {
     print_syntax_sugar(r#"abc:"a":1"#, r#"|: abc |: "a" 1"#);
 }
+
+#[test]
+fn accessor() {
+    print_syntax_sugar("a.b", "'> |. a b");
+}
+
+#[test]
+fn nested_accessor() {
+    print_syntax_sugar("a.b.c.d", "'> |. a '> |. b '> |. c d");
+}

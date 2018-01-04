@@ -181,7 +181,7 @@ impl<'a> Parser<'a> {
         match self.current_token() {
             Has(Tokn::Lbkt) => self.parse_list(),
             _ => {
-                let l = (self.parse_term())?;
+                let l = (self.parse_accessing_term())?;
                 match self.current_token() {
                     Has(Tokn::Bang) => self.parse_apply(l),
                     t @ _ => Ok(l),
@@ -209,6 +209,32 @@ impl<'a> Parser<'a> {
                 let qidx = (self.parse_list_internal())?;
                 push!(self, Epiq::Lpiq(pidx, qidx))
             }
+        }
+    }
+
+    fn parse_accessing_term(&mut self) -> Result<usize, Error> {
+        self.log("parse_accessing_term");
+        let l = (self.parse_term())?;
+        match self.current_token() {
+            Has(Tokn::Stop) => self.parse_accessor(l),
+            t @ _ => Ok(l),
+        }
+    }
+
+    fn parse_accessor(&mut self, left: usize) -> Result<usize, Error> {
+        self.log("parse_accessor");
+        self.consume_token();
+        let qidx = (self.parse_term())?; // TODO: 左側はexpressionにしたいが一旦保留
+        match self.current_token() {
+            Has(Tokn::Stop) => {
+                let new_cons = (self.parse_accessor(qidx))?;
+                let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, new_cons));
+                push!(self, Epiq::Eval(UNIT_INDX, id))
+            },
+            t @ _ => {
+                let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, qidx));
+                push!(self, Epiq::Eval(UNIT_INDX, id))
+            },
         }
     }
 
