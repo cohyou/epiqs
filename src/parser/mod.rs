@@ -13,26 +13,32 @@ use std::usize::MAX;
 use core::*;
 use lexer::*;
 use self::error::Error;
+use self::TokenState::*;
+
 
 const UNIT_INDX: usize = 5;
 const K: usize = 3;
+
+#[derive(Eq, PartialEq, Clone, Debug)]
+enum TokenState {
+    SOT, // Start Of Tokens
+    Has(Tokn),
+    EOT, // End Of Tokens
+}
+
+impl Default for TokenState {
+    fn default() -> Self { SOT }
+}
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     vm: Rc<RefCell<Heliqs>>,
     // state: State,
-    current_token: RefCell<CurrentToken>,
+    current_token: RefCell<TokenState>,
     // aexp_tokens: Vec<Vec<Tokn>>,
 
-    lookahead: [CurrentToken; K],
+    lookahead: [TokenState; K],
     p: usize,
-}
-
-#[derive(Eq, PartialEq, Clone, Debug)]
-enum CurrentToken {
-    SOT, // Start Of Tokens
-    Has(Tokn),
-    EOT, // End Of Tokens
 }
 
 impl<'a> Parser<'a> {
@@ -41,26 +47,17 @@ impl<'a> Parser<'a> {
             lexer: lexer,
             vm: vm,
             // state: State::Aexp,
-            current_token: RefCell::new(CurrentToken::SOT),
+            current_token: RefCell::new(SOT),
             // aexp_tokens: vec![vec![]],
-            lookahead: [CurrentToken::SOT, CurrentToken::SOT, CurrentToken::SOT],
-            p: K - 1, // 0にはCurrentToken::SOTを入れることが固定で決まっているので、consumeを開始するのはK - 1から
+            lookahead: Default::default(),
+            p: 0,
         };
 
-        parser.consume_token();
-        parser.consume_token();
+        for _ in 0..K {
+            parser.consume_token();
+        }
 
         parser
-    }
-
-    // Unitは常に1つにする(index固定)
-    fn add_unit(&mut self) {
-        let _unit = self.vm.borrow_mut().alloc(Epiq::Unit);
-    }
-
-    fn add_prim(&mut self, name: &str) {
-        let prim = self.vm.borrow_mut().alloc(Epiq::Prim(name.to_string()));
-        self.vm.borrow_mut().define(name, prim);
     }
 
     pub fn parse(&mut self) {
@@ -73,142 +70,68 @@ impl<'a> Parser<'a> {
 
         self.add_unit();
 
-        self.consume_token();
-
-        let _ = self.parse_aexp();
-    }
-
-    fn set_current_token(&mut self, t: CurrentToken) {
-        self.lookahead[self.p] = t;
-        self.p = (self.p + 1) % K;
-    }
-
-    fn get_token(&self, i: usize) -> CurrentToken {
-        self.lookahead[(self.p + i) % K].clone()
-    }
-
-    fn get_current_token(&self) -> CurrentToken {
-        self.get_token(0)
-    }
-
-    fn consume_token(&mut self) {
-        let res = self.lexer.tokenize();
-        match res {
-            TokenizeResult::Ok(t) => self.set_current_token(CurrentToken::Has(t)),
-            TokenizeResult::Err(_e) => {},
-            TokenizeResult::EOF => self.set_current_token(CurrentToken::EOT),
+        match self.parse_aexp() {
+            Ok(_) => {},
+            Err(e) => {
+                println!("parse error: {:?}", e);
+            },
         }
     }
 
     fn parse_aexp(&mut self) -> Result<usize, Error> {
-        let res = self.get_current_token();
-
-        match res {
-            // 中置記法の判断をする
-
-            // @と!だと@の方が優先度が高い
-            CurrentToken::Has(Tokn::Atsm) => {
-                if self.get_token(2) == CurrentToken::Has(Tokn::Bang) {
-                    // println!("{:?}", "@ symbol ! という典型的な場合");
-                    // @ symbol ! という典型的な場合
-                    self.consume_token(); // consume Atsm
-                    let left = (self.parse_resolve())?;
-                    self.consume_token(); // consume Bang
-                    let qidx = (self.parse_aexp())?;
-                    let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
-                    push!(self, Epiq::Eval(UNIT_INDX, id))
-                } else {
-                    // println!("{:?}", "@の次がliteral以外の場合、まだ考慮していない");
-                    // @の次がliteral以外の場合、まだ考慮していない
-                    self.consume_token(); // consume Atsm
-                    self.parse_resolve()
-                }
-            },
-
-            CurrentToken::Has(Tokn::Chvc(_)) |
-            CurrentToken::Has(Tokn::Nmbr(_))
-            if self.get_token(1) == CurrentToken::Has(Tokn::Bang) => {
-                self.parse_apply()
-            },
-
-            // LL(1)の範囲内
-            CurrentToken::Has(Tokn::Sgqt) => {
-                self.consume_token();
-                self.parse_otag(Tokn::Sgqt)
-            },
-
-
-            CurrentToken::Has(Tokn::Pipe) => {
-                self.consume_token();
-                self.parse_otag(Tokn::Pipe)
-            },
-            CurrentToken::Has(Tokn::Crrt) => {
-                self.consume_token();
-                self.parse_otag(Tokn::Crrt)
-            },
-            CurrentToken::Has(Tokn::Smcl) => {
-                self.consume_token();
-                Ok(UNIT_INDX)
-            }
-            CurrentToken::Has(Tokn::Lbkt) => {
-                self.consume_token();
-                self.parse_list()
-            },
-            CurrentToken::Has(Tokn::Dbqt) => {
-                self.consume_token();
-                self.parse_text()
-            },
-
-            _ => {
-                self.parse_literal()
-            },
+        self.log("parse_aexp");
+        match self.current_token() {
+            Has(Tokn::Sgqt) => self.parse_tpiq_single(),
+            Has(Tokn::Pipe) => self.parse_tpiq(),
+            Has(Tokn::Crrt) => self.parse_mpiq(),
+            _ => self.parse_expression(),
         }
     }
 
-    fn parse_resolve(&mut self) -> Result<usize, Error> {
-        // let pidx = (self.parse_aexp())?;
-        let qidx = (self.parse_literal())?;
-        let id = self.vm.borrow_mut().alloc(Epiq::Rslv(UNIT_INDX, qidx));
-        push!(self, Epiq::Eval(UNIT_INDX, id))
+    fn parse_tpiq_single(&mut self) -> Result<usize, Error> {
+        self.log("parse_tpiq_single");
+        self.consume_token(); // dispatcher Sgqtのはず
+        match self.current_token() {
+            Has(Tokn::Otag(ref otag)) => {
+                self.consume_token();
+                // 引数は一つ、それをqとみなす
+                let qidx = (self.parse_aexp())?;
+                self.match_otag(UNIT_INDX, qidx, otag)
+            },
+            t @ _ => Err(Error::TpiqSingle(t)),
+        }
     }
 
-    // Pipe QTag Pval QVal
-    fn parse_otag(&mut self, tokn: Tokn) -> Result<usize, Error> {
-        let current_token = self.get_current_token();
-        match current_token {
-            CurrentToken::Has(Tokn::Otag(ref otag)) => {
-                self.consume_token();
+    fn parse_tpiq(&mut self) -> Result<usize, Error> {
+        self.log("parse_tpiq");
+        self.consume_token(); // dispatcher Pipeのはず
+        if let Has(Tokn::Otag(ref otag)) = self.current_token() {
+            self.consume_token();
+            let pidx = (self.parse_aexp())?;
+            let qidx = (self.parse_aexp())?;
+            self.match_otag(pidx, qidx, otag)
+        } else {
+            Err(Error::Unimplemented)
+        }
+    }
 
-                match tokn {
-                    Tokn::Pipe => {
-                        let pidx = (self.parse_aexp())?;
-                        let qidx = (self.parse_aexp())?;
-                        self.match_otag(pidx, qidx, otag)
-                    },
-                    Tokn::Crrt => {
-                        match otag.as_ref() {
-                            // ^Tと^Fは特別扱い
-                            "T" => push!(self, Epiq::Tval),
-                            "F" => push!(self, Epiq::Fval),
-                            _ =>  {
-                                // 現在は^Tか^Fしか認めていないが、将来のため
-                                let pidx = (self.parse_aexp())?;
-                                let qidx = (self.parse_aexp())?;
-                                push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx})
-                            },
-                        }
-                    },
-                    Tokn::Sgqt => {
-                        // 引数は一つ、それをqとみなす
-                        let qidx = (self.parse_aexp())?;
-                        self.match_otag(UNIT_INDX, qidx, otag)
-                    },
-                    _ => Err(Error::UnknownError(255)),
-                }
-            },
-
-            CurrentToken::Has(ref t) => Err(Error::TokenError(t.clone())),
-            _ => Err(Error::UnknownError(1)),
+    fn parse_mpiq(&mut self) -> Result<usize, Error> {
+        self.consume_token(); // dispatcher Crrtのはず
+        if let Has(Tokn::Otag(ref otag)) = self.current_token() {
+            self.consume_token();
+            match otag.as_ref() {
+                // ^Tと^Fは特別扱い
+                "T" => push!(self, Epiq::Tval),
+                "F" => push!(self, Epiq::Fval),
+                _ => {
+                    // 現在は^Tか^Fしか認めていないが、将来のため
+                    let pidx = (self.parse_aexp())?;
+                    let qidx = (self.parse_aexp())?;
+                    push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx})
+                },
+            }
+        } else {
+            Err(Error::Unimplemented)
         }
     }
 
@@ -230,66 +153,145 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // expressionとは、ここでは中置記法の中の値になれるものを指している
+    fn parse_expression(&mut self) -> Result<usize, Error> {
+        self.log("parse_expression");
+        // ここはcomsume_tokenしない
+        match self.current_token() {
+            Has(Tokn::Lbkt) => self.parse_list(),
+            _ => {
+                let l = (self.parse_term())?;
+                match self.current_token() {
+                    Has(Tokn::Bang) => self.parse_apply(l),
+                    t @ _ => Ok(l),
+                }
+            }
+        }
+    }
+
     fn parse_list(&mut self) -> Result<usize, Error> {
-        let current_token = self.get_current_token();
+        self.log("parse_list");
+        self.consume_token();
+        self.parse_list_internal()
+    }
+
+    fn parse_list_internal(&mut self) -> Result<usize, Error> {
+        self.log("parse_list_internal");
         // 閉じbracketが出るまで再帰呼出
-        match current_token {
-            CurrentToken::Has(Tokn::Rbkt) => {
+        match self.current_token() {
+            Has(Tokn::Rbkt) => {
                 self.consume_token();
                 push!(self, Epiq::Unit)
             },
             _ => {
                 let pidx = (self.parse_aexp())?;
-                let qidx = (self.parse_list())?;
+                let qidx = (self.parse_list_internal())?;
                 push!(self, Epiq::Lpiq(pidx, qidx))
             }
         }
     }
 
-    fn parse_text(&mut self) -> Result<usize, Error> {
-        let current_token1 = self.get_current_token();
-        match current_token1 {
-            CurrentToken::Has(Tokn::Chvc(ref s)) => {
-                self.consume_token();
-                let current_token2 = self.get_current_token();
-                match current_token2 {
-                    CurrentToken::Has(Tokn::Dbqt) => {
-                        self.consume_token();
-                        push!(self, Epiq::Text(s.clone()))
-                    },
-                    _ => Err(Error::UnknownError(13)),
-                }
-            },
-            _ => Err(Error::UnknownError(12)),
+    /// "term" means resolve or literal in this context
+    fn parse_term(&mut self) -> Result<usize, Error> {
+        self.log("parse_term");
+        match self.current_token() {
+            Has(Tokn::Atsm) => self.parse_resolve(),
+            _ => self.parse_literal(),
         }
+    }
+
+    fn parse_apply(&mut self, left: usize) -> Result<usize, Error> {
+        self.consume_token();
+        let qidx = (self.parse_expression())?;
+        let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
+        push!(self, Epiq::Eval(UNIT_INDX, id))
+    }
+
+    fn parse_resolve(&mut self) -> Result<usize, Error> {
+        self.consume_token(); // Atsm
+        let qidx = (self.parse_literal())?;
+        let id = self.vm.borrow_mut().alloc(Epiq::Rslv(UNIT_INDX, qidx));
+        push!(self, Epiq::Eval(UNIT_INDX, id))
     }
 
     fn parse_literal(&mut self) -> Result<usize, Error> {
-        let current_token = self.get_current_token();
-        match current_token {
-            CurrentToken::Has(Tokn::Chvc(ref s)) => {
-                self.consume_token();
-                push!(self, Epiq::Name(s.clone()))
-            },
-            CurrentToken::Has(Tokn::Nmbr(ref s)) => {
-                self.consume_token();
-                push!(self, Epiq::Uit8(s.parse::<i64>().unwrap()))
-            },
-            _ => Err(Error::UnknownError(10)),
+        self.log("parse_literal");
+        match self.current_token() {
+            Has(Tokn::Smcl) => self.parse_unit(),
+            Has(Tokn::Dbqt) => self.parse_text(),
+            Has(Tokn::Chvc(ref s)) => self.parse_name(s),
+            Has(Tokn::Nmbr(ref s)) => self.parse_number(s),
+            _ => Err(Error::Unimplemented),
         }
     }
 
-    fn parse_apply(&mut self) -> Result<usize, Error> {
-        let left = (self.parse_literal())?;
-        if self.get_current_token() == CurrentToken::Has(Tokn::Bang) {
+    fn parse_unit(&mut self) -> Result<usize, Error> {
+        self.consume_token(); // Smclのはず
+        Ok(UNIT_INDX)
+    }
+
+    fn parse_text(&mut self) -> Result<usize, Error> {
+        self.consume_token(); // Dbqt
+        if let Has(Tokn::Chvc(ref s)) = self.current_token() {
             self.consume_token();
-            println!("its bang in apply1: {:?}", left);
-            let qidx = (self.parse_aexp())?;
-            println!("its bang in apply2: {:?}", self.vm.borrow().get_epiq(qidx));
-            let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
-            push!(self, Epiq::Eval(UNIT_INDX, id))
+            if let Has(Tokn::Dbqt) = self.current_token() {
+                self.consume_token();
+                push!(self, Epiq::Text(s.clone()))
+            } else {
+                Err(Error::Unimplemented)
+            }
         } else {
-            Err(Error::UnknownError(20)) // 普通は通らない
+            Err(Error::Unimplemented)
+        }
+    }
+
+    fn parse_name(&mut self, s: &str) -> Result<usize, Error> {
+        self.log("parse_name");
+        self.consume_token();
+        push!(self, Epiq::Name(s.to_string()))
+    }
+
+    fn parse_number(&mut self, s: &str) -> Result<usize, Error> {
+        self.consume_token();
+        push!(self, Epiq::Uit8(s.parse::<i64>().unwrap()))
+    }
+
+    // Unitは常に1つにする(index固定)
+    fn add_unit(&mut self) {
+        let _unit = self.vm.borrow_mut().alloc(Epiq::Unit);
+    }
+
+    fn add_prim(&mut self, name: &str) {
+        let prim = self.vm.borrow_mut().alloc(Epiq::Prim(name.to_string()));
+        self.vm.borrow_mut().define(name, prim);
+    }
+
+    fn consume_token(&mut self) {
+        let res = self.lexer.tokenize();
+        match res {
+            TokenizeResult::Ok(t) => self.set_current_token(Has(t)),
+            TokenizeResult::Err(_e) => {},
+            TokenizeResult::EOF => self.set_current_token(EOT),
+        }
+    }
+
+    fn set_current_token(&mut self, t: TokenState) {
+        self.lookahead[self.p] = t;
+        self.p = (self.p + 1) % K;
+    }
+
+    fn token(&self, i: usize) -> TokenState {
+        self.lookahead[(self.p + i) % K].clone()
+    }
+
+    fn current_token(&self) -> TokenState {
+        self.token(0)
+    }
+
+
+    fn log(&self, func_name: &str) {
+        if true {
+            println!("{}: {:?}", func_name, self.current_token());
         }
     }
 }
