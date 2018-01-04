@@ -29,7 +29,7 @@ impl Scanner for AtmarkScanner {
 
 #[test]
 // #[ignore]
-fn text() {
+fn atmark() {
     let scanners: &mut Vec<&Scanner> = &mut vec![&AtmarkScanner];
     lex_from_str("@", "Atsm", scanners);
 }

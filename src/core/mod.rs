@@ -125,7 +125,7 @@ pub enum Tokn {
     Dbqt, // " double quotation
     Atsm, // @ at symbol
     Bang, // ! exclamation
-    // Coln, // : colon
+    Coln, // : colon
 
     /*
 
@@ -189,7 +189,7 @@ impl fmt::Debug for Tokn {
             Tokn::Dbqt => write!(f, "Dbqt"),
             Tokn::Atsm => write!(f, "Atsm"),
             Tokn::Bang => write!(f, "Bang"),
-            // &Tokn::Coln => write!(f, "Coln"),
+            Tokn::Coln => write!(f, "Coln"),
 
             /*
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),

@@ -1,4 +1,4 @@
-const LEXER_DEBUGGING: bool = false;
+const LEXER_DEBUGGING: bool = true;
 
 macro_rules! push_into_mode {
     ($e:ident) => {{
@@ -86,6 +86,7 @@ mod text;
 mod atmark;
 mod otag;
 mod bang;
+mod colon;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -102,6 +103,7 @@ pub use self::text::TextScanner;
 pub use self::atmark::AtmarkScanner;
 pub use self::otag::OtagScanner;
 pub use self::bang::BangScanner;
+pub use self::colon::ColonScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -129,6 +131,10 @@ pub enum State {
 
     InnerBang,
     AfterBang,
+
+    InnerColon,
+    AfterColon,
+
     // AfterDot,
     // InnerComment,
 }
@@ -306,6 +312,13 @@ fn symbol_and_bang() {
     lex_from_str_with_all_scanners("ab!", "Chvc<ab> Bang");
 }
 
+#[test]
+fn colon_and_others() {
+    lex_from_str_with_all_scanners(
+        "a:1:\"b\":\"c\":d:2",
+        "Chvc<a> Coln Nmbr<1> Coln Dbqt Chvc<b> Dbqt Coln Dbqt Chvc<c> Dbqt Coln Chvc<d> Coln Nmbr<2>");
+}
+
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);
@@ -335,6 +348,7 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
 
 fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
+        &ColonScanner,
         &BangScanner,
         &AtmarkScanner,
         &OtagScanner,

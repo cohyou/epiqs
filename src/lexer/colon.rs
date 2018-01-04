@@ -3,34 +3,34 @@ use lexer::*;
 use util::*;
 
 #[derive(Debug)]
-pub struct BangScanner;
+pub struct ColonScanner;
 
 
-impl Scanner for BangScanner {
+impl Scanner for ColonScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
         match state {
             State::Normal => {
                 match c {
-                    b'!' => push_into_mode!(AfterBang),
+                    b':' => push_into_mode!(AfterColon),
                     _ => go_ahead!(),
                 }
             },
 
-            State::InnerName => {
+            State::InnerName | State::InnerNumber => {
                 match c {
-                    b'!' => delimite_into_mode!(InnerBang), // 一度区切る
+                    b':' => delimite_into_mode!(InnerColon), // 一度区切る
                     _ => go_ahead!(),
                 }
             },
 
-            State::InnerBang => {
+            State::InnerColon => {
                 match c {
-                    b'!' => push_into_mode!(AfterBang),
+                    b':' => push_into_mode!(AfterColon),
                     _ => go_ahead!(), // 普通はかっこが来るが、構文チェックはparserに任せる
                 }
             },
 
-            State::AfterBang => {
+            State::AfterColon => {
                 // 何が来ても終了
                 match c {
                     0 => finish!(),
@@ -45,7 +45,8 @@ impl Scanner for BangScanner {
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
             State::InnerName => Some(Tokn::Chvc(token_string)),
-            State::AfterBang => Some(Tokn::Bang),
+            State::InnerNumber => Some(Tokn::Nmbr(token_string)),
+            State::AfterColon => Some(Tokn::Coln),
             _ => None,
         }
     }
@@ -53,7 +54,7 @@ impl Scanner for BangScanner {
 
 #[test]
 // #[ignore]
-fn bang() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![&BangScanner];
-    lex_from_str("!", "Bang", scanners);
+fn Colon() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&ColonScanner];
+    lex_from_str(":", "Coln", scanners);
 }

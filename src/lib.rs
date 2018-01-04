@@ -1,6 +1,7 @@
 macro_rules! all_scanners {
     () => {
         vec![
+            &ColonScanner,
             &BangScanner,
             &AtmarkScanner,
             &OtagScanner,
