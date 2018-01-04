@@ -9,6 +9,7 @@ mod error;
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::usize::MAX;
 use core::*;
 use lexer::*;
 use self::error::Error;
@@ -83,10 +84,27 @@ impl<'a> Parser<'a> {
         self.p = 1 - self.p;
     }
 
+    // ひどい名前
+    // 指定された番目のCurrentTokenを返す
+    //
+    fn index_from_index(&self, i: usize) -> usize {
+        // i == 0 -> self.p
+        // i == 1 -> 1 - self.p
+        match i {
+            0 => self.p,
+            1 => 1 - self.p,
+            _ => MAX,
+        }
+    }
+
+    fn get_token(&self, i: usize) -> CurrentToken {
+        self.lookahead[self.index_from_index(i)].clone()
+    }
+
     fn get_current_token(&self) -> CurrentToken {
         // self.current_token.borrow().clone()
-
-        self.lookahead[self.p].clone()
+        // self.lookahead[self.p].clone()
+        self.get_token(0)
     }
 
     fn consume_token(&mut self) {
@@ -102,6 +120,15 @@ impl<'a> Parser<'a> {
         let res = self.get_current_token();
 
         match res {
+            // 中置記法の判断をする
+            CurrentToken::Has(Tokn::Chvc(_)) |
+            CurrentToken::Has(Tokn::Nmbr(_))
+            if self.get_token(1) == CurrentToken::Has(Tokn::Bang) => {
+                self.parse_apply()
+            },
+
+
+            // LL(1)の範囲内
             CurrentToken::Has(Tokn::Atsm) => {
                 self.consume_token();
                 self.parse_resolve()
@@ -134,13 +161,25 @@ impl<'a> Parser<'a> {
                 self.parse_text()
             },
 
-            _ => self.parse_literal(),
+            _ => {
+                self.parse_literal()
+                // // 中置記法の判断をする
+                // let token0 = self.get_token(0);
+                // match token0 {
+                //     CurrentToken::Has(Tokn::Chvc(_)) |
+                //     CurrentToken::Has(Tokn::Nmbr(_))
+                //     if self.get_token(1) == CurrentToken::Has(Tokn::Bang) => {
+                //         self.parse_apply()
+                //     }
+                //     _ => self.parse_literal()
+                // }
+            },
         }
     }
 
     fn parse_resolve(&mut self) -> Result<usize, Error> {
         // let pidx = (self.parse_aexp())?;
-        let qidx = (self.parse_aexp())?;
+        let qidx = (self.parse_literal())?;
         let id = self.vm.borrow_mut().alloc(Epiq::Rslv(UNIT_INDX, qidx));
         push!(self, Epiq::Eval(UNIT_INDX, id))
     }
@@ -249,6 +288,20 @@ impl<'a> Parser<'a> {
                 push!(self, Epiq::Uit8(s.parse::<i64>().unwrap()))
             },
             _ => Err(Error::UnknownError(10)),
+        }
+    }
+
+    fn parse_apply(&mut self) -> Result<usize, Error> {
+        let left = (self.parse_literal())?;
+        if self.get_current_token() == CurrentToken::Has(Tokn::Bang) {
+            self.consume_token();
+            println!("its bang in apply1: {:?}", left);
+            let qidx = (self.parse_aexp())?;
+            println!("its bang in apply2: {:?}", self.vm.borrow().get_epiq(qidx));
+            let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
+            push!(self, Epiq::Eval(UNIT_INDX, id))
+        } else {
+            Err(Error::UnknownError(20)) // 普通は通らない
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use core::*;
 
 pub type NodeId = usize;
@@ -6,6 +8,12 @@ pub type NodeId = usize;
 pub struct Node<T>(pub NodeId, pub T);
 
 impl fmt::Debug for Node<Epiq> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({} {:?})", self.0, self.1)
+    }
+}
+
+impl fmt::Debug for Node<Rc<Epiq>> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({} {:?})", self.0, self.1)
     }

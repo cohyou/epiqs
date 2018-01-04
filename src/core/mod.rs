@@ -141,7 +141,7 @@ pub enum Tokn {
     Crrt, // ^ carret
     Sgqt, // ' single quotation
 
-    // Coln, // : colon
+
 
     /* otag */
     Otag(String), // Otag
@@ -158,7 +158,7 @@ pub enum Tokn {
     Dbqt, // " double quotation
     Atsm, // @ at symbol
     Bang, // ! exclamation
-
+    // Coln, // : colon
 
     /*
 
