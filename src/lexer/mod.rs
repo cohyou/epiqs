@@ -1,4 +1,4 @@
-const LEXER_DEBUGGING: bool = true;
+const LEXER_DEBUGGING: bool = false;
 
 macro_rules! push_into_mode {
     ($e:ident) => {{
