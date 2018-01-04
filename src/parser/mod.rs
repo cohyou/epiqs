@@ -106,8 +106,7 @@ impl<'a> Parser<'a> {
             },
             CurrentToken::Has(Tokn::Smcl) => {
                 self.consume_token();
-                // push!(self, Epiq::Unit)
-                Ok(5)
+                Ok(UNIT_INDX)
             }
             CurrentToken::Has(Tokn::Lbkt) => {
                 self.consume_token();
