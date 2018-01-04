@@ -290,3 +290,13 @@ fn apply_syntax_sugar() {
 fn resolve_and_apply_syntax_sugar() {
     print_syntax_sugar("@abc! [1 3]", "'> |! '> '@ abc [1 3]");
 }
+
+#[test]
+fn lpiq() {
+    print_syntax_sugar(r#"abc:"a""#, r#"|: abc "a""#);
+}
+
+#[test]
+fn nested_lpiq() {
+    print_syntax_sugar(r#"abc:"a":1"#, r#"|: abc |: "a" 1"#);
+}

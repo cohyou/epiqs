@@ -84,7 +84,13 @@ impl<'a> Parser<'a> {
             Has(Tokn::Sgqt) => self.parse_tpiq_single(),
             Has(Tokn::Pipe) => self.parse_tpiq(),
             Has(Tokn::Crrt) => self.parse_mpiq(),
-            _ => self.parse_expression(),
+            _ => {
+                let l = (self.parse_expression())?;
+                match self.current_token() {
+                    Has(Tokn::Coln) => self.parse_cons(l),
+                    t @ _ => Ok(l),
+                }
+            },
         }
     }
 
@@ -150,6 +156,21 @@ impl<'a> Parser<'a> {
             _ => {
                 push!(self, Epiq::Tpiq{o: otag.to_string(), p: pidx, q: qidx})
             },
+        }
+    }
+
+    fn parse_cons(&mut self, pidx: usize) -> Result<usize, Error> {
+        self.log("parse_cons");
+        self.consume_token(); // Coln
+        // aexpではない、あえてexpressionしか入れられないように
+        // 中置記法の使い方を限定する
+        let qidx = (self.parse_expression())?;
+        match self.current_token() {
+            Has(Tokn::Coln) => {
+                let new_cons = (self.parse_cons(qidx))?;
+                push!(self, Epiq::Lpiq(pidx, new_cons))
+            },
+            t @ _ => push!(self, Epiq::Lpiq(pidx, qidx)),
         }
     }
 
