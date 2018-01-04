@@ -76,12 +76,16 @@ impl<'a> Parser<'a> {
         let _ = self.parse_aexp();
     }
 
+    fn get_next_token_buffer_index(&self, current: usize) -> usize {
+        1 - current
+    }
+
     fn set_current_token(&mut self, t: CurrentToken) {
         // let mut token = self.current_token.borrow_mut();
         // *token = t;
 
         self.lookahead[self.p] = t;
-        self.p = 1 - self.p;
+        self.p = self.get_next_token_buffer_index(self.p);
     }
 
     // ひどい名前
@@ -92,7 +96,7 @@ impl<'a> Parser<'a> {
         // i == 1 -> 1 - self.p
         match i {
             0 => self.p,
-            1 => 1 - self.p,
+            1 => self.get_next_token_buffer_index(self.p),
             _ => MAX,
         }
     }
