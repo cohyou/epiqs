@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
             // @と!だと@の方が優先度が高い
             CurrentToken::Has(Tokn::Atsm) => {
                 if self.get_token(2) == CurrentToken::Has(Tokn::Bang) {
-                    println!("{:?}", "@ symbol ! という典型的な場合");
+                    // println!("{:?}", "@ symbol ! という典型的な場合");
                     // @ symbol ! という典型的な場合
                     self.consume_token(); // consume Atsm
                     let left = (self.parse_resolve())?;
@@ -118,7 +118,7 @@ impl<'a> Parser<'a> {
                     let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
                     push!(self, Epiq::Eval(UNIT_INDX, id))
                 } else {
-                    println!("{:?}", "@の次がliteral以外の場合、まだ考慮していない");
+                    // println!("{:?}", "@の次がliteral以外の場合、まだ考慮していない");
                     // @の次がliteral以外の場合、まだ考慮していない
                     self.consume_token(); // consume Atsm
                     self.parse_resolve()
