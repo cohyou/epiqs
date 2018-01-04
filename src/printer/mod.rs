@@ -95,6 +95,13 @@ pub fn print_evaled_str(left: &str, right: &str) {
     assert_eq!(result, right);
 }
 
+/// leftを評価したらちゃんとrightになるかどうかのテスト
+pub fn print_syntax_sugar(left: &str, right: &str) {
+    let result_left = evaled_str(left);
+    let result_right = evaled_str(right);
+    assert_eq!(result_left, result_right);
+}
+
 pub fn only_evaluate(s: &str) {
     let mut iter = s.bytes();
     let scanners: &Vec<&Scanner> = &all_scanners!();

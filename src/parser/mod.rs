@@ -15,6 +15,7 @@ use lexer::*;
 use self::error::Error;
 
 const UNIT_INDX: usize = 5;
+const K: usize = 3;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
@@ -23,7 +24,7 @@ pub struct Parser<'a> {
     current_token: RefCell<CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
 
-    lookahead: [CurrentToken; 2],
+    lookahead: [CurrentToken; K],
     p: usize,
 }
 
@@ -42,10 +43,11 @@ impl<'a> Parser<'a> {
             // state: State::Aexp,
             current_token: RefCell::new(CurrentToken::SOT),
             // aexp_tokens: vec![vec![]],
-            lookahead: [CurrentToken::SOT, CurrentToken::SOT],
-            p: 1, // 0にはCurrentToken::SOTを入れることが固定で決まっているので、consumeを開始するのは1から
+            lookahead: [CurrentToken::SOT, CurrentToken::SOT, CurrentToken::SOT],
+            p: K - 1, // 0にはCurrentToken::SOTを入れることが固定で決まっているので、consumeを開始するのはK - 1から
         };
 
+        parser.consume_token();
         parser.consume_token();
 
         parser
@@ -76,38 +78,16 @@ impl<'a> Parser<'a> {
         let _ = self.parse_aexp();
     }
 
-    fn get_next_token_buffer_index(&self, current: usize) -> usize {
-        1 - current
-    }
-
     fn set_current_token(&mut self, t: CurrentToken) {
-        // let mut token = self.current_token.borrow_mut();
-        // *token = t;
-
         self.lookahead[self.p] = t;
-        self.p = self.get_next_token_buffer_index(self.p);
-    }
-
-    // ひどい名前
-    // 指定された番目のCurrentTokenを返す
-    //
-    fn index_from_index(&self, i: usize) -> usize {
-        // i == 0 -> self.p
-        // i == 1 -> 1 - self.p
-        match i {
-            0 => self.p,
-            1 => self.get_next_token_buffer_index(self.p),
-            _ => MAX,
-        }
+        self.p = (self.p + 1) % K;
     }
 
     fn get_token(&self, i: usize) -> CurrentToken {
-        self.lookahead[self.index_from_index(i)].clone()
+        self.lookahead[(self.p + i) % K].clone()
     }
 
     fn get_current_token(&self) -> CurrentToken {
-        // self.current_token.borrow().clone()
-        // self.lookahead[self.p].clone()
         self.get_token(0)
     }
 
@@ -125,19 +105,33 @@ impl<'a> Parser<'a> {
 
         match res {
             // 中置記法の判断をする
+
+            // @と!だと@の方が優先度が高い
+            CurrentToken::Has(Tokn::Atsm) => {
+                if self.get_token(2) == CurrentToken::Has(Tokn::Bang) {
+                    println!("{:?}", "@ symbol ! という典型的な場合");
+                    // @ symbol ! という典型的な場合
+                    self.consume_token(); // consume Atsm
+                    let left = (self.parse_resolve())?;
+                    self.consume_token(); // consume Bang
+                    let qidx = (self.parse_aexp())?;
+                    let id = self.vm.borrow_mut().alloc(Epiq::Appl(left, qidx));
+                    push!(self, Epiq::Eval(UNIT_INDX, id))
+                } else {
+                    println!("{:?}", "@の次がliteral以外の場合、まだ考慮していない");
+                    // @の次がliteral以外の場合、まだ考慮していない
+                    self.consume_token(); // consume Atsm
+                    self.parse_resolve()
+                }
+            },
+
             CurrentToken::Has(Tokn::Chvc(_)) |
             CurrentToken::Has(Tokn::Nmbr(_))
             if self.get_token(1) == CurrentToken::Has(Tokn::Bang) => {
                 self.parse_apply()
             },
 
-
             // LL(1)の範囲内
-            CurrentToken::Has(Tokn::Atsm) => {
-                self.consume_token();
-                self.parse_resolve()
-            },
-
             CurrentToken::Has(Tokn::Sgqt) => {
                 self.consume_token();
                 self.parse_otag(Tokn::Sgqt)
@@ -167,16 +161,6 @@ impl<'a> Parser<'a> {
 
             _ => {
                 self.parse_literal()
-                // // 中置記法の判断をする
-                // let token0 = self.get_token(0);
-                // match token0 {
-                //     CurrentToken::Has(Tokn::Chvc(_)) |
-                //     CurrentToken::Has(Tokn::Nmbr(_))
-                //     if self.get_token(1) == CurrentToken::Has(Tokn::Bang) => {
-                //         self.parse_apply()
-                //     }
-                //     _ => self.parse_literal()
-                // }
             },
         }
     }

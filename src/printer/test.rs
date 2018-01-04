@@ -283,10 +283,10 @@ fn resolve_syntax_sugar() {
 
 #[test]
 fn apply_syntax_sugar() {
-    print_str("abc! [1 2]", ">(; !(abc :(1 :(2 ;))))");
+    print_syntax_sugar("abc! [1 2]", "'> |! abc [1 2]");
 }
 
 #[test]
 fn resolve_and_apply_syntax_sugar() {
-    print_str("@abc! [1 3]", "'> |! '> '@ abc [1 3]");
+    print_syntax_sugar("@abc! [1 3]", "'> |! '> '@ abc [1 3]");
 }
