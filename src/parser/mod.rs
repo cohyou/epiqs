@@ -290,7 +290,7 @@ impl<'a> Parser<'a> {
 
 
     fn log(&self, func_name: &str) {
-        if true {
+        if false {
             println!("{}: {:?}", func_name, self.current_token());
         }
     }

@@ -401,7 +401,7 @@ impl Walker {
                                     self.get_epiq(new_index)
                                 }
                             } else {
-                                println!("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
+                                self.log("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
                                 input
                             }
                         } else {
