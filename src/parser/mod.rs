@@ -21,6 +21,9 @@ pub struct Parser<'a> {
     // state: State,
     current_token: RefCell<CurrentToken>,
     // aexp_tokens: Vec<Vec<Tokn>>,
+
+    lookahead: [CurrentToken; 2],
+    p: usize,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug)]
@@ -32,16 +35,22 @@ enum CurrentToken {
 
 impl<'a> Parser<'a> {
     pub fn new(lexer: Lexer<'a, 'a>, vm: Rc<RefCell<Heliqs>>) -> Self {
-        Parser {
+        let mut parser = Parser {
             lexer: lexer,
             vm: vm,
             // state: State::Aexp,
             current_token: RefCell::new(CurrentToken::SOT),
             // aexp_tokens: vec![vec![]],
-        }
+            lookahead: [CurrentToken::SOT, CurrentToken::SOT],
+            p: 1, // 0にはCurrentToken::SOTを入れることが固定で決まっているので、consumeを開始するのは1から
+        };
+
+        parser.consume_token();
+
+        parser
     }
 
-    // Unitは常に1つにする(index=0)
+    // Unitは常に1つにする(index固定)
     fn add_unit(&mut self) {
         let _unit = self.vm.borrow_mut().alloc(Epiq::Unit);
     }
@@ -66,23 +75,31 @@ impl<'a> Parser<'a> {
         let _ = self.parse_aexp();
     }
 
+    fn set_current_token(&mut self, t: CurrentToken) {
+        // let mut token = self.current_token.borrow_mut();
+        // *token = t;
+
+        self.lookahead[self.p] = t;
+        self.p = 1 - self.p;
+    }
+
+    fn get_current_token(&self) -> CurrentToken {
+        // self.current_token.borrow().clone()
+
+        self.lookahead[self.p].clone()
+    }
+
     fn consume_token(&mut self) {
         let res = self.lexer.tokenize();
         match res {
-            TokenizeResult::Ok(t) => {
-                let mut token = self.current_token.borrow_mut();
-                *token = CurrentToken::Has(t);
-            },
+            TokenizeResult::Ok(t) => self.set_current_token(CurrentToken::Has(t)),
             TokenizeResult::Err(_e) => {},
-            TokenizeResult::EOF => {
-                let mut token = self.current_token.borrow_mut();
-                *token = CurrentToken::EOT;
-            },
+            TokenizeResult::EOF => self.set_current_token(CurrentToken::EOT),
         }
     }
 
     fn parse_aexp(&mut self) -> Result<usize, Error> {
-        let res = self.current_token.borrow().clone();
+        let res = self.get_current_token();
 
         match res {
             CurrentToken::Has(Tokn::Atsm) => {
@@ -116,6 +133,7 @@ impl<'a> Parser<'a> {
                 self.consume_token();
                 self.parse_text()
             },
+
             _ => self.parse_literal(),
         }
     }
@@ -129,7 +147,7 @@ impl<'a> Parser<'a> {
 
     // Pipe QTag Pval QVal
     fn parse_otag(&mut self, tokn: Tokn) -> Result<usize, Error> {
-        let current_token = self.current_token.borrow().clone();
+        let current_token = self.get_current_token();
         match current_token {
             CurrentToken::Has(Tokn::Otag(ref otag)) => {
                 self.consume_token();
@@ -186,7 +204,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_list(&mut self) -> Result<usize, Error> {
-        let current_token = self.current_token.borrow().clone();
+        let current_token = self.get_current_token();
         // 閉じbracketが出るまで再帰呼出
         match current_token {
             CurrentToken::Has(Tokn::Rbkt) => {
@@ -202,11 +220,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_text(&mut self) -> Result<usize, Error> {
-        let current_token1 = self.current_token.borrow().clone();
+        let current_token1 = self.get_current_token();
         match current_token1 {
             CurrentToken::Has(Tokn::Chvc(ref s)) => {
                 self.consume_token();
-                let current_token2 = self.current_token.borrow().clone();
+                let current_token2 = self.get_current_token();
                 match current_token2 {
                     CurrentToken::Has(Tokn::Dbqt) => {
                         self.consume_token();
@@ -220,7 +238,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_literal(&mut self) -> Result<usize, Error> {
-        let current_token = self.current_token.borrow().clone();
+        let current_token = self.get_current_token();
         match current_token {
             CurrentToken::Has(Tokn::Chvc(ref s)) => {
                 self.consume_token();
