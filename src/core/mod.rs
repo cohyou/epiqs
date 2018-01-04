@@ -126,6 +126,7 @@ pub enum Tokn {
     Atsm, // @ at symbol
     Bang, // ! exclamation
     Coln, // : colon
+    Stop, // . full stop (period)
 
     /*
 
@@ -145,7 +146,6 @@ pub enum Tokn {
     Plus, // + plus
     Star, // * asterisk
     Bksl, // \ back slash
-    Stop, // . full stop (period)
 
     Pcnt, // % percent
     Qstn, // ? question mark
@@ -190,6 +190,7 @@ impl fmt::Debug for Tokn {
             Tokn::Atsm => write!(f, "Atsm"),
             Tokn::Bang => write!(f, "Bang"),
             Tokn::Coln => write!(f, "Coln"),
+            Tokn::Stop => write!(f, "Stop"),
 
             /*
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
@@ -209,7 +210,6 @@ impl fmt::Debug for Tokn {
             // 扱いが不明瞭だがひとまず足しておく
             &Tokn::Plus => write!(f, "Plus"),
             &Tokn::Star => write!(f, "Star"),
-            &Tokn::Stop => write!(f, "Stop"),
             &Tokn::Bksl => write!(f, "Bksl"),
 
             &Tokn::Pcnt => write!(f, "Pcnt"),

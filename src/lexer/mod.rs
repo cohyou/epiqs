@@ -87,6 +87,7 @@ mod atmark;
 mod otag;
 mod bang;
 mod colon;
+mod stop;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -104,6 +105,7 @@ pub use self::atmark::AtmarkScanner;
 pub use self::otag::OtagScanner;
 pub use self::bang::BangScanner;
 pub use self::colon::ColonScanner;
+pub use self::stop::StopScanner;
 
 pub struct Lexer<'a, 'b> {
     iter: &'a mut Iterator<Item=u8>,
@@ -135,7 +137,9 @@ pub enum State {
     InnerColon,
     AfterColon,
 
-    // AfterDot,
+    InnerStop,
+    AfterStop,
+
     // InnerComment,
 }
 
@@ -319,6 +323,13 @@ fn colon_and_others() {
         "Chvc<a> Coln Nmbr<1> Coln Dbqt Chvc<b> Dbqt Coln Dbqt Chvc<c> Dbqt Coln Chvc<d> Coln Nmbr<2>");
 }
 
+#[test]
+fn stop_and_others() {
+    lex_from_str_with_all_scanners(
+        "a.1.d.2",
+        "Chvc<a> Stop Nmbr<1> Stop Chvc<d> Stop Nmbr<2>");
+}
+
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
     let mut iter = text.bytes();
     scanners.push(&EOFScanner);
@@ -350,6 +361,7 @@ fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
         &ColonScanner,
         &BangScanner,
+        &StopScanner,
         &AtmarkScanner,
         &OtagScanner,
         &DelimiterScanner,

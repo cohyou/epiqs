@@ -3,34 +3,34 @@ use lexer::*;
 use util::*;
 
 #[derive(Debug)]
-pub struct ColonScanner;
+pub struct StopScanner;
 
 
-impl Scanner for ColonScanner {
+impl Scanner for StopScanner {
     fn scan(&self, state: State, c: u8) -> ScanResult {
         match state {
             State::Normal => {
                 match c {
-                    b':' => push_into_mode!(AfterColon),
+                    b'.' => push_into_mode!(AfterStop),
                     _ => go_ahead!(),
                 }
             },
 
             State::InnerName | State::InnerNumber => {
                 match c {
-                    b':' => delimite_into_mode!(InnerColon), // 一度区切る
+                    b'.' => delimite_into_mode!(InnerStop), // 一度区切る
                     _ => go_ahead!(),
                 }
             },
 
-            State::InnerColon => {
+            State::InnerStop => {
                 match c {
-                    b':' => push_into_mode!(AfterColon),
+                    b'.' => push_into_mode!(AfterStop),
                     _ => go_ahead!(), // 普通はかっこが来るが、構文チェックはparserに任せる
                 }
             },
 
-            State::AfterColon => {
+            State::AfterStop => {
                 // 何が来ても終了
                 match c {
                     0 => finish!(),
@@ -46,7 +46,7 @@ impl Scanner for ColonScanner {
         match state {
             State::InnerName => Some(Tokn::Chvc(token_string)),
             State::InnerNumber => Some(Tokn::Nmbr(token_string)),
-            State::AfterColon => Some(Tokn::Coln),
+            State::AfterStop => Some(Tokn::Stop),
             _ => None,
         }
     }
@@ -54,7 +54,7 @@ impl Scanner for ColonScanner {
 
 #[test]
 // #[ignore]
-fn colon() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![&ColonScanner];
-    lex_from_str(":", "Coln", scanners);
+fn stop() {
+    let scanners: &mut Vec<&Scanner> = &mut vec![&StopScanner];
+    lex_from_str(".", "Stop", scanners);
 }
