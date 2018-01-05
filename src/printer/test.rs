@@ -251,19 +251,19 @@ fn prim() {
 #[test]
 // #[ignore]
 fn text() {
-    print_str("\"o58nkry drtse\"", "\"o58nkry drtse\"");
+    print_str(r#""o58nkry drtse""#, r#""o58nkry drtse""#);
 }
 
 #[test]
 // #[ignore]
 fn evaled_text() {
-    print_evaled_str("\"o58nkry drtse\"", "\"o58nkry drtse\"");
+    print_evaled_str(r#""o58nkry drtse"", r#""o58nkry drtse""#);
 }
 
 #[test]
 // #[ignore]
 fn evaled_text_in_list() {
-    print_str("[\"bbb\" 0 \"aaa\"]", ":(\"bbb\" :(0 :(\"aaa\" ;)))");
+    print_str(r#"["bbb" 0 "aaa"]"#, r#":("bbb" :(0 :("aaa" ;)))"#);
 }
 
 #[test]
