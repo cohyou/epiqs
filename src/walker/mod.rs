@@ -273,10 +273,27 @@ impl Walker {
             //     input
             // },
 
-            Epiq::Tpiq{ref o, p:_, q:_} => {
-                match o.as_ref() as &str {
-                    _ => input,
-                }
+            Epiq::Tpiq{ref o, p, q} => {
+                // call macro
+                let macrocro = match self.vm.borrow().resolve("macro") {
+                    Some(Some(res)) => res.clone().clone(),
+                    _ => {
+                        self.log(&format!("resolve時に指定されたキーが見つからない: {:?}", "macro"));
+                        return input;
+                    },
+                };
+                let arg1 = self.vm.borrow_mut().alloc(Epiq::Text(o.to_string()));
+                let arg2_node = self.get_epiq(p);
+                let arg3_node = self.get_epiq(q);
+
+                let args_last = self.vm.borrow_mut().alloc(Epiq::Lpiq(arg3_node.0, UNIT_INDX));
+                let args_second = self.vm.borrow_mut().alloc(Epiq::Lpiq(arg2_node.0, args_last));
+                let args_first = self.vm.borrow_mut().alloc(Epiq::Lpiq(arg1, args_second));
+                let appl = self.vm.borrow_mut().alloc(Epiq::Appl(macrocro.0, args_first));
+                let appl_node = self.get_epiq(appl);
+
+                let macro_result = self.eval_internal(appl_node, nest_level + 1);
+                macro_result
             },
 
             Epiq::Mpiq{ref o, p: _p, q} => {

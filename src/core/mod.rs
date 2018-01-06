@@ -43,13 +43,13 @@ impl fmt::Debug for Epiq {
             Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
             Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
             Epiq::Lpiq(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Appl(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Rslv(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Cond(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Envn(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Bind(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Accs(p, q) => write!(f, ":({} {})", p, q),
-            Epiq::Lmbd(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Appl(p, q) => write!(f, "!({} {})", p, q),
+            Epiq::Rslv(p, q) => write!(f, "@({} {})", p, q),
+            Epiq::Cond(p, q) => write!(f, "?({} {})", p, q),
+            Epiq::Envn(p, q) => write!(f, "%({} {})", p, q),
+            Epiq::Bind(p, q) => write!(f, "#({} {})", p, q),
+            Epiq::Accs(p, q) => write!(f, ".({} {})", p, q),
+            Epiq::Lmbd(p, q) => write!(f, r"\({} {})", p, q),
         }
     }
 }
