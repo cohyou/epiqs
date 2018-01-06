@@ -1,13 +1,6 @@
 use core::*;
 use walker::*;
 
-macro_rules! alloc_node {
-    ($s:ident, $n:expr) => {{
-        let new_index = $s.vm.borrow_mut().alloc($n);
-        $s.get_epiq(new_index)
-    }}
-}
-
 macro_rules! unwrap_text {
     ($s:ident, $e:expr) => {{
         match *$e.1 {

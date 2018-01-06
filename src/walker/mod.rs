@@ -1,3 +1,10 @@
+macro_rules! alloc_node {
+    ($s:ident, $n:expr) => {{
+        let new_index = $s.vm.borrow_mut().alloc($n);
+        $s.get_epiq(new_index)
+    }}
+}
+
 mod primitive;
 
 use std::rc::Rc;
@@ -403,30 +410,57 @@ impl Walker {
         let Node(_, q_accessor) = self.walk_internal(self.get_epiq(q), nest_level + 1);
 
         // レシーバの種類によってできることが変わる
-        if let Epiq::Lpiq(p, q) = *p_reciever {
-            // Lpiqならば、pとqが使える、それ以外は無理
-            if let Epiq::Name(ref n) = *q_accessor {
-                match n.as_ref() {
-                    "p" => {
-                        let p_node = self.get_epiq(p);
-                        self.walk_internal(p_node, nest_level + 1)
-                    },
-                    "q" => {
-                        let q_node = self.get_epiq(q);
-                        self.walk_internal(q_node, nest_level + 1)
-                    },
-                    _ => {
-                        self.log("Lpiqならばpとq以外はエラー");
-                        input
-                    },
+        match *p_reciever {
+            Epiq::Lpiq(p, q) => {
+                // Lpiqならば、pとqが使える、それ以外は無理
+                if let Epiq::Name(ref n) = *q_accessor {
+                    match n.as_ref() {
+                        "o" => alloc_node!(self, Epiq::Text(":".to_string())),
+                        "p" => {
+                            let p_node = self.get_epiq(p);
+                            self.walk_internal(p_node, nest_level + 1)
+                        },
+                        "q" => {
+                            let q_node = self.get_epiq(q);
+                            self.walk_internal(q_node, nest_level + 1)
+                        },
+                        _ => {
+                            self.log("Lpiqならばpとq以外はエラー");
+                            input
+                        },
+                    }
+                } else {
+                    self.log("アクセッサがNameではないのでエラー");
+                    input
                 }
-            } else {
-                self.log("アクセッサがNameではないのでエラー");
+            },
+            Epiq::Tpiq{ref o,p,q} => {
+                // Lpiqならば、pとqが使える、それ以外は無理
+                if let Epiq::Name(ref n) = *q_accessor {
+                    match n.as_ref() {
+                        "o" => alloc_node!(self, Epiq::Text(o.to_string())),
+                        "p" => {
+                            let p_node = self.get_epiq(p);
+                            self.walk_internal(p_node, nest_level + 1)
+                        },
+                        "q" => {
+                            let q_node = self.get_epiq(q);
+                            self.walk_internal(q_node, nest_level + 1)
+                        },
+                        _ => {
+                            self.log("Tpiqならばoとpとq以外はエラー");
+                            input
+                        },
+                    }
+                } else {
+                    self.log("アクセッサがNameではないのでエラー");
+                    input
+                }
+            },
+            _ => {
+                self.log(&format!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever));
                 input
-            }
-        } else {
-            self.log(&format!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever));
-            input
+            },
         }
     }
 
