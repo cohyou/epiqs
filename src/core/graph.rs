@@ -44,7 +44,7 @@ impl SymbolTable {
             }
         } {
             self.table[self.current_index].push( (name.to_string(), Some(value)) );
-            // println!("symbol_table: {:?}", self.table);
+            // log(format!("symbol_table: {:?}", self.table));
         }
     }
 
@@ -82,7 +82,7 @@ impl SymbolTable {
     }
 }
 
-pub struct NodeArena<T> (Vec<Node<T>>, Option<usize>, SymbolTable);
+pub struct NodeArena<T> (pub Vec<Node<T>>, Option<usize>, SymbolTable);
 
 impl<T> NodeArena<T> {
     pub fn new() -> NodeArena<T> {

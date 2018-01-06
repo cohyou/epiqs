@@ -63,7 +63,9 @@ impl Heliqs {
     }
 
     pub fn alloc(&mut self, value: Epiq) -> NodeId {
-        self.ast.alloc(Rc::new(value))
+        let id = self.ast.alloc(Rc::new(value));
+        log(format!("alloc: {:?} from: {:?}", self.ast.0, self.ast.entry()));
+        id
     }
 
     pub fn entry(&self) -> Option<NodeId> {
@@ -235,4 +237,10 @@ fn epiq_arena_get() {
         node.1 = Epiq::Name("wowow".to_string());
     }
     assert_eq!(arena.get(node_id).1, Epiq::Name("wowow".to_string()));
+}
+
+pub fn log(message: String) {
+    if false {
+        println!("{}", &message);
+    }
 }

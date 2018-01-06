@@ -274,6 +274,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_unit(&mut self) -> Result<usize, Error> {
+        self.log("parse_unit");
         self.consume_token(); // Smclのはず
         self.vm.borrow_mut().set_entry(UNIT_INDX); // これをしないと;だけの時にentrypointがダメになる
         Ok(UNIT_INDX)
@@ -312,6 +313,7 @@ impl<'a> Parser<'a> {
 
     fn add_prim(&mut self, name: &str) {
         let prim = self.vm.borrow_mut().alloc(Epiq::Prim(name.to_string()));
+        log(format!("add_prim: {:?} {:?}", name, prim));
         self.vm.borrow_mut().define(name, prim);
     }
 
