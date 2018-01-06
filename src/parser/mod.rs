@@ -228,9 +228,10 @@ impl<'a> Parser<'a> {
         let qidx = (self.parse_term())?; // TODO: 左側はexpressionにしたいが一旦保留
         match self.current_token() {
             Has(Tokn::Stop) => {
-                let new_cons = (self.parse_accessor(qidx))?;
-                let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, new_cons));
-                push!(self, Epiq::Eval(UNIT_INDX, id))
+                let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, qidx));
+                let new_left = self.vm.borrow_mut().alloc(Epiq::Eval(UNIT_INDX, id));
+                let new_cons = (self.parse_accessor(new_left))?;
+                push!(self, Epiq::Eval(UNIT_INDX, new_cons))
             },
             t @ _ => {
                 let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, qidx));
