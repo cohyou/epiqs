@@ -4,7 +4,7 @@ use core::*;
 use printer::*;
 
 const DEGUGGING_NOW: bool = false;
-const UNIT_INDX: usize = 5;
+const UNIT_INDX: usize = 0;
 
 pub struct Walker {
     vm: Rc<RefCell<Heliqs>>,

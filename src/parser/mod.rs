@@ -16,7 +16,7 @@ use self::error::Error;
 use self::TokenState::*;
 
 
-const UNIT_INDX: usize = 5;
+const UNIT_INDX: usize = 0;
 const K: usize = 3;
 
 #[derive(Eq, PartialEq, Clone, Debug)]
@@ -61,6 +61,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) {
+        self.add_unit();
 
         self.add_prim("decr");
         self.add_prim("ltoreq");
@@ -68,7 +69,7 @@ impl<'a> Parser<'a> {
         self.add_prim("plus");
         self.add_prim("minus");
 
-        self.add_unit();
+        // self.add_prim("print");
 
         match self.parse_aexp() {
             Ok(_) => {},
@@ -274,6 +275,7 @@ impl<'a> Parser<'a> {
 
     fn parse_unit(&mut self) -> Result<usize, Error> {
         self.consume_token(); // Smclのはず
+        self.vm.borrow_mut().set_entry(UNIT_INDX); // これをしないと;だけの時にentrypointがダメになる
         Ok(UNIT_INDX)
     }
 
