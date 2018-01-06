@@ -310,3 +310,9 @@ fn accessor() {
 fn nested_accessor() {
     print_syntax_sugar("a.b.c.d", "'> |. a '> |. b '> |. c d");
 }
+
+#[test]
+// #[ignore]
+fn print() {
+    print_evaled_str(r#"@print! ["a"]"#, ";");
+}

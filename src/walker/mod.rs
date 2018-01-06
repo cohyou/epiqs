@@ -418,6 +418,22 @@ impl Walker {
                 }
             },
 
+            "print" => {
+                if let Epiq::Lpiq(p1, q1) = *args.1 {
+                    if let Epiq::Text(ref n1) = *self.get_epiq(p1).1 {
+                        print!("{}", n1);
+                        self.get_epiq(UNIT_INDX)
+                    } else {
+                        self.log("prim print 1つ目の引数の中身が文字列じゃなかった");
+                        input
+                    }
+                } else {
+                    self.log("prim print 1つ目の引数がリストじゃなかった");
+                    input
+                }
+            },
+
+
             _ => {
                 // println!("Primitive関数名が想定外なのでエラー");
                 input
