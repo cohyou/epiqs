@@ -1,6 +1,8 @@
 '> ^> -1 [
-  |# macro |\ '% [otag p q] ^> -1 [    
-    @otag
+  |# macro |\ '% [otag p q] ^> -1 [
+    |? @eq! [@otag "Add"]
+       @plus! [@p @q]
+    :;
   ]
 
   |Add 1 2
