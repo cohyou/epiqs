@@ -257,7 +257,7 @@ fn text() {
 #[test]
 // #[ignore]
 fn evaled_text() {
-    print_evaled_str(r#""o58nkry drtse"", r#""o58nkry drtse""#);
+    print_evaled_str(r#""o58nkry drtse""#, r#""o58nkry drtse""#);
 }
 
 #[test]
