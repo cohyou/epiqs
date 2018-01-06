@@ -70,6 +70,7 @@ impl<'a> Parser<'a> {
         self.add_prim("minus");
 
         self.add_prim("print");
+        self.add_prim("concat");
 
         match self.parse_aexp() {
             Ok(_) => {},

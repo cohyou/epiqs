@@ -102,6 +102,21 @@ impl Walker {
         alloc_node!(self, new_epiq)
     }
 
+    pub fn concat(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        self.concat_internal(args, "")
+    }
+
+    fn concat_internal(&self, args: Node<Rc<Epiq>>, accum: &str) -> Node<Rc<Epiq>> {
+        let t = self.first(args.clone());
+        let text = unwrap_text!(self, t);
+
+        let accuming = accum.to_string() + text;
+        match *self.qval(args.clone()).1 {
+            Epiq::Unit => alloc_node!(self, Epiq::Text(accuming)),
+            _ => self.concat_internal(self.qval(args.clone()), &accuming),
+        }
+    }
+
 
     fn first(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
         self.pval(piq.clone())

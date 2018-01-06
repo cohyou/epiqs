@@ -373,7 +373,7 @@ impl Walker {
             "minus" => self.minus(args),
             "print" => self.print(args),
             "ltoreq" => self.le_or_eq_nmbr(args),
-
+            "concat" => self.concat(args),
             "eq" => {
                 match *self.pval(args.clone()).1 {
                     Epiq::Uit8(n1) => self.eq_nmbr(args),
