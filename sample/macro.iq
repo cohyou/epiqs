@@ -12,4 +12,5 @@
 
   |Add 1 2
   'Html ['Head "" 'Body ""]
+  @print! ["printing now"]
 ]

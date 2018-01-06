@@ -368,75 +368,19 @@ impl Walker {
         // println!("{:?}", "primitive");
 
         match n.as_ref() {
-            "decr" => {
-                // 面倒なので 1- を実装
-                // 引数取得
-                if let Epiq::Lpiq(p, _) = *args.1 {
-                    if let Epiq::Uit8(n) = *self.get_epiq(p).1 {
-                        // 1を引く
-                        let new_index = self.vm.borrow_mut().alloc(Epiq::Uit8(n - 1));
-                        self.get_epiq(new_index)
-                    } else {
-                        input // 中身が数値じゃなかった
-                    }
-                } else {
-                    input // 引数がリストじゃなかった
-                }
-            },
+            "decr" => self.decrement(args),
+            "plus" => self.plus(args),
+            "minus" => self.minus(args),
+            "print" => self.print(args),
+            "ltoreq" => self.le_or_eq_nmbr(args),
 
-            prim_name @ "ltoreq" |
-            prim_name @ "eq" |
-            prim_name @ "plus" |
-            prim_name @ "minus" => {
+            prim_name @ "eq" => {
                 // <=を実装
                 // 一つ目の引数
                 if let Epiq::Lpiq(p1, q1) = *args.1 {
                     match *self.get_epiq(p1).1 {
-                        Epiq::Uit8(n1) => {
-                            // 二つ目の引数が数値
-                            if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
-                                if let Epiq::Uit8(n2) = *self.get_epiq(p2).1 {
-                                    let new_index;
-
-                                    let new_epiq = match prim_name {
-                                        pred @ "ltoreq" | pred @ "eq" => {
-                                            let boolean = match pred {
-                                                "ltoreq" => n1 <= n2,
-                                                "eq" => n1 == n2,
-                                                _ => false,
-                                            };
-                                            if boolean { Epiq::Tval } else { Epiq::Fval }
-                                        },
-
-                                        "plus" => Epiq::Uit8(n1 + n2),
-                                        "minus" => Epiq::Uit8(n1 - n2),
-                                        _ => Epiq::Unit,
-                                    };
-
-                                    // Unitだけ最適化
-                                    if new_epiq == Epiq::Unit {
-                                        self.get_epiq(UNIT_INDX)
-                                    } else {
-                                        new_index = self.vm.borrow_mut().alloc(new_epiq);
-                                        self.get_epiq(new_index)
-                                    }
-                                } else {
-                                    self.log("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
-                                    input
-                                }
-                            } else {
-                                self.log("primitive ltoreq 2つ目の引数がリストじゃなかった");
-                                input
-                            }
-                        },
-                        Epiq::Text(ref text1) => {
-                            if prim_name == "eq" {
-                                self.eq_text(input, args)
-                            } else {
-                                self.log("primitive 文字列演算に対応しているのは今の所eqのみだが違反している");
-                                input
-                            }
-                        },
+                        Epiq::Uit8(n1) => self.eq_nmbr(args),
+                        Epiq::Text(ref text1) => self.eq_text(args),
                         _ => {
                             self.log("primitive 1つ目の引数の型は数値/文字列のみだが違反している");
                             input
@@ -448,24 +392,8 @@ impl Walker {
                 }
             },
 
-            "print" => {
-                if let Epiq::Lpiq(p1, q1) = *args.1 {
-                    if let Epiq::Text(ref n1) = *self.get_epiq(p1).1 {
-                        print!("{}", n1);
-                        self.get_epiq(UNIT_INDX)
-                    } else {
-                        self.log("prim print 1つ目の引数の中身が文字列じゃなかった");
-                        input
-                    }
-                } else {
-                    self.log("prim print 1つ目の引数がリストじゃなかった");
-                    input
-                }
-            },
-
-
             _ => {
-                // println!("Primitive関数名が想定外なのでエラー");
+                self.log("Primitive関数名が想定外なのでエラー");
                 input
             },
         }

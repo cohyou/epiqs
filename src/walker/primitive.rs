@@ -9,26 +9,107 @@ macro_rules! alloc_node {
 }
 
 macro_rules! unwrap_text {
-    ($s:ident, $e:expr) => (match *$e.1 {
-        Epiq::Text(ref t) => t,
-        _ => {
-            let from = $s.printer_printed($e.0);
-            panic!("{:?}からtextは取り出せません", from);
-        },
-    });
+    ($s:ident, $e:expr) => {{
+        match *$e.1 {
+            Epiq::Text(ref t) => t,
+            _ => {
+                let from = $s.printer_printed($e.0);
+                panic!("{:?}からtextは取り出せません", from);
+            },
+        }
+    }}
+}
+
+macro_rules! unwrap_nmbr {
+    ($s:ident, $e:expr) => {{
+        match *$e.1 {
+            Epiq::Uit8(n) => n,
+            _ => {
+                let from = $s.printer_printed($e.0);
+                panic!("{:?}からnmbrは取り出せません", from);
+            },
+        }
+    }}
+}
+
+macro_rules! first_nmbr {
+    ($s:ident, $e:expr) => {{
+        let first = $s.first($e.clone());
+        unwrap_nmbr!($s, first)
+    }}
+}
+
+macro_rules! second_nmbr {
+    ($s:ident, $e:expr) => {{
+        let first = $s.second($e.clone());
+        unwrap_nmbr!($s, first)
+    }}
 }
 
 impl Walker {
-    pub fn eq_text(&self, input: Node<Rc<Epiq>>, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        let first = self.pval(args.clone());
-        let text1 = unwrap_text!(self, first);
+    pub fn eq_nmbr(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let n1 = first_nmbr!(self, args);
+        let n2 = second_nmbr!(self, args);
 
-        let second_lpiq = self.qval(args);
-        let second = self.pval(second_lpiq);
-        let text2 = unwrap_text!(self, second);
+        let new_epiq = if n1 == n2 { Epiq::Tval } else { Epiq::Fval };
+
+        alloc_node!(self, new_epiq)
+    }
+
+    pub fn eq_text(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let t1 = self.first(args.clone());
+        let text1 = unwrap_text!(self, t1);
+
+        let t2 = self.second(args.clone());
+        let text2 = unwrap_text!(self, t2);
 
         let new_epiq = if text1 == text2 { Epiq::Tval } else { Epiq::Fval };
         alloc_node!(self, new_epiq)
+    }
+
+    pub fn print(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let t = self.first(args.clone());
+        let text = unwrap_text!(self, t);
+
+        print!("{}", text);
+
+        self.get_epiq(UNIT_INDX)
+    }
+
+    pub fn decrement(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let n = first_nmbr!(self, args);
+        alloc_node!(self, Epiq::Uit8(n - 1))
+    }
+
+    pub fn plus(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let n1 = first_nmbr!(self, args);
+        let n2 = second_nmbr!(self, args);
+        alloc_node!(self, Epiq::Uit8(n1 + n2))
+    }
+
+    pub fn minus(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let n1 = first_nmbr!(self, args);
+        let n2 = second_nmbr!(self, args);
+        alloc_node!(self, Epiq::Uit8(n1 - n2))
+    }
+
+    pub fn le_or_eq_nmbr(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let n1 = first_nmbr!(self, args);
+        let n2 = second_nmbr!(self, args);
+
+        let new_epiq = if n1 <= n2 { Epiq::Tval } else { Epiq::Fval };
+
+        alloc_node!(self, new_epiq)
+    }
+
+
+    fn first(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        self.pval(piq.clone())
+    }
+
+    fn second(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let second_lpiq = self.qval(piq);
+        self.pval(second_lpiq)
     }
 
     fn pval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
@@ -48,4 +129,5 @@ impl Walker {
             panic!("{:?}からqvalは取り出せません", from);
         }
     }
+
 }
