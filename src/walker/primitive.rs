@@ -112,22 +112,6 @@ impl Walker {
         self.pval(second_lpiq)
     }
 
-    fn pval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        if let Epiq::Lpiq(p, _) = *piq.1 {
-            self.get_epiq(p)
-        } else {
-            let from = self.printer_printed(piq.0);
-            panic!("{:?}からpvalは取り出せません", from);
-        }
-    }
 
-    fn qval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        if let Epiq::Lpiq(_, q) = *piq.1 {
-            self.get_epiq(q)
-        } else {
-            let from = self.printer_printed(piq.0);
-            panic!("{:?}からqvalは取り出せません", from);
-        }
-    }
 
 }

@@ -374,21 +374,14 @@ impl Walker {
             "print" => self.print(args),
             "ltoreq" => self.le_or_eq_nmbr(args),
 
-            prim_name @ "eq" => {
-                // <=を実装
-                // 一つ目の引数
-                if let Epiq::Lpiq(p1, q1) = *args.1 {
-                    match *self.get_epiq(p1).1 {
-                        Epiq::Uit8(n1) => self.eq_nmbr(args),
-                        Epiq::Text(ref text1) => self.eq_text(args),
-                        _ => {
-                            self.log("primitive 1つ目の引数の型は数値/文字列のみだが違反している");
-                            input
-                        },
-                    }
-                } else {
-                    self.log("primitive ltoreq 1つ目の引数がリストじゃなかった");
-                    input
+            "eq" => {
+                match *self.pval(args.clone()).1 {
+                    Epiq::Uit8(n1) => self.eq_nmbr(args),
+                    Epiq::Text(ref text1) => self.eq_text(args),
+                    _ => {
+                        self.log("primitive 1つ目の引数の型は数値/文字列のみだが違反している");
+                        input
+                    },
                 }
             },
 
@@ -410,37 +403,30 @@ impl Walker {
         let Node(_, q_accessor) = self.walk_internal(self.get_epiq(q), nest_level + 1);
 
         // レシーバの種類によってできることが変わる
-        match *p_reciever {
-            Epiq::Lpiq(p, q) => {
-                // Lpiqならば、pとqが使える、それ以外は無理
-                match *q_accessor {
-                    Epiq::Name(ref n) => {
-                        match n.as_ref() {
-                            "p" => {
-                                let p_node = self.get_epiq(p);
-                                self.walk_internal(p_node, nest_level + 1)
-                            },
-                            "q" => {
-                                let q_node = self.get_epiq(q);
-                                self.walk_internal(q_node, nest_level + 1)
-                            },
-                            _ => {
-                                self.log("Lpiqならばpとq以外はエラー");
-                                input
-                            },
-                        }
+        if let Epiq::Lpiq(p, q) = *p_reciever {
+            // Lpiqならば、pとqが使える、それ以外は無理
+            if let Epiq::Name(ref n) = *q_accessor {
+                match n.as_ref() {
+                    "p" => {
+                        let p_node = self.get_epiq(p);
+                        self.walk_internal(p_node, nest_level + 1)
                     },
-
+                    "q" => {
+                        let q_node = self.get_epiq(q);
+                        self.walk_internal(q_node, nest_level + 1)
+                    },
                     _ => {
-                        self.log("アクセッサがNameではないのでエラー");
+                        self.log("Lpiqならばpとq以外はエラー");
                         input
                     },
                 }
-            },
-            _ => {
-                self.log(&format!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever));
+            } else {
+                self.log("アクセッサがNameではないのでエラー");
                 input
-            },
+            }
+        } else {
+            self.log(&format!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever));
+            input
         }
     }
 
@@ -453,8 +439,6 @@ impl Walker {
         // q: Lpiq、^Tならpを返し、^Fならqを返す
         let p_condition = self.get_epiq(p);
 
-        let Node(_, q_result) = self.get_epiq(q);
-
         // 条件節をwalk
         // println!("condition: {:?}", "条件節をwalk");
         let walked_condition_node = self.walk_internal(p_condition.clone(), nest_level + 1);
@@ -464,41 +448,23 @@ impl Walker {
             let mut vm = self.vm.borrow_mut();
             let node_mut = vm.get_epiq_mut(input_index);
             node_mut.1 = Rc::new(Epiq::Tpiq{o:o.to_string(), p:walked_condition_node.0, q:q});
-            println!("{:?} -> ({} {:?}){}condition eval後付け替え", *input.1, input_index, walked_condition_node.1, " ".repeat(lvl));
+            // println!("{:?} -> ({} {:?}){}condition eval後付け替え", *input.1, input_index, walked_condition_node.1, " ".repeat(lvl));
         }
 
         let walked_condition_piq = walked_condition_node.1;
 
+        let result_piq = self.get_epiq(q);
         match *walked_condition_piq {
-            ref v @ Epiq::Tval | ref v @ Epiq::Fval => {
-                match *q_result {
-                    Epiq::Lpiq(p, q) => {
-                        match *v {
-                            Epiq::Tval => {
-                                let p_node = self.get_epiq(p);
-                                self.walk_internal(p_node, nest_level + 1)
-                            },
-
-                            Epiq::Fval => {
-                                let q_node = self.get_epiq(q);
-                                self.walk_internal(q_node, nest_level + 1)
-                            },
-                            _ => {
-                                // println!("condtion ^Tか^Fしか取れないが、事前に弾いているので、ここは通らないはず");
-                                input
-                            },
-                        }
-                    },
-
-                    _ => {
-                        // println!("result部分がLpiqじゃないのでエラー");
-                        input
-                    },
-                }
+            Epiq::Tval => {
+                let p_node = self.pval(result_piq);
+                self.walk_internal(p_node, nest_level + 1)
             },
-
+            Epiq::Fval => {
+                let q_node = self.qval(result_piq);
+                self.walk_internal(q_node, nest_level + 1)
+            },
             _ => {
-                // println!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_condition_piq);
+                self.log(&format!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_condition_piq));
                 input
             },
         }
@@ -507,29 +473,16 @@ impl Walker {
     fn eval_list(&self, input: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
         // println!("{}eval_list ＿開始＿ {:?}: ", " ".repeat(lvl), input);
 
-        let Node(_, piq) = input.clone();
+        let current_node = self.pval(input.clone());
+        let evaled_current_node = self.eval_internal(current_node, nest_level + 1);
 
-        match *piq {
-            Epiq::Lpiq(p, q) => {
-                let current_node = self.get_epiq(p);
-
-                let evaled_current_node = self.eval_internal(current_node, nest_level + 1);
-
-                self.log_piq(nest_level, "elst ＿完了前: ", p);
-                self.log_piq(nest_level, "elst ＿完了後: ", evaled_current_node.0);
-
-                let next = self.get_epiq(q);
-                if let Epiq::Unit = *next.1 {
-                    // リストの最後なので評価の結果を返す
-                    evaled_current_node
-                } else {
-                    // 次の項目へ
-                    let next_node = self.get_epiq(q);
-                    self.eval_list(next_node, nest_level + 1)
-                }
-            },
-
-            _ => input,
+        let next = self.qval(input);
+        if let Epiq::Unit = *next.1 {
+            // リストの最後なので評価の結果を返す
+            evaled_current_node
+        } else {
+            // 次の項目へ
+            self.eval_list(next, nest_level + 1)
         }
     }
 
@@ -537,71 +490,52 @@ impl Walker {
         // arguments_piqはリストのはずなので、一つ一つ回して定義していく
         // println!("assign_arguments: {:?}", "start!!");
 
-        let next_params_node;
-        let next_args_node;
-        {
+        let content_node = self.pval(arguments_node.clone());
+        let next_args_node = self.qval(arguments_node);
 
-            let Node(_, params_piq) = parameters_node;
-            let Node(_, args_piq) = arguments_node;
+        let param_node = self.pval(parameters_node.clone());
+        let next_params_node = self.qval(parameters_node);
 
-            let content;
-            if let Some((cntt, next_args)) = match *args_piq {
-                Epiq::Lpiq(p, q) => Some((p, q)),
-                _ => { None },
-            } {
-                next_args_node = self.get_epiq(next_args);
-                content = cntt;
-            } else {
-                /* 普通は通らない */
-                // println!("assign arguments_piqがおかしい");
-                return;
-            }
-
-            let Node(_, next_args_piq) = next_args_node.clone();
-            let content_node = self.get_epiq(content);
-
-            // println!("assign: {:?}", content_node);
-
-            let next_params;
-            let param;
-            if let Epiq::Lpiq(p, q) = *params_piq {
-                next_params = q;
-                param = p;
-            } else {
-                /* 普通は通らない */
-                // println!("assign parameters_piqがおかしい Tpiqじゃない: {:?}", parameters_node);
-                return;
-            }
-
-            next_params_node = self.get_epiq(next_params);
-            let Node(_, _next_params_piq) = next_params_node.clone();
-            let Node(_, param_piq) = self.get_epiq(param);
-
-            let mut symbol_string = "";
-            if let Epiq::Name(ref s) = *param_piq {
-                symbol_string = s;
-            } else {
-                // 文字列じゃない場合は初期値があるとか、
-                // 他の可能性があるが今は実装しない
-            }
-
-            // println!("assign_arguments: {:?}", "define!!");
-            // println!("borrow_mut: {:?}", 9);
-            self.vm.borrow_mut().define(symbol_string, content_node.0);
-
-
-            // paramsとargs、両方のリストを回していくが、
-            // ループの基準となるのはargs。
-            // paramsが途中でなくなっても知らん。
-            if *next_args_piq == Epiq::Unit {
-                // 最後なので終了
-                // println!("assign終わりです");
-                return;
-            }
+        let mut symbol_string = "";
+        if let Epiq::Name(ref s) = *param_node.1 {
+            symbol_string = s;
+        } else {
+            // 文字列じゃない場合は初期値があるとか、
+            // 他の可能性があるが今は実装しない
         }
+
+        self.vm.borrow_mut().define(symbol_string, content_node.0);
+
+
+        // paramsとargs、両方のリストを回していくが、
+        // ループの基準となるのはargs。
+        // paramsが途中でなくなっても知らん。
+        if *next_args_node.1 == Epiq::Unit {
+            // 最後なので終了
+            return;
+        }
+
 
         // 次にいく
         self.assign_arguments(next_params_node, next_args_node);
+    }
+
+    fn pval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        if let Epiq::Lpiq(p, _) = *piq.1 {
+            self.get_epiq(p)
+        } else {
+            let from = self.printer_printed(piq.0);
+            panic!("{:?}からpvalは取り出せません", from);
+        }
+    }
+
+    fn qval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        if let Epiq::Lpiq(_, q) = *piq.1 {
+            self.get_epiq(q)
+        } else {
+            let from = self.printer_printed(piq.0);
+            panic!("{:?}からqvalは取り出せません", from);
+        }
     }
 
     // walker内でEpiqを読み取り用で取得するためのヘルパー
