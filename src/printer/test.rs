@@ -319,5 +319,5 @@ fn print() {
 
 #[test]
 fn compare_texts() {
-    print_evaled_str(r#"@eq! ["a", "c"]"#, "^F");
+    print_evaled_str(r#"@eq! ["a", "b"]"#, "^F");
 }

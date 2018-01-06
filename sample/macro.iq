@@ -1,9 +1,15 @@
 '> ^> -1 [
   |# macro |\ '% [otag p q] ^> -1 [
-    |? @eq! [@otag "Add"]
-       @plus! [@p @q]
-    :;
+    |? @eq! [@otag "Add"] |:
+       @plus! [@p @q] '>
+    |? @eq! [@otag "Html"] |:
+       "<html></html>" '>
+    |? @eq! [@otag "Head"] |:
+       "<head></head>" '>
+    |? @eq! [@otag "Body"] |:
+       "<body></body>" ;
   ]
 
   |Add 1 2
+  'Html ['Head "" 'Body ""]
 ]
