@@ -316,3 +316,8 @@ fn nested_accessor() {
 fn print() {
     print_evaled_str(r#"@print! ["a"]"#, ";");
 }
+
+#[test]
+fn compare_texts() {
+    print_evaled_str(r#"@eq! ["a", "c"]"#, "^F");
+}

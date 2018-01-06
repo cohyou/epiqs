@@ -389,45 +389,69 @@ impl Walker {
                 // <=を実装
                 // 一つ目の引数
                 if let Epiq::Lpiq(p1, q1) = *args.1 {
-                    if let Epiq::Uit8(n1) = *self.get_epiq(p1).1 {
-                        // 二つ目の引数
-                        if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
-                            if let Epiq::Uit8(n2) = *self.get_epiq(p2).1 {
-                                let new_index;
+                    match *self.get_epiq(p1).1 {
+                        Epiq::Uit8(n1) => {
+                            // 二つ目の引数が数値
+                            if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
+                                if let Epiq::Uit8(n2) = *self.get_epiq(p2).1 {
+                                    let new_index;
 
-                                let new_epiq = match prim_name {
-                                    pred @ "ltoreq" | pred @ "eq" => {
-                                        let boolean = match pred {
-                                            "ltoreq" => n1 <= n2,
-                                            "eq" => n1 == n2,
-                                            _ => false,
-                                        };
-                                        if boolean { Epiq::Tval } else { Epiq::Fval }
-                                    },
+                                    let new_epiq = match prim_name {
+                                        pred @ "ltoreq" | pred @ "eq" => {
+                                            let boolean = match pred {
+                                                "ltoreq" => n1 <= n2,
+                                                "eq" => n1 == n2,
+                                                _ => false,
+                                            };
+                                            if boolean { Epiq::Tval } else { Epiq::Fval }
+                                        },
 
-                                    "plus" => Epiq::Uit8(n1 + n2),
-                                    "minus" => Epiq::Uit8(n1 - n2),
-                                    _ => Epiq::Unit,
-                                };
+                                        "plus" => Epiq::Uit8(n1 + n2),
+                                        "minus" => Epiq::Uit8(n1 - n2),
+                                        _ => Epiq::Unit,
+                                    };
 
-                                // Unitだけ最適化
-                                if new_epiq == Epiq::Unit {
-                                    self.get_epiq(UNIT_INDX)
+                                    // Unitだけ最適化
+                                    if new_epiq == Epiq::Unit {
+                                        self.get_epiq(UNIT_INDX)
+                                    } else {
+                                        new_index = self.vm.borrow_mut().alloc(new_epiq);
+                                        self.get_epiq(new_index)
+                                    }
                                 } else {
-                                    new_index = self.vm.borrow_mut().alloc(new_epiq);
-                                    self.get_epiq(new_index)
+                                    self.log("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
+                                    input
                                 }
                             } else {
-                                self.log("primitive ltoreq 2つ目の引数の中身が数値じゃなかった");
+                                self.log("primitive ltoreq 2つ目の引数がリストじゃなかった");
                                 input
                             }
-                        } else {
-                            self.log("primitive ltoreq 2つ目の引数がリストじゃなかった");
+                        },
+                        Epiq::Text(ref text1) => {
+                            // 二つ目の引数が文字列
+                            if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
+                                if let Epiq::Text(ref text2) = *self.get_epiq(p2).1 {
+                                    if prim_name == "eq" {
+                                        let new_epiq = if text1 == text2 { Epiq::Tval } else { Epiq::Fval };
+                                        let new_index = self.vm.borrow_mut().alloc(new_epiq);
+                                        self.get_epiq(new_index)
+                                    } else {
+                                        self.log("primitive 文字列演算に対応しているのは今の所eqのみだが違反している");
+                                        input
+                                    }
+                                } else {
+                                    self.log("primitive 2つ目の引数の中身が文字列じゃなかった");
+                                    input
+                                }
+                            } else {
+                                self.log("primitive 2つ目の引数がリストじゃなかった");
+                                input
+                            }
+                        },
+                        _ => {
+                            self.log("primitive 1つ目の引数の型は数値/文字列のみだが違反している");
                             input
-                        }
-                    } else {
-                        self.log("primitive ltoreq 1つ目の引数の中身が数値じゃなかった");
-                        input
+                        },
                     }
                 } else {
                     self.log("primitive ltoreq 1つ目の引数がリストじゃなかった");
@@ -457,6 +481,7 @@ impl Walker {
             },
         }
     }
+
 
     fn eval_access(&self, input: Node<Rc<Epiq>>,
                           p: usize, q: usize,
