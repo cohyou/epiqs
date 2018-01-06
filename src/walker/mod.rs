@@ -432,20 +432,6 @@ impl Walker {
                         Epiq::Text(ref text1) => {
                             if prim_name == "eq" {
                                 self.eq_text(input, args)
-                                // // 二つ目の引数が文字列
-                                // if let Epiq::Lpiq(p2, _) = *self.get_epiq(q1).1 {
-                                //     if let Epiq::Text(ref text2) = *self.get_epiq(p2).1 {
-                                //         let new_epiq = if text1 == text2 { Epiq::Tval } else { Epiq::Fval };
-                                //         let new_index = self.vm.borrow_mut().alloc(new_epiq);
-                                //         self.get_epiq(new_index)
-                                //     } else {
-                                //         self.log("primitive 2つ目の引数の中身が文字列じゃなかった");
-                                //         input
-                                //     }
-                                // } else {
-                                //     self.log("primitive 2つ目の引数がリストじゃなかった");
-                                //     input
-                                // }
                             } else {
                                 self.log("primitive 文字列演算に対応しているのは今の所eqのみだが違反している");
                                 input
