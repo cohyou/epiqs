@@ -111,14 +111,20 @@ impl<'a> Parser<'a> {
     fn parse_tpiq(&mut self) -> Result<usize, Error> {
         self.log("parse_tpiq");
         self.consume_token(); // dispatcher Pipeのはず
-        if let Has(Tokn::Otag(ref otag)) = self.current_token() {
-            self.consume_token();
-            let pidx = (self.parse_aexp())?;
-            let qidx = (self.parse_aexp())?;
-            self.match_otag(pidx, qidx, otag)
-        } else {
-            // Err(Error::Unimplemented)
-            panic!("parse_tpiq {:?}はOtagではありません", self.current_token());
+        match self.current_token() {
+            Has(Tokn::Otag(ref otag)) => {
+                self.consume_token();
+                let pidx = (self.parse_aexp())?;
+                let qidx = (self.parse_aexp())?;
+                self.match_otag(pidx, qidx, otag)
+            },
+            Has(Tokn::Pipe) => {
+                // Pipeなのに引数は一つだけという、特殊なパターンになるが一度試す
+                self.consume_token();
+                let qidx = (self.parse_aexp())?;
+                push!(self, Epiq::Quot(UNIT_INDX, qidx))
+            },
+            _ => panic!("parse_tpiq {:?}はOtag/Pipeではありません", self.current_token()),
         }
     }
 

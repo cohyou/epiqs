@@ -123,6 +123,7 @@ impl Walker {
             Epiq::Lpiq(..) => input,
 
             Epiq::Eval(p, q) => self.eval(p, q, nest_level), // こっちはあまり通らないかもしれない
+            Epiq::Quot(_, q) => self.get_epiq(q),
             Epiq::Appl(p, q) => self.eval_apply(input, p, q, nest_level),
             Epiq::Rslv(p, q) => self.eval_resolve(p, q, nest_level),
             Epiq::Cond(p, q) => self.eval_condition(input, "?", p, q, nest_level),

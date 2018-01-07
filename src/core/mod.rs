@@ -19,6 +19,8 @@ pub enum Epiq {
     Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
 
     Eval(NodeId, NodeId), // eval piq
+    Quot(NodeId, NodeId), // quote piq
+
     Lpiq(NodeId, NodeId), // (linked) list piq
     Appl(NodeId, NodeId), // apply piq
     Rslv(NodeId, NodeId), // resolve
@@ -42,6 +44,7 @@ impl fmt::Debug for Epiq {
             Epiq::Tpiq { ref o, p, q} => write!(f, "{}({} {})", o, p, q),
             Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
             Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
+            Epiq::Quot(p, q) => write!(f, "|({} {})", p, q),
             Epiq::Lpiq(p, q) => write!(f, ":({} {})", p, q),
             Epiq::Appl(p, q) => write!(f, "!({} {})", p, q),
             Epiq::Rslv(p, q) => write!(f, "@({} {})", p, q),

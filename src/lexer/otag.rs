@@ -38,7 +38,7 @@ impl Scanner for OtagScanner {
                 match c {
                     0 => ScanResult::Error,
                     _ if self.is_first_otag_letter(c) => push_into_mode!(InnerOtag),
-                    b'[' => push_into_mode!(InnerSpecialOtag),
+                    b'|' | b'[' => push_into_mode!(InnerSpecialOtag),
                     _ => go_ahead!(),
                 }
             },
@@ -75,6 +75,7 @@ impl Scanner for OtagScanner {
             State::InnerSpecialOtag => {
                 match token_string.as_ref() {
                     "[" => Some(Tokn::Lbkt),
+                    "|" => Some(Tokn::Pipe),
                     _ => None,
                 }
             }

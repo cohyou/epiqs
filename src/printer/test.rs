@@ -283,5 +283,11 @@ fn concat_texts() {
 
 #[test]
 fn evaled_list_syntax_sugar() {
-    print_syntax_sugar("^[1 2 3]", "^> -1 [1 2 3]");
+    // print_syntax_sugar("^[1 2 3]", "^> -1 [1 2 3]");
+    print_syntax_sugar("^[@plus! [1 2]]", "^> ; [@plus! [1 2]]");
+}
+
+#[test]
+fn quote() {
+    print_evaled_str("'> || a", "a");
 }

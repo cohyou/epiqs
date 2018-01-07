@@ -39,6 +39,7 @@ impl Printer {
             Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
             Epiq::Mpiq { ref o, p, q } => self.print_piq(&format!("^{}", o), p, q, nest_level),
             Epiq::Eval(p, q) => self.print_piq(">", p, q, nest_level),
+            Epiq::Quot(p, q) => self.print_piq("|", p, q, nest_level),
             Epiq::Lpiq(p, q) => self.print_piq(":", p, q, nest_level),
             Epiq::Appl(p, q) => self.print_piq("!", p, q, nest_level),
             Epiq::Rslv(p, q) => self.print_piq("@", p, q, nest_level),
