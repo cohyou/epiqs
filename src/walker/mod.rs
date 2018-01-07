@@ -403,39 +403,31 @@ impl Walker {
         }
     }
 
-    fn assign_arguments(&self, parameters_node: Node<Rc<Epiq>>, arguments_node: Node<Rc<Epiq>>, nest_level: u32) {
+    fn assign_arguments(&self, params: Node<Rc<Epiq>>, args: Node<Rc<Epiq>>, nest_level: u32) {
         // arguments_piqはリストのはずなので、一つ一つ回して定義していく
-        self.log_piq(nest_level, "assign_arguments", parameters_node.0);
+        self.log_piq(nest_level, "assign_arguments", params.0);
 
-        let content_node = self.pval(arguments_node.clone());
-        let next_args_node = self.qval(arguments_node);
+        let content = self.pval(args.clone());
+        let next_args = self.qval(args);
 
-        let param_node = self.pval(parameters_node.clone());
-        let next_params_node = self.qval(parameters_node);
+        let param = self.pval(params.clone());
+        let next_params = self.qval(params);
 
-        let mut symbol_string = "";
-        if let Epiq::Name(ref s) = *param_node.1 {
-            symbol_string = s;
+        let mut symbol_name = "";
+        if let Epiq::Name(ref s) = *param.1 {
+            symbol_name = s;
         } else {
-            // 文字列じゃない場合は初期値があるとか、
-            // 他の可能性があるが今は実装しない
+            // 文字列じゃない場合は初期値があるとか、他の可能性があるが今は実装しない
         }
 
-        self.vm.borrow_mut().define(symbol_string, content_node.0);
+        self.vm.borrow_mut().define(symbol_name, content.0);
 
-
-        // paramsとargs、両方のリストを回していくが、
-        // ループの基準となるのはargs。
-        // paramsが途中でなくなっても知らん。
-        if *next_args_node.1 == Epiq::Unit {
-            // 最後なので終了
-            return;
+        // paramsとargs、両方のリストを回していく
+        // ループの基準となるのはargs。paramsが途中でなくなっても知らん。
+        if *next_args.1 != Epiq::Unit {
+            // 次にいく
+            self.assign_arguments(next_params, next_args, nest_level);
         }
-
-
-        // 次にいく
-        self.assign_arguments(next_params_node, next_args_node, nest_level
-        );
     }
 
     fn eval_tpiq(&self, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
