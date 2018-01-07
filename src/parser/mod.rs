@@ -145,7 +145,7 @@ impl<'a> Parser<'a> {
                 }
             },
             Has(Tokn::Lbkt) => {
-                let pidx = self.vm.borrow_mut().alloc(Epiq::Uit8(-1));
+                let pidx = UNIT_INDX; //self.vm.borrow_mut().alloc(Epiq::Uit8(-1));
                 let qidx = (self.parse_list())?;
                 push!(self, Epiq::Mpiq{o:">".to_string(), p: pidx, q: qidx })
             },
@@ -189,6 +189,7 @@ impl<'a> Parser<'a> {
         // ここはcomsume_tokenしない
         match self.current_token() {
             Has(Tokn::Lbkt) => self.parse_list(),
+            Has(Tokn::Crrt) => self.parse_mpiq(),
             _ => {
                 let l = (self.parse_accessing_term())?;
                 match self.current_token() {
