@@ -243,47 +243,34 @@ impl Walker {
     /// applyを通して呼ばれる
     /// 一方、eval_lambda_direct()は直接lambdaをevalした時('> |\)に通る
     fn eval_lambda(&self, input: Node<Rc<Epiq>>,
-                          lambda_env: usize, lambda_body: usize, args: Node<Rc<Epiq>>,
+                          env: usize, body: usize, args: Node<Rc<Epiq>>,
                           nest_level: u32) -> Node<Rc<Epiq>> {
         self.log_piq(nest_level, "eval_lambda", input.0);
-        // 1. bind p.p(環境)の順番に沿って、q(引数リスト)を当てはめていく
-        // まず環境を取得
-        let env_node = self.get_epiq(lambda_env);
-        let walked_env_box = self.walk_internal(env_node, nest_level + 1);
-        let walked_env_piq = walked_env_box.1;
 
-        if let Epiq::Envn(_, symbol_table) =*walked_env_piq {
-            // pは無視
-            // qはシンボルのリストになる
-            let params = self.get_epiq(symbol_table);
+        // 1. 環境を作成する
+        let walked_env_box = self.walked_node(env, nest_level);
 
-            // 新しい環境フレームを作る
-            // println!("borrow_mut: {:?}", 5);
+        if let Epiq::Envn(_, symbols) = *walked_env_box.1 {
+            let params = self.get_epiq(symbols);
             self.vm.borrow_mut().extend();
-
-            // 束縛を追加する
             self.assign_arguments(params, args, nest_level);
-
-            // 2. p.q(関数本体)をそのまま返却する
-            let lambda_body_node = self.get_epiq(lambda_body);
-
-            // walkを挟んでから返す
-            // TODO: walkにするとLambdaをそのまま返してしまうので、マクロのような扱いになる
-            // 実行したければevalしてから返す、
-            // しかしできればマクロ展開・関数適用を両方ともこの中でやってしまいたい。。。
-            // 今のところはひとまず関数適用しておく（普通にevalを通す）
-            // println!("apply: {:?}", "Lambdaの評価開始");
-            let walked_lambda_body_box = self.eval_internal(lambda_body_node, nest_level + 1);
-
-            // 環境フレームを削除する
-            // println!("borrow_mut: {:?}", 6);
-            self.vm.borrow_mut().pop();
-
-            self.log_piq(nest_level, "apply 正常終了: ", walked_lambda_body_box.0);
-            walked_lambda_body_box
         } else {
-            panic!("apply env_piqがTpiqじゃないのでエラー");
+            panic!("apply envがTpiqではありません");
         }
+
+        // 2. 関数本体をwalkを挟んでから返す
+        // TODO: walkにするとLambdaをそのまま返してしまうので、マクロのような扱いになる
+        // 実行したければevalしてから返す、
+        // しかしできればマクロ展開・関数適用を両方ともこの中でやってしまいたい。。。
+        // 今のところはひとまず関数適用しておく（普通にevalを通す）
+        let body_node = self.get_epiq(body);
+        let evaled_body = self.eval_internal(body_node, nest_level + 1);
+
+        // 3. 環境フレームを削除する
+        self.vm.borrow_mut().pop();
+
+        self.log_piq(nest_level, "apply 正常終了: ", evaled_body.0);
+        evaled_body
     }
 
     /// 直接Primをevalした時に通る(現在、基本的には何もしない)
@@ -525,6 +512,11 @@ impl Walker {
 
             _ => panic!("Epiq::Mpiqは>のみ"),
         }
+    }
+
+    fn walked_node(&self, i: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
+        let node = self.get_epiq(i);
+        self.walk_internal(node, nest_level + 1)
     }
 
     fn pval(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
