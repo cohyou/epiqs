@@ -100,8 +100,10 @@ impl Walker {
             r"\" => Epiq::Lmbd(p, q),
             _   => Epiq::Tpiq{o: o.to_string(), p, q},
         };
-        let mut borrow_mut_vm = self.vm.borrow_mut();
-        let new_epiq_index = borrow_mut_vm.alloc(new_epiq);
+        let new_epiq_index = {
+            let mut borrow_mut_vm = self.vm.borrow_mut();
+            borrow_mut_vm.alloc(new_epiq)
+        };
 
         self.get_epiq(new_epiq_index)
     }
