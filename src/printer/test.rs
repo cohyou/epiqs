@@ -289,5 +289,5 @@ fn evaled_list_syntax_sugar() {
 
 #[test]
 fn quote() {
-    print_evaled_str("'> || a", "a");
+    print_evaled_str("|| a", "a");
 }

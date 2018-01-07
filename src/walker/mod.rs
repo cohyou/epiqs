@@ -63,6 +63,8 @@ impl Walker {
 
         match *piq {
             Epiq::Eval(p, q) => self.eval(p, q, nest_level),
+            Epiq::Quot(_, q) => self.get_epiq(q),
+
             Epiq::Lpiq(p, q) => self.walk_piq(input, ":", p, q, nest_level),
             Epiq::Appl(p, q) => self.walk_piq(input, "!", p, q, nest_level),
             Epiq::Rslv(p, q) => self.walk_piq(input, "@", p, q, nest_level),
@@ -120,10 +122,10 @@ impl Walker {
             Epiq::Uit8(_) |
             Epiq::Name(_) |
             Epiq::Text(_) |
+            Epiq::Quot(..) |
             Epiq::Lpiq(..) => input,
 
             Epiq::Eval(p, q) => self.eval(p, q, nest_level), // こっちはあまり通らないかもしれない
-            Epiq::Quot(_, q) => self.get_epiq(q),
             Epiq::Appl(p, q) => self.eval_apply(input, p, q, nest_level),
             Epiq::Rslv(p, q) => self.eval_resolve(p, q, nest_level),
             Epiq::Cond(p, q) => self.eval_condition(input, "?", p, q, nest_level),
