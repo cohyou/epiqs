@@ -73,31 +73,30 @@ impl Walker {
         let q_node = self.get_epiq(q);
 
         let p_result = self.walk_internal(p_node, nest_level + 1);
-        let new_p = p_result.0;
-
         let q_result = self.walk_internal(q_node, nest_level + 1);
-        let new_q = q_result.0;
 
-        if new_p == p && new_q == q {
+        if p_result.0 == p && q_result.0 == q {
             input
         } else {
-            let new_epiq_index = {
-                let new_epiq = match o {
-                    ":" => Epiq::Lpiq(new_p, new_q),
-                    "!" => Epiq::Appl(new_p, new_q),
-                    "@" => Epiq::Rslv(new_p, new_q),
-                    "?" => Epiq::Cond(new_p, new_q),
-                    "%" => Epiq::Envn(new_p, new_q),
-                    "#" => Epiq::Bind(new_p, new_q),
-                    r"\" => Epiq::Lmbd(new_p, new_q),
-                    _   => Epiq::Tpiq{o: o.to_string(), p: new_p, q: new_q},
-                };
-                let mut borrow_mut_vm = self.vm.borrow_mut();
-                borrow_mut_vm.alloc(new_epiq)
-            };
-            let new_epiq_node = self.vm.borrow().get_epiq(new_epiq_index).clone();
-            new_epiq_node
+            self.walk_piq_internal(o, p_result.0, q_result.0)
         }
+    }
+
+    fn walk_piq_internal(&self, o: &str, p: NodeId, q: NodeId) -> Node<Rc<Epiq>> {
+        let new_epiq = match o {
+            ":" => Epiq::Lpiq(p, q),
+            "!" => Epiq::Appl(p, q),
+            "@" => Epiq::Rslv(p, q),
+            "?" => Epiq::Cond(p, q),
+            "%" => Epiq::Envn(p, q),
+            "#" => Epiq::Bind(p, q),
+            r"\" => Epiq::Lmbd(p, q),
+            _   => Epiq::Tpiq{o: o.to_string(), p, q},
+        };
+        let mut borrow_mut_vm = self.vm.borrow_mut();
+        let new_epiq_index = borrow_mut_vm.alloc(new_epiq);
+
+        self.get_epiq(new_epiq_index)
     }
 
     fn eval_internal<'a>(&self, input: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
