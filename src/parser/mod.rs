@@ -164,10 +164,7 @@ impl<'a> Parser<'a> {
             "#" => push!(self, Epiq::Bind(pidx, qidx)),
             "." => push!(self, Epiq::Accs(pidx, qidx)),
             r"\" => push!(self, Epiq::Lmbd(pidx, qidx)),
-
-            _ => {
-                push!(self, Epiq::Tpiq{o: otag.to_string(), p: pidx, q: qidx})
-            },
+            _ => push!(self, Epiq::Tpiq{o: otag.to_string(), p: pidx, q: qidx}),
         }
     }
 

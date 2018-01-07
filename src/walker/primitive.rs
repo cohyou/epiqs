@@ -7,7 +7,7 @@ macro_rules! unwrap_text {
             Epiq::Text(ref t) => t,
             _ => {
                 let from = $s.printer_printed($e.0);
-                panic!("{:?}からtextは取り出せません", from);
+                panic!("{}からtextは取り出せません", from);
             },
         }
     }}
@@ -19,7 +19,7 @@ macro_rules! unwrap_nmbr {
             Epiq::Uit8(n) => n,
             _ => {
                 let from = $s.printer_printed($e.0);
-                panic!("{:?}からnmbrは取り出せません", from);
+                panic!("{}からnmbrは取り出せません", from);
             },
         }
     }}
