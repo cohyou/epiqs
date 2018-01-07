@@ -77,15 +77,10 @@ impl Walker {
     }
 
     fn walk_piq(&self, input: Node<Rc<Epiq>>, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        // pとq両方をwalkしてみて、
-        // 結果が両方とも変わらなければそのまま返す、
+        // pとq両方をwalkして結果が両方とも変わらなければそのまま返す
         // そうでなければ新しくpiqを作って返す
-
-        let p_node = self.get_epiq(p);
-        let q_node = self.get_epiq(q);
-
-        let p_result = self.walk_internal(p_node, nest_level + 1);
-        let q_result = self.walk_internal(q_node, nest_level + 1);
+        let p_result = self.walked_node(p, nest_level);
+        let q_result = self.walked_node(q, nest_level);
 
         if p_result.0 == p && q_result.0 == q {
             input
@@ -142,12 +137,9 @@ impl Walker {
         }
     }
 
+    /// ひとまずpは無視
     fn eval(&self, _p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        // ひとまずpは無視
-
-        // そのまま返すとNG
         let q_node = self.get_epiq(q);
-
         let result = self.eval_internal(q_node, nest_level + 1);
 
         self.log_piq(nest_level, "eval: eval完前", q);
@@ -156,91 +148,46 @@ impl Walker {
         result
     }
 
+    /// p: lambda
+    /// q: arguments
     fn eval_apply(&self, input: Node<Rc<Epiq>>, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        // p: lambda q:arguments
-
-        let lambda_node = self.get_epiq(p);
-
-        let walked_lambda_box = self.walk_internal(lambda_node, nest_level + 1);
-        let walked_lambda_piq = walked_lambda_box.1;
-
-        let args_node = self.get_epiq(q);
-
-        let args = self.walk_internal(args_node, nest_level + 1);
+        let lambda = self.walked_node(p, nest_level);
+        let args = self.walked_node(q, nest_level);
 
         self.log_piq(nest_level, "args: ", args.0);
 
-        match *walked_lambda_piq {
-            Epiq::Lmbd(lambda_env, lambda_body) => {
-                self.eval_lambda(input, lambda_env, lambda_body, args, nest_level)
-            },
-
-            Epiq::Prim(ref n) => self.eval_primitive(input, args, n, nest_level),
-
-            _ => {
-                panic!("関数部分がlambdaでもprimでもないのでエラー");
-            },
+        match *lambda.1 {
+            Epiq::Lmbd(env, body) => self.eval_lambda(input, env, body, args, nest_level),
+            Epiq::Prim(ref n) => self.eval_primitive(input, n, args, nest_level),
+            _ => panic!("関数部分がlambdaでもprimでもないのでエラー"),
         }
     }
 
+    /// p: 用途未定。ひとまず無視
+    /// q: シンボルというか名前
     fn eval_resolve(&self, _p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        // p: 用途未定。ひとまず無視
-        // q: シンボルというか名前
-        let node = self.get_epiq(q);
-
-        let result = self.walk_internal(node, nest_level + 1);
-
-        if let Epiq::Name(ref n) = *result.1 {
-            let vm = self.vm.borrow();
-            match vm.resolve(n) {
-                Some(Some(res)) => res.clone().clone(),
-                _ => {
-                    panic!("resolve時に指定されたキーが見つからない: {:?}", n);
-                },
-            }
-        } else {
-            panic!("resolve時のキーがNameじゃないのでエラー");
+        let result = self.walked_node(q, nest_level);
+        let n = unwrap_name!(self, result);
+        match self.vm.borrow().resolve(n) {
+            Some(Some(res)) => res.clone().clone(),
+            _ => panic!("resolve時に指定されたキーが見つからない: {:?}", n),
         }
     }
 
+    /// ひとまずNoneを返しておく
+    /// 本来は中身もwalkしてから返すべき？
     fn eval_environment(&self, input: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        // ひとまずNoneを返しておく
-        // 本来は中身もwalkしてから返すべき？
         input
     }
 
     fn eval_bind(&self, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        let result;
-        if let Some((n, walked_q_val)) = {
+        let walked_p = self.walked_node(p, nest_level);
+        let name = unwrap_name!(self, walked_p);
 
-            let p_val = self.get_epiq(p);
+        let target = self.walked_node(q, nest_level);
 
-            let walked_p_val = self.walk_internal(p_val, nest_level + 1);
-            if let Epiq::Name(ref n) = *walked_p_val.1 {
-
-                let q_val = self.get_epiq(q);
-
-                let result = self.walk_internal(q_val, nest_level + 1);
-                let walked_q_val = result.0;
-                Some((n.clone(), walked_q_val.clone()))
-
-            } else {
-                None
-            }
-        } {
-            // println!("#.p is Name");
-            result = {
-                // println!("borrow_mut: {:?}", 3);
-                self.vm.borrow_mut().define(n.as_ref(), walked_q_val);
-                // println!("borrow_mut: {:?}", 4);
-                let new_index = UNIT_INDX; // self.vm.borrow_mut().alloc(Epiq::Unit);
-                self.get_epiq(new_index)
-            };
-
-            result
-        } else {
-            panic!("#.p is not Name");
-        }
+        self.vm.borrow_mut().define(name.as_ref(), target.0);
+        self.get_epiq(UNIT_INDX)
     }
 
     /// 直接lambdaをevalした時('> |\)に通る(現在、基本的には何もしない)
@@ -294,7 +241,7 @@ impl Walker {
 
     /// applyを通して呼ばれる
     /// 一方、eval_primitive_direct()は直接Primをevalした時に通る
-    fn eval_primitive(&self, input: Node<Rc<Epiq>>, args: Node<Rc<Epiq>>, n: &str, nest_level: u32) -> Node<Rc<Epiq>> {
+    fn eval_primitive(&self, input: Node<Rc<Epiq>>, n: &str, args: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
         self.log_piq(nest_level, "eval_primitive", input.0);
 
         match n.as_ref() {
@@ -455,13 +402,11 @@ impl Walker {
     fn eval_mpiq(&self, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
         match o.as_ref() {
             ">" => {
-                // ^> リストのeval
-                // リストの要素それぞれをevalする
+                // ^> リストの要素それぞれをevalする
                 // pは-1だとして処理する(最後の項目の評価結果が最終的な結果となる)
 
                 let eval_list_node = self.get_epiq(q);
                 let result = self.eval_list(eval_list_node, nest_level + 1);
-                // println!("eval_list result: {:?}", result);
                 result
             },
 
