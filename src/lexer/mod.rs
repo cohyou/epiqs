@@ -140,6 +140,7 @@ pub enum State {
     InnerStop,
     AfterStop,
 
+    InnerSpecialOtag,
     // InnerComment,
 }
 
@@ -328,6 +329,11 @@ fn stop_and_others() {
     lex_from_str_with_all_scanners(
         "a.1.d.2",
         "Chvc<a> Stop Nmbr<1> Stop Chvc<d> Stop Nmbr<2>");
+}
+
+#[test]
+fn special_carret_otag() {
+    lex_from_str_with_all_scanners("^[a]", "Crrt Lbkt Chvc<a> Rbkt");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {

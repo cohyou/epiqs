@@ -123,21 +123,26 @@ impl<'a> Parser<'a> {
 
     fn parse_mpiq(&mut self) -> Result<usize, Error> {
         self.consume_token(); // dispatcher Crrtのはず
-        if let Has(Tokn::Otag(ref otag)) = self.current_token() {
-            self.consume_token();
-            match otag.as_ref() {
-                // ^Tと^Fは特別扱い
-                "T" => push!(self, Epiq::Tval),
-                "F" => push!(self, Epiq::Fval),
-                _ => {
-                    // 現在は^Tか^Fしか認めていないが、将来のため
-                    let pidx = (self.parse_aexp())?;
-                    let qidx = (self.parse_aexp())?;
-                    push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx})
-                },
-            }
-        } else {
-            Err(Error::Unimplemented)
+        match self.current_token() {
+            Has(Tokn::Otag(ref otag)) => {
+                self.consume_token();
+                match otag.as_ref() {
+                    // ^Tと^Fは特別扱い
+                    "T" => push!(self, Epiq::Tval),
+                    "F" => push!(self, Epiq::Fval),
+                    _ => {
+                        let pidx = (self.parse_aexp())?;
+                        let qidx = (self.parse_aexp())?;
+                        push!(self, Epiq::Mpiq{o: otag.clone(), p: pidx, q: qidx})
+                    },
+                }
+            },
+            Has(Tokn::Lbkt) => {
+                let pidx = self.vm.borrow_mut().alloc(Epiq::Uit8(-1));
+                let qidx = (self.parse_list())?;
+                push!(self, Epiq::Mpiq{o:">".to_string(), p: pidx, q: qidx })
+            },
+            _ => Err(Error::Unimplemented),
         }
     }
 

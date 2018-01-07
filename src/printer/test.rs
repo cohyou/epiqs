@@ -273,10 +273,15 @@ fn print() {
 
 #[test]
 fn compare_texts() {
-    print_evaled_str(r#"@eq! ["a", "b"]"#, "^F");
+    print_evaled_str(r#"@eq! ["a" "b"]"#, "^F");
 }
 
 #[test]
 fn concat_texts() {
     print_evaled_str(r#"@concat! ["a", "b"]"#, r#""ab""#);
+}
+
+#[test]
+fn evaled_list_syntax_sugar() {
+    print_syntax_sugar("^[1 2 3]", "^> -1 [1 2 3]");
 }

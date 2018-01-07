@@ -38,7 +38,15 @@ impl Scanner for OtagScanner {
                 match c {
                     0 => ScanResult::Error,
                     _ if self.is_first_otag_letter(c) => push_into_mode!(InnerOtag),
+                    b'[' => push_into_mode!(InnerSpecialOtag),
                     _ => go_ahead!(),
+                }
+            },
+            State::InnerSpecialOtag => {
+                // 何が来ても終了
+                match c {
+                    0 => ScanResult::Error,
+                    _ => delimite!(),
                 }
             },
             State::InnerOtag => {
@@ -64,7 +72,12 @@ impl Scanner for OtagScanner {
                     _ => None,
                 }
             },
-
+            State::InnerSpecialOtag => {
+                match token_string.as_ref() {
+                    "[" => Some(Tokn::Lbkt),
+                    _ => None,
+                }
+            }
             State::InnerOtag => Some(Tokn::Otag(token_string)),
             _ => None,
         }
