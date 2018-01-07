@@ -128,7 +128,7 @@ impl Walker {
             Epiq::Eval(p, q) => self.eval(p, q, nest_level), // こっちはあまり通らないかもしれない
             Epiq::Appl(p, q) => self.eval_apply(input, p, q, nest_level),
             Epiq::Rslv(p, q) => self.eval_resolve(p, q, nest_level),
-            Epiq::Cond(p, q) => self.eval_condition(input, input_index, "?", p, q, nest_level),
+            Epiq::Cond(p, q) => self.eval_condition(input, "?", p, q, nest_level),
             Epiq::Envn(..) => self.eval_environment(input),
             Epiq::Bind(p, q) => self.eval_bind(p, q, nest_level),
             Epiq::Accs(p, q) => self.eval_access(input, p, q, nest_level),
@@ -362,40 +362,28 @@ impl Walker {
         }
     }
 
-    fn eval_condition(&self, input: Node<Rc<Epiq>>, input_index: usize,
-                             o: &str, p: usize, q: usize,
+    fn eval_condition(&self, input: Node<Rc<Epiq>>, o: &str, p: usize, q: usize,
                              nest_level: u32) -> Node<Rc<Epiq>> {
+        /// p: ^T or ^F(他の値の評価はひとまず考えない)
+        /// q: Lpiq、^Tならpを返し、^Fならqを返す
         self.log_piq(nest_level, "eval_condition", input.0);
 
-        // p: ^T or ^F(他の値の評価はひとまず考えない)
-        // q: Lpiq、^Tならpを返し、^Fならqを返す
-        let p_condition = self.get_epiq(p);
-
         // 条件節をwalk
-        // println!("condition: {:?}", "条件節をwalk");
-        let walked_condition = self.walk_internal(p_condition.clone(), nest_level + 1);
+        let cond = self.get_epiq(p);
+        let walked_cond = self.walk_internal(cond.clone(), nest_level + 1);
 
         // 値がwalk後に変化していたら付け替える
-        if walked_condition.0 == p_condition.0 {
+        if cond.0 == walked_cond.0 {
             let mut vm = self.vm.borrow_mut();
-            let node_mut = vm.get_epiq_mut(input_index);
-            node_mut.1 = Rc::new(Epiq::Tpiq{o:o.to_string(), p:walked_condition.0, q:q});
-            // println!("{:?} -> ({} {:?}){}condition eval後付け替え", *input.1, input_index, walked_condition_node.1, " ".repeat(lvl));
+            let node_mut = vm.get_epiq_mut(input.0);
+            node_mut.1 = Rc::new(Epiq::Tpiq{o:o.to_string(), p:walked_cond.0, q});
         }
 
-        let result_piq = self.get_epiq(q);
-        match *walked_condition.1 {
-            Epiq::Tval => {
-                let p_node = self.pval(result_piq);
-                self.walk_internal(p_node, nest_level + 1)
-            },
-            Epiq::Fval => {
-                let q_node = self.qval(result_piq);
-                self.walk_internal(q_node, nest_level + 1)
-            },
-            _ => {
-                panic!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_condition.1);
-            },
+        let result = self.get_epiq(q);
+        match *walked_cond.1 {
+            Epiq::Tval => self.walk_internal(self.pval(result), nest_level + 1),
+            Epiq::Fval => self.walk_internal(self.qval(result), nest_level + 1),
+            _ => panic!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_cond.1),
         }
     }
 
