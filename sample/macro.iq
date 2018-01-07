@@ -1,27 +1,27 @@
-'> ^> -1 [
-  |# macro |\ '% [otag p q] ^> -1 [
-    |? @eq! [@otag "="] |:
-       @eq! [@p @q] '>
+'> ^[
+  |# macro |\ '% [otag p q] ^[
+    |? @eq! [@otag "="]
+       |: @eq! [@p @q]
+          '> |? '> |= @otag "Match"
+                |: '> |? '> |= @p @q.p.p
+                         |: @q.p.q
+                            '> |? '> |= ; @q.q
+                                  |: ;
+                                     @macro! [@otag @p @q.q]
 
-    |? '> |= @otag "Match" |:
-       '> |? '> |= @p @q.p.p
-             |: @q.p.q
-                '> |? '> |= ; @q.q
-                      |: ;
-                         @macro! [@otag @p @q.q] '>
-    |Match @otag [
-       |: "Add" ^> -1 [@plus! [@p @q]]
-       "Html":
-          @concat! [
-             "<!DOCTYPE html><html>"
-             @macropiq! [@q.p]
-             @macropiq! [@q.q.p]
-             "</html>"
-          ]
+                   '> |Match @otag [
+                         |: "Add" || @plus! [@p @q]
+                         |: "Html"
+                            @concat! [
+                               "<!DOCTYPE html><html>"
+                               @macropiq! [@q.p]
+                               @macropiq! [@q.q.p]
+                               "</html>"
+                            ]
     ]
   ]
 
   |# macropiq |\ '% [piq] ^> -1 [@macro! [@piq.o @piq.p @piq.q]]
 
-  |Add 1 2
+  'Html [|A "p" |B |D "e" ["d"] ["q"]]
 ]
