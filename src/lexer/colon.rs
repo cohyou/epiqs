@@ -16,7 +16,7 @@ impl Scanner for ColonScanner {
                 }
             },
 
-            State::InnerName | State::InnerNumber => {
+            State::InnerName | State::ZeroNumber | State::InnerNumber => {
                 match c {
                     b':' => delimite_into_mode!(InnerColon), // 一度区切る
                     _ => go_ahead!(),
@@ -45,7 +45,7 @@ impl Scanner for ColonScanner {
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
             State::InnerName => Some(Tokn::Chvc(token_string)),
-            State::InnerNumber => Some(Tokn::Nmbr(token_string)),
+            State::ZeroNumber | State::InnerNumber => Some(Tokn::Nmbr(token_string)),
             State::AfterColon => Some(Tokn::Coln),
             _ => None,
         }

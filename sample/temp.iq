@@ -1,0 +1,19 @@
+
+  |Match 2 [0:"zero" 1:"one" 2:"two"]
+
+  'Html [
+      'Head [
+           'Title "title"
+      ]
+      'Body "hello world!"
+  ]
+             @macropiq! [@q.p]
+
+             "Head":
+                @concat! [
+                   "<head>"
+                   @macropiq! [@q.p]
+                   "</head>"
+                ]
+             "Body": @concat! ["<body>" "</body>"]
+             "Title": @concat! ["<title>" "</title>"]

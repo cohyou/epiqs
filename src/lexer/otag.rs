@@ -14,7 +14,7 @@ impl OtagScanner {
     fn is_otag_sign(&self, c: u8) -> bool {
         c == b':' || c == b'#' || c == b'%' || c == b'\\' ||
         c == b'@' || c == b'~' || c == b'>' || c == b'!' || c == b'.' ||
-        c == b'?'
+        c == b'?' || c == b'='
     }
 }
 

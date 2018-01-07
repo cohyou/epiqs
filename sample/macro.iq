@@ -1,14 +1,27 @@
 '> ^> -1 [
   |# macro |\ '% [otag p q] ^> -1 [
-    |? @eq! [@otag "Add"]
-       |: @plus! [@p @q]
-          '> |? @eq! [@otag "Html"]
-                |: @concat! ["<html>" @macro! [@q.q.p.o @q.q.p.p @q.q.p.q] "</html>"]
-                   '> |? @eq! [@otag "Body"]
-                         |: "<body></body>"
-                            "none"
+    |? @eq! [@otag "="] |:
+       @eq! [@p @q] '>
+
+    |? '> |= @otag "Match" |:
+       '> |? '> |= @p @q.p.p
+             |: @q.p.q
+                '> |? '> |= ; @q.q
+                      |: ;
+                         @macro! [@otag @p @q.q] '>
+    |Match @otag [
+       |: "Add" ^> -1 [@plus! [@p @q]]
+       "Html":
+          @concat! [
+             "<!DOCTYPE html><html>"
+             @macropiq! [@q.p]
+             @macropiq! [@q.q.p]
+             "</html>"
+          ]
+    ]
   ]
 
+  |# macropiq |\ '% [piq] ^> -1 [@macro! [@piq.o @piq.p @piq.q]]
+
   |Add 1 2
-  'Html ['Head "" 'Body ""]
 ]

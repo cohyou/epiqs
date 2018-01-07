@@ -363,11 +363,19 @@ impl Walker {
             "ltoreq" => self.le_or_eq_nmbr(args),
             "concat" => self.concat(args),
             "eq" => {
-                match *self.pval(args.clone()).1 {
+                let first = self.pval(args.clone());
+                match *first.1 {
                     Epiq::Uit8(n1) => self.eq_nmbr(args),
                     Epiq::Text(ref text1) => self.eq_text(args),
+                    Epiq::Unit => {
+                        let rest = self.qval(args);
+                        let second = self.pval(rest);
+                        let new_epiq = if *second.1 == Epiq::Unit { Epiq::Tval } else { Epiq::Fval };
+
+                        alloc_node!(self, new_epiq)
+                    }
                     _ => {
-                        panic!("primitive 1つ目の引数の型は数値/文字列のみだが違反している");
+                        panic!("primitive 1つ目の引数の型は数値/文字列のみだが違反している, {:?}", self.printer_printed(first.0));
                     },
                 }
             },
@@ -435,7 +443,7 @@ impl Walker {
                 }
             },
             _ => {
-                panic!("レシーバは今のところLpiq以外にも構造体とかが増えるはずだが、これから{:?}", *p_reciever);
+                panic!("{:?}.{:?}は現在取得できません", *p_reciever, *q_accessor);
             },
         }
     }
