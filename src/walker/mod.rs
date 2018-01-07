@@ -5,6 +5,18 @@ macro_rules! alloc_node {
     }}
 }
 
+macro_rules! unwrap_name {
+    ($s:ident, $e:expr) => {{
+        match *$e.1 {
+            Epiq::Name(ref t) => t,
+            _ => {
+                let from = $s.printer_printed($e.0);
+                panic!("{:?}からnameは取り出せません", from);
+            },
+        }
+    }}
+}
+
 mod primitive;
 
 use std::rc::Rc;
@@ -276,16 +288,7 @@ impl Walker {
     /// 直接Primをevalした時に通る(現在、基本的には何もしない)
     /// 一方、eval_primitive()はapplyを通して呼ばれる
     fn eval_primitive_direct(&self, input: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        /*
-        println!("primitive");
-
-        // まずは引き算
-
-        Result::MakeEpiq(Some(Epiq::Uit8(3)))
-        */
-        // と思ったけど、これはapplyから呼ばれるので、ここを通ることはなさそう
-        // println!("Primはapplyから呼ばれるので、ここを通ることはなさそう");
-        // Result::MakeEpiq(None)
+        // println!("primitive");
         input
     }
 
@@ -326,64 +329,36 @@ impl Walker {
     }
 
 
-    fn eval_access(&self, input: Node<Rc<Epiq>>,
-                          p: usize, q: usize,
+    fn eval_access(&self, input: Node<Rc<Epiq>>, p: usize, q: usize,
                           nest_level: u32) -> Node<Rc<Epiq>> {
         self.log_piq(nest_level, "eval_access", input.0);
-        // p: レシーバ
-        // q: アクセッサ
-        let Node(_, p_reciever) = self.walk_internal(self.get_epiq(p), nest_level + 1);
-        let Node(_, q_accessor) = self.walk_internal(self.get_epiq(q), nest_level + 1);
+
+        // p: レシーバ q: アクセッサ
+        let p_reciever = self.walked_node(p, nest_level);
+        let q_accessor = self.walked_node(q, nest_level);
 
         // レシーバの種類によってできることが変わる
-        match *p_reciever {
+        match *p_reciever.1 {
             Epiq::Lpiq(p, q) => {
-                // Lpiqならば、pとqが使える、それ以外は無理
-                if let Epiq::Name(ref n) = *q_accessor {
-                    match n.as_ref() {
-                        "o" => alloc_node!(self, Epiq::Text(":".to_string())),
-                        "p" => {
-                            let p_node = self.get_epiq(p);
-                            self.walk_internal(p_node, nest_level + 1)
-                        },
-                        "q" => {
-                            let q_node = self.get_epiq(q);
-                            self.walk_internal(q_node, nest_level + 1)
-                        },
-                        _ => {
-                            self.log("Lpiqならばpとq以外はエラー");
-                            input
-                        },
-                    }
-                } else {
-                    panic!("アクセッサがNameではないのでエラー");
+                // Lpiqならば、pとqのみが使える
+                let n = unwrap_name!(self, q_accessor);
+                match n.as_ref() {
+                    "p" => self.walked_node(p, nest_level),
+                    "q" => self.walked_node(q, nest_level),
+                    _ => panic!("Lpiqならばpとq以外はエラー"),
                 }
             },
             Epiq::Tpiq{ref o,p,q} => {
-                // Lpiqならば、pとqが使える、それ以外は無理
-                if let Epiq::Name(ref n) = *q_accessor {
-                    match n.as_ref() {
-                        "o" => alloc_node!(self, Epiq::Text(o.to_string())),
-                        "p" => {
-                            let p_node = self.get_epiq(p);
-                            self.walk_internal(p_node, nest_level + 1)
-                        },
-                        "q" => {
-                            let q_node = self.get_epiq(q);
-                            self.walk_internal(q_node, nest_level + 1)
-                        },
-                        _ => {
-                            self.log("Tpiqならばoとpとq以外はエラー");
-                            input
-                        },
-                    }
-                } else {
-                    panic!("アクセッサがNameではないのでエラー");
+                // Tpiqならば、pとqが使える
+                let n = unwrap_name!(self, q_accessor);
+                match n.as_ref() {
+                    "o" => alloc_node!(self, Epiq::Text(o.to_string())),
+                    "p" => self.walked_node(p, nest_level),
+                    "q" => self.walked_node(q, nest_level),
+                    _ => panic!("Tpiqならばoとpとq以外はエラー"),
                 }
             },
-            _ => {
-                panic!("{:?}.{:?}は現在取得できません", *p_reciever, *q_accessor);
-            },
+            _ => panic!("{:?}に{:?}というアクセッサはありません", *p_reciever.1, *q_accessor.1),
         }
     }
 
