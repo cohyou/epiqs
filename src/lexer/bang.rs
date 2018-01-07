@@ -1,6 +1,5 @@
 use core::*;
 use lexer::*;
-use util::*;
 
 #[derive(Debug)]
 pub struct BangScanner;

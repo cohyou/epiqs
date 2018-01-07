@@ -9,18 +9,16 @@ mod error;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::usize::MAX;
 use core::*;
 use lexer::*;
 use self::error::Error;
 use self::TokenState::*;
 
-
 const UNIT_INDX: usize = 0;
 const K: usize = 3;
 
 #[derive(Eq, PartialEq, Clone, Debug)]
-enum TokenState {
+pub enum TokenState {
     SOT, // Start Of Tokens
     Has(Tokn),
     EOT, // End Of Tokens
@@ -34,7 +32,7 @@ pub struct Parser<'a> {
     lexer: Lexer<'a, 'a>,
     vm: Rc<RefCell<Heliqs>>,
     // state: State,
-    current_token: RefCell<TokenState>,
+    // current_token: RefCell<TokenState>,
     // aexp_tokens: Vec<Vec<Tokn>>,
 
     lookahead: [TokenState; K],
@@ -47,7 +45,7 @@ impl<'a> Parser<'a> {
             lexer: lexer,
             vm: vm,
             // state: State::Aexp,
-            current_token: RefCell::new(SOT),
+            // current_token: RefCell::new(SOT),
             // aexp_tokens: vec![vec![]],
             lookahead: Default::default(),
             p: 0,
@@ -90,7 +88,7 @@ impl<'a> Parser<'a> {
                 let l = (self.parse_expression())?;
                 match self.current_token() {
                     Has(Tokn::Coln) => self.parse_cons(l),
-                    t @ _ => Ok(l),
+                    _ => Ok(l),
                 }
             },
         }
@@ -172,7 +170,7 @@ impl<'a> Parser<'a> {
                 let new_cons = (self.parse_cons(qidx))?;
                 push!(self, Epiq::Lpiq(pidx, new_cons))
             },
-            t @ _ => push!(self, Epiq::Lpiq(pidx, qidx)),
+            _ => push!(self, Epiq::Lpiq(pidx, qidx)),
         }
     }
 
@@ -186,7 +184,7 @@ impl<'a> Parser<'a> {
                 let l = (self.parse_accessing_term())?;
                 match self.current_token() {
                     Has(Tokn::Bang) => self.parse_apply(l),
-                    t @ _ => Ok(l),
+                    _ => Ok(l),
                 }
             }
         }
@@ -219,7 +217,7 @@ impl<'a> Parser<'a> {
         let l = (self.parse_term())?;
         match self.current_token() {
             Has(Tokn::Stop) => self.parse_accessor(l),
-            t @ _ => Ok(l),
+            _ => Ok(l),
         }
     }
 
@@ -234,7 +232,7 @@ impl<'a> Parser<'a> {
                 let new_cons = (self.parse_accessor(new_left))?;
                 push!(self, Epiq::Eval(UNIT_INDX, new_cons))
             },
-            t @ _ => {
+            _ => {
                 let id = self.vm.borrow_mut().alloc(Epiq::Accs(left, qidx));
                 push!(self, Epiq::Eval(UNIT_INDX, id))
             },

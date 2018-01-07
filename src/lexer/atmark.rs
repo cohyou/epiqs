@@ -1,6 +1,5 @@
 use core::*;
 use lexer::*;
-use util::*;
 
 #[derive(Debug)]
 pub struct AtmarkScanner;
@@ -19,7 +18,7 @@ impl Scanner for AtmarkScanner {
         }
     }
 
-    fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
+    fn return_token(&self, state: State, _token_string: String) -> Option<Tokn> {
         match state {
             State::Normal => Some(Tokn::Atsm),
             _ => None,

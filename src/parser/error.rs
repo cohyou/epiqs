@@ -1,10 +1,10 @@
-use core::*;
+// use core::*;
 use super::TokenState;
 
 #[derive(Debug)]
 pub enum Error {
-    UnknownError(u8),
-    TokenError(Tokn),
+    // UnknownError(u8),
+    // TokenError(Tokn),
     // Int8CastError,
     // TextError,
     // NotAexpError,
@@ -14,9 +14,9 @@ pub enum Error {
     // NotTrueListError,
     // NotDebruijnIndexError,
     // Next(String),
-    Expression(TokenState),
+    // Expression(TokenState),
     TpiqSingle(TokenState),
-    
-    NotMatchError,
+
+    // NotMatchError,
     Unimplemented,
 }

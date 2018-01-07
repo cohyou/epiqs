@@ -109,7 +109,7 @@ impl Walker {
     fn eval_internal<'a>(&self, input: Node<Rc<Epiq>>, nest_level: u32) -> Node<Rc<Epiq>> {
         self.log_piq(nest_level, "eval_internal", input.0);
 
-        let Node(input_index, piq) = input.clone();
+        let Node(_, piq) = input.clone();
 
         match *piq {
             Epiq::Unit |
@@ -133,7 +133,7 @@ impl Walker {
             Epiq::Tpiq{ref o, p, q} => self.eval_tpiq(o, p, q, nest_level),
             Epiq::Mpiq{ref o, p, q} => self.eval_mpiq(o, p, q, nest_level),
 
-            _ => panic!("eval_internal: 無効なEpiq"),
+            // _ => panic!("eval_internal: 無効なEpiq"),
         }
     }
 
@@ -254,8 +254,8 @@ impl Walker {
             "eq" => {
                 let first = self.pval(args.clone());
                 match *first.1 {
-                    Epiq::Uit8(n1) => self.eq_nmbr(args),
-                    Epiq::Text(ref text1) => self.eq_text(args),
+                    Epiq::Uit8(_) => self.eq_nmbr(args),
+                    Epiq::Text(_) => self.eq_text(args),
                     Epiq::Unit => {
                         let rest = self.qval(args);
                         let second = self.pval(rest);
@@ -399,7 +399,7 @@ impl Walker {
         macro_result
     }
 
-    fn eval_mpiq(&self, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
+    fn eval_mpiq(&self, o: &str, _p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
         match o.as_ref() {
             ">" => {
                 // ^> リストの要素それぞれをevalする
