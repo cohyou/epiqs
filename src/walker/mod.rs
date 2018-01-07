@@ -21,32 +21,26 @@ pub struct Walker {
 
 impl Walker {
     pub fn new(vm: Rc<RefCell<Heliqs>>) -> Walker {
-        Walker {
-            vm: vm,
-        }
+        Walker { vm: vm, }
     }
 
     pub fn walk(&self) {
         println!("\n");
 
-        if let Some((entry, eee)) = {
-            let borrowed_vm = self.vm.borrow();
-            if let Some(entry) = borrowed_vm.entry() {
-                let Node(e0, e1) = self.get_epiq(entry);
-                let eee = (entry, Node(e0, e1.clone()));
-                Some(eee)
-            } else {
-                None
-            }
-        } {
-            let walked = self.walk_internal(eee, 0);
-            let result = walked.0;
-            if result != entry {
-                // なんらかの変化があったので反映する必要がある
-                // ここだと、entrypointを変更する
-                // // println!("borrow_mut: {:?}", 1);
-                self.vm.borrow_mut().set_entry(result);
-            }
+        let entry = self.get_entry_node();
+        let result = self.walk_internal(entry.clone(), 0);
+
+        // 変化があればentryを変更する
+        if result.0 != entry.0 {
+            self.vm.borrow_mut().set_entry(result.0);
+        }
+    }
+
+    fn get_entry_node(&self) -> Node<Rc<Epiq>> {
+        if let Some(node) = self.vm.borrow().entry().map(|entry| self.get_epiq(entry)) {
+            node
+        } else {
+            panic!("entryが正しく取得できませんでした");
         }
     }
 
