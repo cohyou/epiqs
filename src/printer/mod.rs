@@ -37,7 +37,7 @@ impl Printer {
             Epiq::Text(ref n) => format!("\"{}\"", n),
             Epiq::Prim(ref n) => format!("Prim({})", n),
             Epiq::Tpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
-            Epiq::Mpiq { ref o, p, q } => self.print_piq(o, p, q, nest_level),
+            Epiq::Mpiq { ref o, p, q } => self.print_piq(&format!("^{}", o), p, q, nest_level),
             Epiq::Eval(p, q) => self.print_piq(">", p, q, nest_level),
             Epiq::Lpiq(p, q) => self.print_piq(":", p, q, nest_level),
             Epiq::Appl(p, q) => self.print_piq("!", p, q, nest_level),
