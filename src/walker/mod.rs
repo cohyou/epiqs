@@ -335,7 +335,7 @@ impl Walker {
         match *walked_cond.1 {
             Epiq::Tval => self.walk_internal(self.pval(result), nest_level + 1),
             Epiq::Fval => self.walk_internal(self.qval(result), nest_level + 1),
-            _ => panic!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", walked_cond.1),
+            _ => panic!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", self.printer_printed(walked_cond.0)),
         }
     }
 
