@@ -117,7 +117,8 @@ impl<'a> Parser<'a> {
             let qidx = (self.parse_aexp())?;
             self.match_otag(pidx, qidx, otag)
         } else {
-            Err(Error::Unimplemented)
+            // Err(Error::Unimplemented)
+            panic!("parse_tpiq {:?}はOtagではありません", self.current_token());
         }
     }
 
@@ -142,7 +143,7 @@ impl<'a> Parser<'a> {
                 let qidx = (self.parse_list())?;
                 push!(self, Epiq::Mpiq{o:">".to_string(), p: pidx, q: qidx })
             },
-            _ => Err(Error::Unimplemented),
+            _ => panic!("parse_mpiq {:?}がOtag/Lbktではありません", self.current_token()) /*Err(Error::Unimplemented)*/,
         }
     }
 
@@ -274,7 +275,7 @@ impl<'a> Parser<'a> {
             Has(Tokn::Dbqt) => self.parse_text(),
             Has(Tokn::Chvc(ref s)) => self.parse_name(s),
             Has(Tokn::Nmbr(ref s)) => self.parse_number(s),
-            _ => Err(Error::Unimplemented),
+            _ => panic!("parse_literal {:?}がSmcl/Dbqt/Chvc/Nmbrではありません", self.current_token())/*Err(Error::Unimplemented)*/,
         }
     }
 
