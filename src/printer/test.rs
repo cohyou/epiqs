@@ -123,7 +123,7 @@ fn condition() {
 fn exec_func() {
     // print_str(r"|% ; ;", ";a")
     // print_str(r"|> ; |! |\ |% ; ; 1 ;", ";a")
-    print_evaled_str(r"|> ; |! |\ |% ; [a b c] |> ; ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
+    print_evaled_str(r"|> ; |! |\ |% ; [a b c] ^> -1 [|@ ; c |@ ; b] [6667 6668 6669]", "6668")
 }
 
 
@@ -141,56 +141,6 @@ fn primitive_function() {
 #[test]
 #[ignore]
 fn tarai() {
-    /*
-    print_evaled_str(
-        r"|> ; ^> -1 [
-          |# abc |\ |% ; [x] ^> -1 [|@ ; x]
-          |! |> ; |@ ; abc [8888]
-        ]",
-        "8888",
-    );
-    */
-
-    /*
-    print_evaled_str(
-        r"|> ; ^> -1 [
-          |# abc |\ |% ; [x]
-                    ^> -1 [
-                       |? |> ; |! |> ; |@ ; ltoreq [|> ; |@ ; x 10]
-                          |: 1234
-                             4321
-                       ]
-          |! |> ; |@ ; abc [8888]
-        ]",
-        "8888",
-    );
-    */
-
-    // (defun tak (x y z)
-    //   (if (<= x y)
-    //       y
-    //       (tak (tak (1- x) y z)
-    //            (tak (1- y) z x)
-    //            (tak (1- z) x y))))
-    // (tak 12 6 0)
-
-    /*
-    print_evaled_str(
-        r"|> ; ^> -1
-        [
-            |# recursive |\ |% ; [x]
-                      ^> -1 [
-                         |? |> ; |! |> ; |@ ; ltoreq [|> ; |@ ; x 0]
-                            |: ^T
-                               |> ; |! |> ; |@ ; recursive [0]
-                      ]
-
-            |! |> ; |@ ; recursive [1]
-        ]",
-        r";",
-    );
-    */
-
     print_evaled_str(
         r"|> ; ^> -1
         [
@@ -282,11 +232,13 @@ fn resolve_syntax_sugar() {
 }
 
 #[test]
+#[ignore]
 fn apply_syntax_sugar() {
     print_syntax_sugar("abc! [1 2]", "'> |! abc [1 2]");
 }
 
 #[test]
+#[ignore]
 fn resolve_and_apply_syntax_sugar() {
     print_syntax_sugar("@abc! [1 3]", "'> |! '> '@ abc [1 3]");
 }
@@ -302,11 +254,13 @@ fn nested_lpiq() {
 }
 
 #[test]
+#[ignore]
 fn accessor() {
     print_syntax_sugar("a.b", "'> |. a b");
 }
 
 #[test]
+#[ignore]
 fn nested_accessor() {
     print_syntax_sugar("a.b.c", " '> |. '> |. a b c");
 }

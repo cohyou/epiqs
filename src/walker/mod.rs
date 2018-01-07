@@ -159,7 +159,7 @@ impl Walker {
         match *lambda.1 {
             Epiq::Lmbd(env, body) => self.eval_lambda(input, env, body, args, nest_level),
             Epiq::Prim(ref n) => self.eval_primitive(input, n, args, nest_level),
-            _ => panic!("関数部分がlambdaでもprimでもないのでエラー"),
+            _ => panic!("関数部分がlambdaでもprimでもないのでエラー: {:?}", lambda.1),
         }
     }
 
