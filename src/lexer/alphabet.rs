@@ -26,6 +26,7 @@ impl Scanner for AlphabetScanner {
                     _ if is_whitespace(c) => finish!(),
                     _ if is_token_end_delimiter(c) => delimite!(),
                     _ if is_alphanumeric(c) => push!(),
+                    b'-' => push!(),
                     _ => ScanResult::Error,
                 }
             },
