@@ -60,6 +60,17 @@ impl Walker {
         alloc_node!(self, new_epiq)
     }
 
+    pub fn eq_name(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        let t1 = self.first(args.clone());
+        let name1 = unwrap_name!(self, t1);
+
+        let t2 = self.second(args.clone());
+        let name2 = unwrap_name!(self, t2);
+
+        let new_epiq = if name1 == name2 { Epiq::Tval } else { Epiq::Fval };
+        alloc_node!(self, new_epiq)
+    }
+
     pub fn print(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
         let t = self.first(args.clone());
         let text = unwrap_text!(self, t);
@@ -102,15 +113,16 @@ impl Walker {
     fn concat_internal(&self, args: Node<Rc<Epiq>>, accum: &str) -> Node<Rc<Epiq>> {
         let t = self.first(args.clone());
         let text = match *t.1 {
-            Epiq::Text(ref tt) => tt,
-            Epiq::Name(ref tt) => tt,
+            Epiq::Text(ref tt) => tt.clone(),
+            Epiq::Name(ref tt) => tt.clone(),
+            Epiq::Uit8(n) => n.to_string(),
             _ => {
                 let from = self.printer_printed(t.0);
                 panic!("{}からtextは取り出せません", from);
             },
         };
 
-        let accuming = accum.to_string() + text;
+        let accuming = accum.to_string() + &text;
         match *self.qval(args.clone()).1 {
             Epiq::Unit => alloc_node!(self, Epiq::Text(accuming)),
             _ => self.concat_internal(self.qval(args.clone()), &accuming),
