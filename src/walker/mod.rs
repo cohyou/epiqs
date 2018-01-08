@@ -37,7 +37,7 @@ impl Walker {
     }
 
     pub fn walk(&self) {
-        println!("\n");
+        // println!("\n");
 
         let entry = self.get_entry_node();
         let result = self.walk_internal(entry.clone(), 0);

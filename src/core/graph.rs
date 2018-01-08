@@ -54,7 +54,7 @@ impl SymbolTable {
 
     fn resolve_internal(&self, name: &str, frame: usize) -> Option<Option<NodeId>> {
         if let Some(&( _, Some(r) )) = self.table[frame].iter().find(|&&(ref n, _)| n == name) {
-            // println!("resolve 見つかりました {:?} {:?}", name, self.table);
+            // println!("resolve 見つかりました {:?} {:?}\n", name, self.table);
             Some(Some(r))
         } else {
             if frame == 0 {
