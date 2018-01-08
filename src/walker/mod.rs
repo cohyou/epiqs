@@ -72,7 +72,8 @@ impl Walker {
             Epiq::Envn(p, q) => self.walk_piq(input, "%", p, q, nest_level),
             Epiq::Bind(p, q) => self.walk_piq(input, "#", p, q, nest_level),
             Epiq::Lmbd(p, q) => self.walk_piq(input, r"\", p, q, nest_level),
-            Epiq::Tpiq{ref o, p, q} => self.walk_piq(input, o, p, q, nest_level),
+            Epiq::Tpiq{ref o, p, q} => self.eval_tpiq(o, p, q, nest_level),
+            // Epiq::Tpiq{ref o, p, q} => self.walk_piq(input, o, p, q, nest_level),
 
             _ => input,
         }
