@@ -1,0 +1,1 @@
+cargo run sample/macro.iq | sed 's/^"\(.*\)"$/\1/' > sample/sample.html; open sample/sample.html
