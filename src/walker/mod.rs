@@ -333,8 +333,8 @@ impl Walker {
 
         let result = self.get_epiq(q);
         match *walked_cond.1 {
-            Epiq::Tval => self.walk_internal(self.pval(result), nest_level + 1),
-            Epiq::Fval => self.walk_internal(self.qval(result), nest_level + 1),
+            Epiq::Tval => self.eval_internal(self.pval(result), nest_level + 1),
+            Epiq::Fval => self.eval_internal(self.qval(result), nest_level + 1),
             _ => panic!("condtion 評価結果は^Tか^Fだが{:?}なのでエラー", self.printer_printed(walked_cond.0)),
         }
     }
@@ -403,7 +403,8 @@ impl Walker {
         let args_second = self.vm.borrow_mut().alloc(Epiq::Lpiq(arg2_node.0, args_last));
         let args_first = self.vm.borrow_mut().alloc(Epiq::Lpiq(arg1, args_second));
         let appl = self.vm.borrow_mut().alloc(Epiq::Appl(macrocro.0, args_first));
-        let appl_node = self.get_epiq(appl);
+        let eval = self.vm.borrow_mut().alloc(Epiq::Eval(UNIT_INDX, appl));
+        let appl_node = self.get_epiq(eval);
 
         let macro_result = self.eval_internal(appl_node, nest_level + 1);
         macro_result
