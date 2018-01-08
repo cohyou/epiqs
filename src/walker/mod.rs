@@ -297,7 +297,7 @@ impl Walker {
                 match n.as_ref() {
                     "p" => self.walked_node(p, nest_level),
                     "q" => self.walked_node(q, nest_level),
-                    _ => panic!("Lpiqならばpとq以外はエラー"),
+                    _ => panic!("Lpiqに{:?}というアクセッサはありません p/q以外はエラー {:?}", n, self.printer_printed(p_reciever.0)),
                 }
             },
             Epiq::Tpiq{ref o,p,q} => {
