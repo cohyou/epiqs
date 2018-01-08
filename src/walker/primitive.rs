@@ -101,7 +101,14 @@ impl Walker {
 
     fn concat_internal(&self, args: Node<Rc<Epiq>>, accum: &str) -> Node<Rc<Epiq>> {
         let t = self.first(args.clone());
-        let text = unwrap_text!(self, t);
+        let text = match *t.1 {
+            Epiq::Text(ref tt) => tt,
+            Epiq::Name(ref tt) => tt,
+            _ => {
+                let from = self.printer_printed(t.0);
+                panic!("{}からtextは取り出せません", from);
+            },
+        };
 
         let accuming = accum.to_string() + text;
         match *self.qval(args.clone()).1 {
