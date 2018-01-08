@@ -358,9 +358,11 @@ impl Walker {
     fn assign_arguments(&self, params: Node<Rc<Epiq>>, args: Node<Rc<Epiq>>, nest_level: u32) {
         // arguments_piqはリストのはずなので、一つ一つ回して定義していく
         self.log_piq(nest_level, "assign_arguments", params.0);
-
-        let content = self.pval(args.clone());
-        let next_args = self.qval(args);
+        
+        // 引数が必要ない場合は即終了
+        if *params.1 == Epiq::Unit {
+            return;
+        }
 
         let param = self.pval(params.clone());
         let next_params = self.qval(params);
@@ -371,6 +373,9 @@ impl Walker {
         } else {
             // 文字列じゃない場合は初期値があるとか、他の可能性があるが今は実装しない
         }
+
+        let content = self.pval(args.clone());
+        let next_args = self.qval(args);
 
         self.vm.borrow_mut().define(symbol_name, content.0);
 
