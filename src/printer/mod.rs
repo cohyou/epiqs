@@ -88,7 +88,7 @@ pub fn evaled_str(left: &str) -> String {
     walker.walk();
 
     let printer = Printer::new(vm3);
-    printer.print().to_string()
+    printer.print()
 }
 
 pub fn print_evaled_str(left: &str, right: &str) {
@@ -116,8 +116,4 @@ pub fn only_evaluate(s: &str) {
 
     let walker = Walker::new(vm2);
     walker.walk();
-}
-
-fn craete_vm<'a>() -> Rc<RefCell<Heliqs>> {
-    Rc::new(RefCell::new(Heliqs::new()))
 }
