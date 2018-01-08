@@ -257,11 +257,13 @@ impl Walker {
             "print" => self.print(args),
             "ltoreq" => self.le_or_eq_nmbr(args),
             "concat" => self.concat(args),
+            "dbqt" => self.dbqt(args),
             "eq" => {
                 let first = self.pval(args.clone());
                 match *first.1 {
                     Epiq::Uit8(_) => self.eq_nmbr(args),
                     Epiq::Text(_) => self.eq_text(args),
+                    Epiq::Name(_) => self.eq_name(args),
                     Epiq::Unit => {
                         let rest = self.qval(args);
                         let second = self.pval(rest);

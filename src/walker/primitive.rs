@@ -117,6 +117,9 @@ impl Walker {
         }
     }
 
+    pub fn dbqt(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
+        alloc_node!(self, Epiq::Text("\"".to_string()))
+    }
 
     fn first(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
         self.pval(piq.clone())
