@@ -108,7 +108,8 @@ pub use self::colon::ColonScanner;
 pub use self::stop::StopScanner;
 
 pub struct Lexer<'a, 'b> {
-    iter: &'a mut Iterator<Item=u8>,
+    iter: Option<&'a mut Iterator<Item=u8>>,
+    iter2: Option<&'a mut Iterator<Item=::std::io::Result<u8>>>,
     current_char: u8,
     state: Cell<State>,
     token_bytes: RefCell<Vec<u8>>,
@@ -179,15 +180,29 @@ const FIRST_CHAR: u8 = 255;
 impl<'a, 'b> Lexer<'a, 'b> {
     pub fn new<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
     where I: Iterator<Item=u8> {
-        Lexer { iter: iter, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
+        Lexer { iter: Some(iter), iter2: None, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
+            token_bytes: RefCell::new(vec![]), scanners: scanners, }
+    }
+
+    pub fn new2<I>(iter2: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
+    where I: Iterator<Item=::std::io::Result<u8>> {
+        Lexer { iter: None, iter2: Some(iter2), current_char: FIRST_CHAR, state: Cell::new(State::Normal),
             token_bytes: RefCell::new(vec![]), scanners: scanners, }
     }
 
     fn consume_char(&mut self) {
-        if let Some(c) = self.iter.next() {
-            self.current_char = c;
-        } else {
-            self.current_char = 0; // EOF
+        if let Some(ref mut iter) = self.iter {
+            if let Some(c) = iter.next() {
+                self.current_char = c;
+            } else {
+                self.current_char = 0; // EOF
+            }
+        } else if let Some(ref mut iter) = self.iter2 {
+            if let Some(Ok(c)) = iter.next() {
+                self.current_char = c;
+            } else {
+                self.current_char = 0; // EOF
+            }
         }
     }
 

@@ -2,6 +2,8 @@ mod test;
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::fs::File;
+use std::io::{Read, BufReader};
 
 use core::*;
 use lexer::*;
@@ -78,6 +80,20 @@ pub fn evaled_str(left: &str) -> String {
     let scanners: &Vec<&Scanner> = &all_scanners!();
     let lexer = Lexer::new(&mut iter, scanners);
 
+    evaled_lexer(lexer)
+}
+
+pub fn evaled_reader(file_name: &str) -> String {
+    let file = File::open(file_name).unwrap();
+    let mut bytes = BufReader::new(file).bytes();
+
+    let scanners: &Vec<&Scanner> = &all_scanners!();
+    let lexer = Lexer::new2(&mut bytes, scanners);
+
+    evaled_lexer(lexer)
+}
+
+fn evaled_lexer<'a>(lexer :Lexer<'a, 'a>) -> String {
     let vm = Rc::new(RefCell::new(Heliqs::new()));
     let vm2 = vm.clone();
     let vm3 = vm.clone();
