@@ -32,9 +32,16 @@ fn exec() -> Result<Vec<String>, Box<Error>> {
 fn main() {
     print_str("abc", "abc");
 
-    /*
-    match exec() {
-        _ => println!("{:?}", "finished"),
+    if args.len() >= 2 {
+        let file_name = &args[1];
+        // let file = File::open(file_name).unwrap();
+        // let reader = BufReader::new(file);
+        println!("{}", evaled_reader("sample/macro.iq"));
+        // let mut s = String::new();
+        // file.read_to_string(&mut s).unwrap();
+        // println!("{}", evaled_str(&s));
+    } else {
+        println!("{}", "sorry, REPL is now developing, please wait a bit...");
     }
     */
 }
