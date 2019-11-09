@@ -1,3 +1,5 @@
+const LEXER_DEBUGGING: bool = false;
+
 macro_rules! push_into_mode {
     ($e:ident) => {{
         let opt = vec![
@@ -13,29 +15,37 @@ macro_rules! push {
     }}
 }
 
-macro_rules! finish {
-    () => {{
+macro_rules! finish_into_mode {
+    ($e:ident) => {{
         let opts = vec![
             ScanOption::ClearBytes,
-            ScanOption::ChangeState(State::Normal),
+            ScanOption::ChangeState(State::$e),
             ScanOption::ConsumeChar,
         ];
         ScanResult::Finish(opts)
     }}
 }
 
+macro_rules! finish {
+    () => { finish_into_mode!(Normal) }
+}
+
 macro_rules! go_ahead {
     () => { ScanResult::Continue(vec![]) }
 }
 
-macro_rules! delimite {
-    () => {{
+macro_rules! delimite_into_mode {
+    ($e:ident) => {{
         let opts = vec![
             ScanOption::ClearBytes,
-            ScanOption::ChangeState(State::Normal)
+            ScanOption::ChangeState(State::$e)
         ];
         ScanResult::Finish(opts)
     }}
+}
+
+macro_rules! delimite {
+    () => { delimite_into_mode!(Normal) }
 }
 
 macro_rules! next_char {
@@ -43,24 +53,26 @@ macro_rules! next_char {
 }
 
 macro_rules! print_lexer_info {
-    ($slf:ident, $e:ident) => {/*{
-        let s = $slf.state.get();
-        let c = $slf.current_char;
-        let debug_t = $slf.get_token_string();
-        let debub_c = $slf.get_char_string(c);
-        println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
-    }*/}
+    ($slf:ident, $e:ident) => {
+        if LEXER_DEBUGGING {
+            let s = $slf.state.get();
+            let c = $slf.current_char;
+            let debug_t = $slf.get_token_string();
+            let debub_c = $slf.get_char_string(c);
+            println!("state: {:?} bytes: {:?} char: {:?} scanner: {:?}", s, debug_t, debub_c, $e);
+        }
+    }
 }
 
 macro_rules! print_continue {
     () => {
-        // println!("Continue");
+        if LEXER_DEBUGGING { /*println!("Continue");*/ }
     }
 }
 
 macro_rules! print_finished_token {
     ($r:ident) => {
-        // println!("Ok: {:?}", $r);
+        if LEXER_DEBUGGING { println!("Ok: {:?}", $r); }
     }
 }
 
@@ -70,6 +82,12 @@ mod eof;
 mod number;
 mod delimiter;
 mod alphabet;
+mod text;
+mod atmark;
+mod otag;
+mod bang;
+mod colon;
+mod stop;
 
 use std::fmt::Debug;
 use std::cell::{Cell, RefCell};
@@ -82,9 +100,16 @@ pub use self::alphabet::AlphabetScanner;
 pub use self::number::ZeroScanner;
 pub use self::number::IntegerScanner;
 pub use self::delimiter::DelimiterScanner;
+pub use self::text::TextScanner;
+pub use self::atmark::AtmarkScanner;
+pub use self::otag::OtagScanner;
+pub use self::bang::BangScanner;
+pub use self::colon::ColonScanner;
+pub use self::stop::StopScanner;
 
 pub struct Lexer<'a, 'b> {
-    iter: &'a mut Iterator<Item=u8>,
+    iter: Option<&'a mut Iterator<Item=u8>>,
+    iter2: Option<&'a mut Iterator<Item=::std::io::Result<u8>>>,
     current_char: u8,
     state: Cell<State>,
     token_bytes: RefCell<Vec<u8>>,
@@ -101,10 +126,22 @@ pub enum State {
     InnerNumber,
     Delimiter,
 
-    // InnerText,
-    // FinishText,
-    // AfterUnderscore,
-    // AfterDot,
+    InnerText,
+    FinishText,
+
+    Dispatcher,
+    AfterDispatcher,
+
+    InnerBang,
+    AfterBang,
+
+    InnerColon,
+    AfterColon,
+
+    InnerStop,
+    AfterStop,
+
+    InnerSpecialOtag,
     // InnerComment,
 }
 
@@ -143,15 +180,29 @@ const FIRST_CHAR: u8 = 255;
 impl<'a, 'b> Lexer<'a, 'b> {
     pub fn new<I>(iter: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
     where I: Iterator<Item=u8> {
-        Lexer { iter: iter, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
+        Lexer { iter: Some(iter), iter2: None, current_char: FIRST_CHAR, state: Cell::new(State::Normal),
+            token_bytes: RefCell::new(vec![]), scanners: scanners, }
+    }
+
+    pub fn new2<I>(iter2: &'a mut I, scanners: &'b Vec<&'b Scanner>) -> Lexer<'a, 'b>
+    where I: Iterator<Item=::std::io::Result<u8>> {
+        Lexer { iter: None, iter2: Some(iter2), current_char: FIRST_CHAR, state: Cell::new(State::Normal),
             token_bytes: RefCell::new(vec![]), scanners: scanners, }
     }
 
     fn consume_char(&mut self) {
-        if let Some(c) = self.iter.next() {
-            self.current_char = c;
-        } else {
-            self.current_char = 0; // EOF
+        if let Some(ref mut iter) = self.iter {
+            if let Some(c) = iter.next() {
+                self.current_char = c;
+            } else {
+                self.current_char = 0; // EOF
+            }
+        } else if let Some(ref mut iter) = self.iter2 {
+            if let Some(Ok(c)) = iter.next() {
+                self.current_char = c;
+            } else {
+                self.current_char = 0; // EOF
+            }
         }
     }
 
@@ -248,12 +299,14 @@ fn bracket_list() {
 }
 
 #[test]
+// #[ignore]
 fn mpiq() {
     // lex_from_str_with_all_scanners("^> 246", "Crrt Otag<>> Nmbr<246>");
     lex_from_str_with_all_scanners("|% ; -1", "Pipe Otag<%> Smcl Nmbr<-1>");
 }
 
 #[test]
+// #[ignore]
 fn tval() {
     lex_from_str_with_all_scanners("^T", "Crrt Otag<T>");
 }
@@ -261,6 +314,41 @@ fn tval() {
 #[test]
 fn primitive_function() {
     lex_from_str_with_all_scanners("decr", "Chvc<decr>");
+}
+
+#[test]
+// #[ignore]
+fn texts() {
+    lex_from_str_with_all_scanners("[0 \"b\"]", "Lbkt Nmbr<0> Dbqt Chvc<b> Dbqt Rbkt")
+}
+
+#[test]
+fn atmark_and_symbol() {
+    lex_from_str_with_all_scanners("@abc", "Atsm Chvc<abc>");
+}
+
+#[test]
+fn symbol_and_bang() {
+    lex_from_str_with_all_scanners("ab!", "Chvc<ab> Bang");
+}
+
+#[test]
+fn colon_and_others() {
+    lex_from_str_with_all_scanners(
+        "a:1:\"b\":\"c\":d:2",
+        "Chvc<a> Coln Nmbr<1> Coln Dbqt Chvc<b> Dbqt Coln Dbqt Chvc<c> Dbqt Coln Chvc<d> Coln Nmbr<2>");
+}
+
+#[test]
+fn stop_and_others() {
+    lex_from_str_with_all_scanners(
+        "a.1.d.2",
+        "Chvc<a> Stop Nmbr<1> Stop Chvc<d> Stop Nmbr<2>");
+}
+
+#[test]
+fn special_carret_otag() {
+    lex_from_str_with_all_scanners("^[a]", "Crrt Lbkt Chvc<a> Rbkt");
 }
 
 fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
@@ -292,7 +380,13 @@ fn lex_from_str(text: &str, right: &str, scanners: &mut Vec<&Scanner>) {
 
 fn lex_from_str_with_all_scanners(text: &str, right: &str) {
     let scanners: &mut Vec<&Scanner> = &mut vec![
+        &ColonScanner,
+        &BangScanner,
+        &StopScanner,
+        &AtmarkScanner,
+        &OtagScanner,
         &DelimiterScanner,
+        &TextScanner,
         &AlphabetScanner,
         &ZeroScanner,
         &IntegerScanner,

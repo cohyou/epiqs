@@ -1,63 +1,106 @@
 mod graph;
 
-use std::cell::Cell;
-pub use self::graph::NodeId;
-pub use self::graph::Node;
-pub use self::graph::NodeArena;
+use std::rc::Rc;
+
+pub use self::graph::*;
 
 /// E(lemantal) piq
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum Epiq {
     Unit,
     Tval,
     Fval,
     Name(String),
     Uit8(i64),
+    Text(String),
     Prim(String), // primitive function
 
     Tpiq { o: String, p: NodeId, q: NodeId}, // tagged piq
     Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
-    // Apiq { p: u32, q: u32 }, // application piq
 
-    // Text(String),
+    Eval(NodeId, NodeId), // eval piq
+    Quot(NodeId, NodeId), // quote piq
 
-    // Lpiq { p: usize, q: usize }, // (linked) list piq
-    // Vpiq { p: usize, q: usize }, // vector piq
-    // Fpiq { p: usize, q: usize }, // function piq
-
-    // Aexp { a: usize, e: usize }, // A-Expression
-    // Prmt(usize), // anonymous parameter
-    // Pprn(usize), // priority parentheses
-    // Dbri(usize), // de bruijn index
+    Lpiq(NodeId, NodeId), // (linked) list piq
+    Appl(NodeId, NodeId), // apply piq
+    Rslv(NodeId, NodeId), // resolve
+    Cond(NodeId, NodeId), // condition
+    Envn(NodeId, NodeId), // environment
+    Bind(NodeId, NodeId), // bind
+    Accs(NodeId, NodeId), // access
+    Lmbd(NodeId, NodeId), // function
 }
 
+impl fmt::Debug for Epiq {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Epiq::Unit => write!(f, "Unit"),
+            Epiq::Tval => write!(f, "Tval"),
+            Epiq::Fval => write!(f, "Fval"),
+            Epiq::Name(ref n) => write!(f, "Name<{}>", n),
+            Epiq::Uit8(n) => write!(f, "Uit8<{}>", n),
+            Epiq::Text(ref n) => write!(f, "Text<{}>", n),
+            Epiq::Prim(ref n) => write!(f, "Prim<{}>", n),
+            Epiq::Tpiq { ref o, p, q} => write!(f, "{}({} {})", o, p, q),
+            Epiq::Mpiq { ref o, p, q} => write!(f, "^{}({} {})", o, p, q),
+            Epiq::Eval(p, q) => write!(f, ">({} {})", p, q),
+            Epiq::Quot(p, q) => write!(f, "|({} {})", p, q),
+            Epiq::Lpiq(p, q) => write!(f, ":({} {})", p, q),
+            Epiq::Appl(p, q) => write!(f, "!({} {})", p, q),
+            Epiq::Rslv(p, q) => write!(f, "@({} {})", p, q),
+            Epiq::Cond(p, q) => write!(f, "?({} {})", p, q),
+            Epiq::Envn(p, q) => write!(f, "%({} {})", p, q),
+            Epiq::Bind(p, q) => write!(f, "#({} {})", p, q),
+            Epiq::Accs(p, q) => write!(f, ".({} {})", p, q),
+            Epiq::Lmbd(p, q) => write!(f, r"\({} {})", p, q),
+        }
+    }
+}
 pub struct Heliqs {
-    pub vctr: Vec<Epiq>,
+    ast: NodeArena<Rc<Epiq>>,
 }
 
-pub struct AbstractSyntaxTree {
-    pub entrypoint: Option<u32>,
-    tree: Vec<Epiq>,
-    pub max_index: Cell<u32>,
-}
-
-impl AbstractSyntaxTree {
-    pub fn new() -> Self {
-        AbstractSyntaxTree{ entrypoint: None, tree: vec![], max_index: Cell::new(0) }
+impl Heliqs {
+    pub fn new() -> Heliqs {
+        Heliqs { ast: NodeArena::new(), }
     }
 
-    pub fn get(&self, index: u32) -> &Epiq {
-        &(self.tree[index as usize])
+    pub fn alloc(&mut self, value: Epiq) -> NodeId {
+        let id = self.ast.alloc(Rc::new(value));
+        log(format!("alloc: {:?} from: {:?}", self.ast.0, self.ast.entry()));
+        id
     }
 
-    pub fn push(&mut self, epiq: Epiq) {
-        self.tree.push(epiq);
-        self.max_index.set((self.tree.len() - 1) as u32);
+    pub fn entry(&self) -> Option<NodeId> {
+        self.ast.entry()
     }
 
-    pub fn push_and_entry(&mut self, epiq: Epiq) {
-        self.push(epiq);
-        self.entrypoint = Some(self.max_index.get());
+    pub fn set_entry(&mut self, id: NodeId) {
+        self.ast.set_entry(id)
+    }
+
+    pub fn get_epiq(&self, id: NodeId) -> &Node<Rc<Epiq>> {
+        self.ast.get(id)
+    }
+
+    pub fn get_epiq_mut(&mut self, id: NodeId) -> &mut Node<Rc<Epiq>> {
+        self.ast.get_mut(id)
+    }
+
+    pub fn define(&mut self, name: &str, value: NodeId) {
+        self.ast.define(name, value)
+    }
+
+    pub fn resolve(&self, name: &str) -> Option<Option<&Node<Rc<Epiq>>>> {
+        self.ast.resolve(name)
+    }
+
+    pub fn extend(&mut self) {
+        self.ast.extend()
+    }
+
+    pub fn pop(&mut self) {
+        self.ast.pop()
     }
 }
 
@@ -68,11 +111,12 @@ pub enum Tokn {
     /* dispatcher */
     Pipe, // | vertical bar
     Crrt, // ^ carret
+    Sgqt, // ' single quotation
 
-    // Coln, // : colon
 
     /* otag */
     Otag(String), // Otag
+
 
     /* literal */
     Chvc(String), // Charactor Vector 単なる文字の並び
@@ -83,13 +127,18 @@ pub enum Tokn {
     Lbkt, // [ left bracket
     Rbkt, // ] right bracket
 
+    Dbqt, // " double quotation
+    Atsm, // @ at symbol
+    Bang, // ! exclamation
+    Coln, // : colon
+    Stop, // . full stop (period)
+
     /*
 
     Usnm(String), // under score and number (e.g. _0 _34)
 
     // asciiのうち、記号は32(スペースを除く、また7Fも対象外)
 
-    Dbqt, // " double quotation
 
     Lprn, // ( left parentheses
     Rprn, // ) right parentheses
@@ -98,18 +147,14 @@ pub enum Tokn {
 
     Dllr, // $ dollar
 
-    Bang, // ! exclamation
-
     // 残りの記号も列挙
     Plus, // + plus
     Star, // * asterisk
     Bksl, // \ back slash
-    Stop, // . full stop (period)
 
     Pcnt, // % percent
     Qstn, // ? question mark
     Amps, // & ampersand
-    Atsm, // @ at symbol
     Hash, // # hash
 
     Comm, // , comma
@@ -117,8 +162,6 @@ pub enum Tokn {
 
     /*
     Slsh, // / slash
-
-    Sgqt, // ' single quotation
 
     Hphn, // - hyphen-minus
     Less, // < less than
@@ -136,6 +179,7 @@ impl fmt::Debug for Tokn {
         match *self {
             Tokn::Pipe => write!(f, "Pipe"),
             Tokn::Crrt => write!(f, "Crrt"),
+            Tokn::Sgqt => write!(f, "Sgqt"),
 
             Tokn::Otag(ref s) => write!(f, "Otag<{}>", s),
 
@@ -147,7 +191,11 @@ impl fmt::Debug for Tokn {
             Tokn::Lbkt => write!(f, "Lbkt"),
             Tokn::Rbkt => write!(f, "Rbkt"),
 
-            // &Tokn::Coln => write!(f, "Coln"),
+            Tokn::Dbqt => write!(f, "Dbqt"),
+            Tokn::Atsm => write!(f, "Atsm"),
+            Tokn::Bang => write!(f, "Bang"),
+            Tokn::Coln => write!(f, "Coln"),
+            Tokn::Stop => write!(f, "Stop"),
 
             /*
             &Tokn::Usnm(ref s) => write!(f, "Usnm<{}>", s),
@@ -167,7 +215,6 @@ impl fmt::Debug for Tokn {
             // 扱いが不明瞭だがひとまず足しておく
             &Tokn::Plus => write!(f, "Plus"),
             &Tokn::Star => write!(f, "Star"),
-            &Tokn::Stop => write!(f, "Stop"),
             &Tokn::Bksl => write!(f, "Bksl"),
 
             &Tokn::Pcnt => write!(f, "Pcnt"),
@@ -189,8 +236,14 @@ fn epiq_arena_get() {
     let mut arena = NodeArena::<Epiq>::new();
     let node_id = arena.alloc(Epiq::Unit);
     {
-        let mut node = arena.get_mut(node_id);
-        node.value = Epiq::Name("wowow".to_string());
+        let node = arena.get_mut(node_id);
+        node.1 = Epiq::Name("wowow".to_string());
     }
-    assert_eq!(arena.get(node_id).value, Epiq::Name("wowow".to_string()));
+    assert_eq!(arena.get(node_id).1, Epiq::Name("wowow".to_string()));
+}
+
+pub fn log(message: String) {
+    if false {
+        println!("{}", &message);
+    }
 }

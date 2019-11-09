@@ -1,0 +1,164 @@
+'> ^[
+  |# macro |\ '% [otag p q] ^[
+    |? @eq! [@otag "="] |:
+       ^[ @eq! [@p @q] ]
+       |? '> |= @otag "Match" |:
+          |? '> |= @p @q.p.p |:
+             ^[ '> @q.p.q ]
+             |? '> |= ; @q.q |:
+                ;
+                |! @macro [@otag @p @q.q]
+
+          ^[
+          |Match @otag [
+             |: "Add"   |! @plus [@p @q]
+             |: "Html"  |! @html [@q]
+             |: "Head"  |! @tagtext ["head" @p @q]
+             |: "Title" |! @tagtexttext ["title" @q]
+             |: "Body"  |! @tagtext ["body" @p @q]
+             |: "Table" |! @tagtext ["table" @p @q]
+             |: "Tr"    |! @tagtext ["tr" @p @q]
+             |: "Td"    |! @tagtext ["td" @p @q]
+             |: "H1"    |! @tagtexttext ["h1" @q]
+          ]
+    ]
+  ]
+
+  |# macropiq |\ '% [piq] ^[ @macro! [@piq.o @piq.p @piq.q] ]
+
+  |# html |\ '% [q] ^[
+     @concat! [
+        "<!DOCTYPE html>"
+        @starttag! ["html"]
+        @q.p
+        '> |? '> |= ; @q.q "" : @q.q.p
+        @endtag! ["html"]
+     ]
+  ]
+
+  |# tagtexttext |\ '% [tagname q] ^[
+     @concat! [
+       @starttag! [@tagname]
+       @q
+       @endtag! [@tagname]
+     ]
+  ]
+
+  |# tagtext |\ '% [tagname p q] ^[
+     @concat! [
+       "<" @tagname " "
+       @attr-list-text! [@p]
+       ">"
+       '> |? '> |= @tagname "head" @concat! ["<meta charset=" @dbqt!; "UTF-8" @dbqt!; ">"] : ""
+       @listtext! [@q]
+       @endtag! [@tagname]
+     ]
+  ]
+
+  |# listtext |\ '% [l] ^[
+     '> |? '> |= ; @l |:
+           ""
+           @concat! [@l.p @listtext! [@l.q]]
+  ]
+
+  |# starttag |\ '% [t] ^[ @concat! ["<" @t ">"] ]
+  |# endtag |\ '% [t] ^[ @concat! ["</" @t ">"] ]
+
+
+  |# style-text |\ '% [tpiq] ^[
+     @concat! [@tpiq.p ": " @tpiq.q ";"]
+  ]
+
+  |# style-list-text |\ '% [l] ^[
+     '> |? '> |= ; @l |:
+           ""
+           @concat! [@style-text! [@l.p] " " @style-list-text! [@l.q]]
+  ]
+
+  |# style-attr-text |\ '% [piq] ^[
+     @concat! [@piq.p "=" @dbqt!; @style-list-text![@piq.q] @dbqt!; ]
+  ]
+
+  |# attr-text |\ '% [piq] ^[
+     @concat! [@piq.p "="  @piq.q ]
+  ]
+
+  |# attr-list-text |\ '% [l] ^[
+     '> |? '> |= ; @l |:
+           ""
+           @concat! [
+              '> |? '> |= @l.p.p style |:
+                    |! @style-attr-text [@l.p]
+                    |! @attr-text [@l.p]
+              " "
+              @attr-list-text! [@l.q]
+           ]
+  ]
+
+  |# make-record |\ '% [year month day content] ^[
+     'Tr ['Td [@year] 'Td [@month] 'Td [@day] 'Td [@content]]
+  ]
+
+  |# make-lpiq |\ '% [ds] ^[
+     [@make-record! [@year @month @ds.p.p @ds.p.q]]
+  ]
+
+  |# make-table |\ '% [year month days] ^[
+     '> |? '> |= ; @days |:
+        ;
+        |! @make-lpiq [@year @month @days]
+  ]
+
+  |# diary [
+    "2018": [
+      "01": [
+        "01": "ずっと寝てた"
+        "02": "寒すぎて布団の中でゲームやってた"
+        "03": "ずっと寝てた"
+        "04": "仕事はじめ"
+        "05": "新年会"
+        "06": "この日記を書き始めた"
+      ]
+    ]
+  ]
+
+  |# year @diary.p.p
+  |# month @diary.p.q.p.p
+  |# days @diary.p.q.p.q
+
+  |# nth |\ '% [list n] ^[
+     '> |? '> |= @n 0 |:
+        @list.p
+        '> |? '> |= ; @list |:
+           ;
+           @nth! [@list.q @decr![@n]]
+  ]
+
+  |# nthp |\ '% [list n] ^[
+     |# piq @nth! [@list @n]
+     @piq.p
+  ]
+
+  |# nthq |\ '% [list n] ^[
+     |# piq @nth! [@list @n]
+     @piq.q
+  ]
+
+  |# contents [
+     @make-record! [@year @month @nthp![@days 0] @nthq![@days 0]]
+     @make-record! [@year @month @nthp![@days 1] @nthq![@days 1]]
+     @make-record! [@year @month @nthp![@days 2] @nthq![@days 2]]
+     @make-record! [@year @month @nthp![@days 3] @nthq![@days 3]]
+     @make-record! [@year @month @nthp![@days 4] @nthq![@days 4]]
+     @make-record! [@year @month @nthp![@days 5] @nthq![@days 5]]
+  ]
+
+  'Html [
+     'Head [ 'Title "title" ]
+     'Body [
+        'H1 "diary"
+        |Table [style: [color:red] border: 1] @contents
+     ]
+  ]
+
+]

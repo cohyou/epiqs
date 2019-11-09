@@ -240,6 +240,7 @@ Hphn, // - hyphen-minus
 Star, // * asterisk
 Slsh, // / slash
 
+Tild, // ~ tilde
 Bkqt, // ` back quote
 Less, // < less than
 (使用済みになりました) Grtr, // > greater than
@@ -286,12 +287,117 @@ Less, // < less than
 
 ### コード例
 
+tarai関数
+```
+|> ; ^> -1 [
+   |# tak |\ |% ; [x y z] ^> -1 [
+          |? |> ; |! |> ; |@ ; ltoreq [|> ; |@ ; x |> ; |@ ; y]
+             |: |> ; |@ ; y
+                |> ; |! |> ; |@ ; tak [
+                     |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; x] |> ; |@ ; y |> ; |@ ; z]
+                     |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; y] |> ; |@ ; z |> ; |@ ; x]
+                     |> ; |! |> ; |@ ; tak [|> ; |! |> ; |@ ; decr [|> ; |@ ; z] |> ; |@ ; x |> ; |@ ; y]
+                ]
+   ]
+
+   |! |> ; |@ ; tak [12 6 0]
+]
+```
+
+tarai関数(with syntax sugar1, 実装中)
+```
+|>>>> [
+   |# tak |\ '% [x y z] ^>> [
+          |? '> |! '> @ltoreq ['> @x '> @y]
+             |: '> @y
+                '> |! '> @tak [
+                   '> |! '> @tak ['> |! '> @decr ['> @x] '> @y '> @z]
+                   '> |! '> @tak ['> |! '> @decr ['> @y] '> @z '> @x]
+                   '> |! '> @tak ['> |! '> @decr ['> @z] '> @x '> @y]
+                ]
+   ]
+
+   |! '> @tak [12 6 0]
+]
+```
+
+tarai関数(with syntax sugar2, 草案)
+```
+^>>>> [
+   |# tak |\ '% [x y z] ^>> [
+          |? @ltoreq!, @x, @y
+             |: @y
+                @tak! [
+                   @tak!, @decr! [@x], @y, @z
+                   @tak!, @decr! [@y], @z, @x
+                   @tak!, @decr! [@z], @x, @y
+                ]
+   ]
+
+   @tak!, 12, 6, 0
+]
+```
+
+fibonacci数
+```
+|> ; ^> -1 [
+   |# fib |\ |% ; [n] ^> -1 [
+          |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 0]
+             |: 0
+                |> ; |? |> ; |! |> ; |@ ; eq [|> ; |@ ; n 1]
+                        |: 1
+                           |> ; |! |> ; |@ ; plus [
+                                |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 2]]
+                                |> ; |! |> ; |@ ; fib [|> ; |! |> ; |@ ; minus [|> ; |@ ; n 1]]
+                           ]
+   ]
+
+   |! |> ; |@ ; fib [30]
+]
+```
+
+fibonacci数(with syntax sugar1, 実装中)
+```
+|>>>> [
+   |# fib |\ '% [n] ^>> [
+          |? '> |! '> @eq ['> @n 0]
+             |: 0
+                '> |? '> |! '> @eq ['> @n 1]
+                        |: 1
+                           '> |! '> @plus [
+                                '> |! '> @fib ['> |! '> @minus ['> @n 2]]
+                                '> |! '> @fib ['> |! '> @minus ['> @n 1]]
+                           ]
+   ]
+
+   |! '> @fib [30]
+]
+```
+
+fibonacci数(with syntax sugar2, 草案)
+```
+^>>>> [
+   |# fib |\ '% [n] ^>> [
+          |? @eq!, @n, 0
+             |: 0
+                |? @eq!, @n, 1
+                   |: 1
+                      @plus! [
+                        @fib!, @minus! [@n 2]
+                        @fib!, @minus! [@n 1]
+                      ]
+   ]
+
+   @fib!, 30
+]
+```
+
 ```
 '!?
   |:
     |# f @open! "myfile.txt"
     |# s @readline! f
-    |# i @int! @s.strip!
+    |# i @int! [@s.strip!]
   |:
     |: [ OSError   : (\ '.> '.>s ["OS error: {0}" .1])
          ValueError: (\ '.> "Could not convert data to an integer.")
@@ -373,6 +479,7 @@ Less, // < less than
 `Lmbd{envn, body}`|`'\ .0` `(\ '% [i] @incl!, .i)`|function piq block
 `Same{val1, val2}`|`(= money happiness)`|equal
 `Appl{func, args}`|`(! @p, "OMG")` `@p!, "Good"`|apply
+`Cond{cond, rslt}`|`(? ^T "true":"false")`|if or cond
 
 
 ### epiq一覧(piq, 主に2つ目の引数を埋めるもの)
@@ -401,6 +508,7 @@ Less, // < less than
 ## TODO
 
 ### その1 簡単そう
+- walkを通していない部分をチェック
 - READMEにcond抜けてる
 - Same（これもまずは数値だけ、ただしこれはotagではなく関数では？）
 - 文字列

@@ -9,15 +9,14 @@ impl Scanner for DelimiterScanner {
         match state {
             State::Normal => {
                 match c {
-                    b'|' | b'^' | b';' |
-                    b'[' | b']' => push_into_mode!(Delimiter),
+                    b';' | b'[' | b']' => push_into_mode!(Delimiter),
                     _    => go_ahead!(),
                 }
             },
             State::Delimiter => {
                 // 何が来ても終了
                 match c {
-                    0 => finish!()/*ScanResult::EOF*/,
+                    0 => finish!(),
                     _ => delimite!(),
                 }
             },
@@ -27,22 +26,12 @@ impl Scanner for DelimiterScanner {
 
     fn return_token(&self, _state: State, token_string: String) -> Option<Tokn> {
         match token_string.as_ref() {
-            "|" => Some(Tokn::Pipe),
             ";" => Some(Tokn::Smcl),
-            "^" => Some(Tokn::Crrt),
-
             "[" => Some(Tokn::Lbkt),
             "]" => Some(Tokn::Rbkt),
             _ => None,
         }
     }
-}
-
-#[test]
-#[ignore]
-fn pipe() {
-    let scanners: &mut Vec<&Scanner> = &mut vec![&DelimiterScanner];
-    lex_from_str("|", "Pipe", scanners);
 }
 
 #[test]
