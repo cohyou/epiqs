@@ -1,13 +1,9 @@
 extern crate env_logger;
 extern crate epiqs;
 use std::env;
-use std::fs::File;
-use std::io::prelude::*;
 use epiqs::printer::*;
 
 fn main() {
-    env_logger::init().unwrap();
-
     let args: Vec<String> = env::args().collect();
 
     if args.len() >= 2 {

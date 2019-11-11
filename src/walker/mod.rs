@@ -61,24 +61,35 @@ impl Walker {
 
         let Node(_, piq) = input.clone();
 
-        match *piq {
-            Epiq::Eval(p, q) => self.eval(p, q, nest_level),
-            Epiq::Quot(_, q) => self.get_epiq(q),
+        match piq.as_ref() {
+            Epiq::Eval(p, q) => self.eval(*p, *q, nest_level),
+            Epiq::Quot(_, q) => self.get_epiq(*q),
 
-            Epiq::Lpiq(p, q) => self.walk_piq(input, ":", p, q, nest_level),
-            Epiq::Appl(p, q) => self.walk_piq(input, "!", p, q, nest_level),
-            Epiq::Rslv(p, q) => self.walk_piq(input, "@", p, q, nest_level),
-            Epiq::Cond(p, q) => self.walk_piq(input, "?", p, q, nest_level),
-            Epiq::Envn(p, q) => self.walk_piq(input, "%", p, q, nest_level),
-            Epiq::Bind(p, q) => self.walk_piq(input, "#", p, q, nest_level),
-            Epiq::Lmbd(p, q) => self.walk_piq(input, r"\", p, q, nest_level),
-            Epiq::Tpiq{ref o, p, q} => self.eval_tpiq(o, p, q, nest_level),
+            Epiq::Lpiq(p, q) => self.walk_piq(input, ":", *p, *q, nest_level),
+            Epiq::Appl(p, q) => self.walk_piq(input, "!", *p, *q, nest_level),
+            Epiq::Rslv(p, q) => self.walk_piq(input, "@", *p, *q, nest_level),
+            Epiq::Cond(p, q) => self.walk_piq(input, "?", *p, *q, nest_level),
+            Epiq::Envn(p, q) => self.walk_piq(input, "%", *p, *q, nest_level),
+            Epiq::Bind(p, q) => self.walk_piq(input, "#", *p, *q, nest_level),
+            Epiq::Lmbd(p, q) => self.walk_piq(input, r"\", *p, *q, nest_level),
+            Epiq::Tpiq{o, p, q} => self.eval_tpiq(o.clone(), *p, *q, nest_level),
             // Epiq::Tpiq{ref o, p, q} => self.walk_piq(input, o, p, q, nest_level),
 
             _ => input,
         }
     }
 
+    /// ひとまずpは無視
+    fn eval(&self, _p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
+        let q_node = self.get_epiq(q);
+        let result = self.eval_internal(q_node, nest_level + 1);
+
+        self.log_piq(nest_level, "eval: eval完前", q);
+        self.log_piq(nest_level, "eval: eval完後", result.0);
+
+        result
+    }
+        
     fn walk_piq(&self, input: Node<Rc<Epiq>>, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
         // pとq両方をwalkして結果が両方とも変わらなければそのまま返す
         // そうでなければ新しくpiqを作って返す
@@ -101,7 +112,7 @@ impl Walker {
             "%" => Epiq::Envn(p, q),
             "#" => Epiq::Bind(p, q),
             r"\" => Epiq::Lmbd(p, q),
-            _   => Epiq::Tpiq{o: o.to_string(), p, q},
+            _   => Epiq::Tpiq{o: Rc::new(o.to_string()), p, q},
         };
         let new_epiq_index = {
             let mut borrow_mut_vm = self.vm.borrow_mut();
@@ -116,7 +127,7 @@ impl Walker {
 
         let Node(_, piq) = input.clone();
 
-        match *piq {
+        match piq.as_ref() {
             Epiq::Unit |
             Epiq::Tval |
             Epiq::Fval |
@@ -125,33 +136,23 @@ impl Walker {
             Epiq::Text(_) |
             Epiq::Lpiq(..) => input,
 
-            Epiq::Eval(p, q) => self.eval_internal(self.eval(p, q, nest_level), nest_level + 1), // こっちはあまり通らないかもしれない
-            Epiq::Quot(_, q) => self.get_epiq(q),
-            Epiq::Appl(p, q) => self.eval_apply(input, p, q, nest_level),
-            Epiq::Rslv(p, q) => self.eval_resolve(p, q, nest_level),
-            Epiq::Cond(p, q) => self.eval_condition(input, "?", p, q, nest_level),
+            Epiq::Eval(p, q) => self.eval_internal(self.eval(*p, *q, nest_level), nest_level + 1), // こっちはあまり通らないかもしれない
+            Epiq::Quot(_, q) => self.get_epiq(*q),
+            Epiq::Appl(p, q) => self.eval_apply(input, *p, *q, nest_level),
+            Epiq::Rslv(p, q) => self.eval_resolve(*p, *q, nest_level),
+            Epiq::Cond(p, q) => self.eval_condition(input, "?", *p, *q, nest_level),
             Epiq::Envn(..) => self.eval_environment(input),
-            Epiq::Bind(p, q) => self.eval_bind(p, q, nest_level),
-            Epiq::Accs(p, q) => self.eval_access(input, p, q, nest_level),
+            Epiq::Bind(p, q) => self.eval_bind(*p, *q, nest_level),
+            Epiq::Accs(p, q) => self.eval_access(input, *p, *q, nest_level),
             Epiq::Lmbd(..) => self.eval_lambda_direct(input),
             Epiq::Prim(_) => self.eval_primitive_direct(input),
 
-            Epiq::Tpiq{ref o, p, q} => self.eval_tpiq(o, p, q, nest_level),
-            Epiq::Mpiq{ref o, p, q} => self.eval_mpiq(o, p, q, nest_level),
+            Epiq::Tpiq{o, p, q} => self.eval_tpiq(o.clone(), *p, *q, nest_level),
+            Epiq::Mpiq{ref o, p, q} => self.eval_mpiq(o, *p, *q, nest_level),
 
             // _ => panic!("eval_internal: 無効なEpiq"),
+            _ => input,
         }
-    }
-
-    /// ひとまずpは無視
-    fn eval(&self, _p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
-        let q_node = self.get_epiq(q);
-        let result = self.eval_internal(q_node, nest_level + 1);
-
-        self.log_piq(nest_level, "eval: eval完前", q);
-        self.log_piq(nest_level, "eval: eval完後", result.0);
-
-        result
     }
 
     /// p: lambda
@@ -307,7 +308,7 @@ impl Walker {
                 // Tpiqならば、pとqが使える
                 let n = unwrap_name!(self, q_accessor);
                 match n.as_ref() {
-                    "o" => alloc_node!(self, Epiq::Text(o.to_string())),
+                    "o" => alloc_node!(self, Epiq::Text(Rc::new(o.to_string()))),
                     "p" => self.walked_node(p, nest_level),
                     "q" => self.walked_node(q, nest_level),
                     _ => panic!("Tpiqならばoとpとq以外はエラー"),
@@ -331,7 +332,7 @@ impl Walker {
         if cond.0 == walked_cond.0 {
             let mut vm = self.vm.borrow_mut();
             let node_mut = vm.get_epiq_mut(input.0);
-            node_mut.1 = Rc::new(Epiq::Tpiq{o:o.to_string(), p:walked_cond.0, q});
+            node_mut.1 = Rc::new(Epiq::Tpiq{o: Rc::new(o.to_string()), p:walked_cond.0, q});
         }
 
         let result = self.get_epiq(q);
@@ -390,7 +391,7 @@ impl Walker {
         }
     }
 
-    fn eval_tpiq(&self, o: &str, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
+    fn eval_tpiq(&self, o: Rc<String>, p: NodeId, q: NodeId, nest_level: u32) -> Node<Rc<Epiq>> {
         // call macro
         let macrocro = match self.vm.borrow().resolve("macro") {
             Some(Some(res)) => res.clone().clone(),
@@ -398,7 +399,7 @@ impl Walker {
                 panic!("resolve時に指定されたキーが見つからない: {:?}", "macro");
             },
         };
-        let arg1 = self.vm.borrow_mut().alloc(Epiq::Text(o.to_string()));
+        let arg1 = self.vm.borrow_mut().alloc(Epiq::Text(o.clone()));
         let arg2_node = self.get_epiq(p);
         let arg3_node = self.get_epiq(q);
 

@@ -100,7 +100,7 @@ impl<'a> Parser<'a> {
         self.log("parse_tpiq_single");
         self.consume_token(); // dispatcher Sgqtのはず
         match self.current_token() {
-            Has(Tokn::Otag(ref otag)) => {
+            Has(Tokn::Otag(otag)) => {
                 self.consume_token();
                 // 引数は一つ、それをqとみなす
                 let qidx = (self.parse_aexp())?;
@@ -114,7 +114,7 @@ impl<'a> Parser<'a> {
         self.log("parse_tpiq");
         self.consume_token(); // dispatcher Pipeのはず
         match self.current_token() {
-            Has(Tokn::Otag(ref otag)) => {
+            Has(Tokn::Otag(otag)) => {
                 self.consume_token();
                 let pidx = (self.parse_aexp())?;
                 let qidx = (self.parse_aexp())?;
@@ -133,9 +133,9 @@ impl<'a> Parser<'a> {
     fn parse_mpiq(&mut self) -> Result<usize, Error> {
         self.consume_token(); // dispatcher Crrtのはず
         match self.current_token() {
-            Has(Tokn::Otag(ref otag)) => {
+            Has(Tokn::Otag(otag)) => {
                 self.consume_token();
-                match otag.as_ref() {
+                match &**otag {
                     // ^Tと^Fは特別扱い
                     "T" => push!(self, Epiq::Tval),
                     "F" => push!(self, Epiq::Fval),
@@ -149,14 +149,14 @@ impl<'a> Parser<'a> {
             Has(Tokn::Lbkt) => {
                 let pidx = UNIT_INDX; //self.vm.borrow_mut().alloc(Epiq::Uit8(-1));
                 let qidx = (self.parse_list())?;
-                push!(self, Epiq::Mpiq{o:">".to_string(), p: pidx, q: qidx })
+                push!(self, Epiq::Mpiq{o: Rc::new(">".to_string()), p: pidx, q: qidx })
             },
             _ => panic!("parse_mpiq {:?}がOtag/Lbktではありません", self.current_token()) /*Err(Error::Unimplemented)*/,
         }
     }
 
-    fn match_otag(&mut self, pidx: NodeId, qidx: NodeId, otag: &str) -> Result<usize, Error> {
-        match otag {
+    fn match_otag(&mut self, pidx: NodeId, qidx: NodeId, otag: Rc<String>) -> Result<usize, Error> {
+        match &**otag {
             ">" => push!(self, Epiq::Eval(pidx, qidx)),
             ":" => push!(self, Epiq::Lpiq(pidx, qidx)),
             "!" => push!(self, Epiq::Appl(pidx, qidx)),
@@ -166,7 +166,7 @@ impl<'a> Parser<'a> {
             "#" => push!(self, Epiq::Bind(pidx, qidx)),
             "." => push!(self, Epiq::Accs(pidx, qidx)),
             r"\" => push!(self, Epiq::Lmbd(pidx, qidx)),
-            _ => push!(self, Epiq::Tpiq{o: otag.to_string(), p: pidx, q: qidx}),
+            _ => push!(self, Epiq::Tpiq{o: otag.clone(), p: pidx, q: qidx}),
         }
     }
 

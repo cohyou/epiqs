@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use core::*;
 use lexer::*;
 
@@ -43,7 +45,7 @@ impl Scanner for ColonScanner {
 
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
-            State::InnerName => Some(Tokn::Chvc(token_string)),
+            State::InnerName => Some(Tokn::Chvc(Rc::new(token_string))),
             State::ZeroNumber | State::InnerNumber => Some(Tokn::Nmbr(token_string)),
             State::AfterColon => Some(Tokn::Coln),
             _ => None,

@@ -112,25 +112,25 @@ impl Walker {
 
     fn concat_internal(&self, args: Node<Rc<Epiq>>, accum: &str) -> Node<Rc<Epiq>> {
         let t = self.first(args.clone());
-        let text = match *t.1 {
-            Epiq::Text(ref tt) => tt.clone(),
-            Epiq::Name(ref tt) => tt.clone(),
-            Epiq::Uit8(n) => n.to_string(),
+        let text = match t.1.as_ref() {
+            Epiq::Text(tt) => tt.clone(),
+            Epiq::Name(ref tt) => Rc::new(tt.clone()),
+            Epiq::Uit8(n) => Rc::new(n.to_string()),
             _ => {
                 let from = self.printer_printed(t.0);
                 panic!("{}からtextは取り出せません", from);
             },
         };
-
+        // println!("[{}] [{}]", accum, text);
         let accuming = accum.to_string() + &text;
         match *self.qval(args.clone()).1 {
-            Epiq::Unit => alloc_node!(self, Epiq::Text(accuming)),
+            Epiq::Unit => alloc_node!(self, Epiq::Text(Rc::new(accuming))),
             _ => self.concat_internal(self.qval(args.clone()), &accuming),
         }
     }
 
     pub fn dbqt(&self, args: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {
-        alloc_node!(self, Epiq::Text("\"".to_string()))
+        alloc_node!(self, Epiq::Text(Rc::new("\"".to_string())))
     }
 
     fn first(&self, piq: Node<Rc<Epiq>>) -> Node<Rc<Epiq>> {

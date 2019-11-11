@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use core::*;
 use lexer::*;
 
@@ -35,7 +37,7 @@ impl Scanner for TextScanner {
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
             State::Normal | State::FinishText => Some(Tokn::Dbqt),
-            State::InnerText => Some(Tokn::Chvc(token_string)),
+            State::InnerText => Some(Tokn::Chvc(Rc::new(token_string))),
             _ => None,
         }
     }

@@ -12,11 +12,11 @@ pub enum Epiq {
     Fval,
     Name(String),
     Uit8(i64),
-    Text(String),
+    Text(Rc<String>),
     Prim(String), // primitive function
 
-    Tpiq { o: String, p: NodeId, q: NodeId}, // tagged piq
-    Mpiq { o: String, p: NodeId, q: NodeId}, // metadata piq
+    Tpiq { o: Rc<String>, p: NodeId, q: NodeId}, // tagged piq
+    Mpiq { o: Rc<String>, p: NodeId, q: NodeId}, // metadata piq
 
     Eval(NodeId, NodeId), // eval piq
     Quot(NodeId, NodeId), // quote piq
@@ -115,11 +115,11 @@ pub enum Tokn {
 
 
     /* otag */
-    Otag(String), // Otag
+    Otag(Rc<String>), // Otag
 
 
     /* literal */
-    Chvc(String), // Charactor Vector 単なる文字の並び
+    Chvc(Rc<String>), // Charactor Vector 単なる文字の並び
     Nmbr(String), // Number 数値（様々な形式を含むが、まずは整数のみ）
 
     Smcl, // ; semi colon

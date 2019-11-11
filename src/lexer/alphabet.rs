@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use core::*;
 use lexer::*;
 use util::*;
@@ -36,7 +38,7 @@ impl Scanner for AlphabetScanner {
 
     fn return_token(&self, state: State, token_string: String) -> Option<Tokn> {
         match state {
-            State::InnerName => Some(Tokn::Chvc(token_string)),
+            State::InnerName => Some(Tokn::Chvc(Rc::new(token_string))),
             _ => None,
         }
     }

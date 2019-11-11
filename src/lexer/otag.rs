@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use core::*;
 use lexer::*;
 use util::*;
@@ -79,7 +81,7 @@ impl Scanner for OtagScanner {
                     _ => None,
                 }
             }
-            State::InnerOtag => Some(Tokn::Otag(token_string)),
+            State::InnerOtag => Some(Tokn::Otag(Rc::new(token_string))),
             _ => None,
         }
     }
